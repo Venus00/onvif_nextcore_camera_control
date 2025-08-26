@@ -4,7 +4,7 @@ import { CameraInfo, cameras,type VideoEncoderConfig } from "./util/camera";
 import { getVideoEncoderConfiguration, setVideoEncoderConfiguration } from "./util/api";
 import onvif from 'node-onvif';
 //{"pan":0.5,"tilt":0.2,"zoom":0.1,"time":2,"stop":true}
-
+//rtsp://192.168.10.57:8554/cam1
 async function discoverCameras() {
   try {
     console.log('Starting ONVIF discovery...');
@@ -30,7 +30,7 @@ async function discoverCameras() {
 }
 
 // Run the scan
-discoverCameras();
+//discoverCameras();
 const app = express();
 app.use(bodyParser.json());
 const PORT = 3000;
