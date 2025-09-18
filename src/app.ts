@@ -7,30 +7,17 @@ import onvif from 'node-onvif';
 
 async function discoverCameras() {
   try {
-    console.log('Starting ONVIF discovery...');
-    
-    onvif.startDiscovery((info) => {
-        // Show the information of the found device
-        console.log("here is the result")
-        console.log(JSON.stringify(info, null, '  '));
-        onvif.startProbe().then((device_list) => {
-            // Show the information of the found devices
-            console.log(JSON.stringify(device_list, null, '  '));
-          }).catch((error) => {
-            console.error(error);
-          });
-      });
-      setTimeout(() => {
-           onvif.startDiscovery()
-      }, 3000);
-     
+    console.log("Starting ONVIF discovery...");
+    const devices = await onvif.startProbe();
+    console.log("Discovered devices:", JSON.stringify(devices, null, 2));
+    return devices;
   } catch (err) {
-    console.error('Error during discovery:', err);
+    console.error("Error during discovery:", err);
+    return [];
   }
 }
 
 // Run the scan
-discoverCameras();
 const app = express();
 app.use(bodyParser.json());
 const PORT = 3000;
@@ -122,4 +109,7 @@ async function getDevice(camId:string) {
 
 
 
-app.listen(PORT, () => console.log(`Service Backend server running on http://localhost:${PORT}`));
+app.listen(PORT, async () => {
+  await  discoverCameras()
+  
+  console.log(`Service Backend server running on http://localhost:${PORT}`)});
