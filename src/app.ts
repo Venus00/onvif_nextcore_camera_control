@@ -63,41 +63,48 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
 
 
 app.post('/ptz/:camId', async (req, res) => {
-    try {
-      const camId = req.params.camId;
-      const { pan, tilt, zoom, speed, time } = req.body;
-  
-      const device = await getDevice(camId);
-  
-      // Get first profile (most cameras have at least one)
-      const profile = device.getCurrentProfile();
-      const token = profile.token;
-      console.log(token)
-      // Move PTZ
-      const result =await device.ptzMove({
-        speed: {
-          x: pan ?? 0.0,  // pan speed -1 to 1
-          y: tilt ?? 0.0, // tilt speed -1 to 1
-          z: zoom ?? 0.0  // zoom speed -1 to 1
-        },
-        timeout: time   // in seconds
+  try {
+    const camId = req.params.camId;
+    const { pan, tilt, zoom, time, stop } = req.body;
+
+    const device = await getDevice(camId);
+
+    // Pick first profile
+    const profile = device.getCurrentProfile();
+    const token = profile.token;
+    console.log("Using profile:", token);
+
+    // Perform PTZ Move
+    const result = await device.ptzMove({
+      profileToken: token,
+      velocity: {
+        x: pan ?? 0.0,   // pan speed -1.0 to 1.0
+        y: tilt ?? 0.0   // tilt speed -1.0 to 1.0
+      },
+      zoom: {
+        x: zoom ?? 0.0   // zoom speed -1.0 to 1.0
+      },
+      timeout: time ? `PT${time}S` : undefined // ONVIF expects "PTxS"
+    });
+
+    console.log("PTZ Move result:", result);
+
+    // Optionally stop after timeout
+    if (stop) {
+      await device.ptzStop({
+        profileToken: token,
+        panTilt: true,
+        zoom: true
       });
-      console.log("result")
-    //   // Stop PTZ after timeout if requested
-      if (req.body.stop) {
-        await device.ptzStop({
-            profileToken: token,
-            panTilt: true,
-            zoom: true
-          });
-      }
-  
-      res.json({ success: true, result });
-    } catch (err:any) {
-      console.error(err);
-      res.status(500).json({ success: false, error: err.message });
     }
-  });
+
+    res.json({ success: true, result });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 async function getDevice(camId:string) {
     const cfg :CameraInfo = cameras[camId] as CameraInfo;
