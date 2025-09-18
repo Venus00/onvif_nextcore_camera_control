@@ -3,6 +3,8 @@ import bodyParser from "body-parser";
 import { CameraInfo, cameras,type VideoEncoderConfig } from "./util/camera";
 import { getVideoEncoderConfiguration, setVideoEncoderConfiguration } from "./util/api";
 import onvif from 'node-onvif';
+import cors from 'cors';
+
 //{"pan":0.5,"tilt":0.2,"zoom":0.1,"time":2,"stop":true}
 async function discoverCameras() {
   console.log("Starting ONVIF discovery...");
@@ -18,6 +20,7 @@ async function discoverCameras() {
 
 // Run the scan
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 const PORT = 3000;
 
