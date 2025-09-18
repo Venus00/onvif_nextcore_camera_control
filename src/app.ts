@@ -65,11 +65,10 @@ app.post('/ptz/:camId', async (req, res) => {
       profileToken: token,
       velocity: {
         x: pan ?? 0.0,   // pan speed -1.0 to 1.0
-        y: tilt ?? 0.0   // tilt speed -1.0 to 1.0
+        y: tilt ?? 0.0,   // tilt speed -1.0 to 1.0
+        z: zoom ?? 0.0   // zoom speed -1.0 to 1.0
       },
-      zoom: {
-        x: zoom ?? 0.0   // zoom speed -1.0 to 1.0
-      },
+
       timeout: time ? `PT${time}S` : undefined // ONVIF expects "PTxS"
     });
 
