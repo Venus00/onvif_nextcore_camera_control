@@ -11,6 +11,7 @@ export const cameras: Record<string, CameraInfo> = {
         id: "cam1",
         ip: "192.168.11.108",
         port: 8899,
+        
         username: "admin",
         password: "2899100*-+"
     },
