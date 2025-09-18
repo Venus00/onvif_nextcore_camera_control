@@ -9,17 +9,17 @@ export interface CameraInfo {
 export const cameras: Record<string, CameraInfo> = {
     cam1: {
         id: "cam1",
-        ip: "192.168.11.115",
+        ip: "192.168.11.108",
         port: 8899,
         username: "admin",
-        password: ""
+        password: "2899100*-+"
     },
     cam2: {
         id: "cam2",
-        ip: "192.168.11.116",
+        ip: "192.168.11.109",
         port: 8899,
         username: "admin",
-        password: "12345"
+        password: "2899100*-+"
     }
 };
 
