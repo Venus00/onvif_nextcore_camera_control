@@ -48,40 +48,52 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
 });
 
 
-app.post('/ptz/:camId', async (req, res) => {
+app.post('/ptz/:camId/move', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { pan, tilt, zoom, time, stop } = req.body;
+    const { direction, time } = req.body; // direction: "up", "down", "left", "right", "zoom_in", "zoom_out", "stop"
 
     const device = await getDevice(camId);
-
-    // Pick first profile
     const profile = device.getCurrentProfile();
     const token = profile.token;
-    console.log("Using profile:", token);
 
-    // Perform PTZ Move
+    // Default speed values
+    const speed = 0.5; // adjust as needed
+
+    let velocity = { x: 0.0, y: 0.0, z: 0.0 };
+
+    switch (direction) {
+      case 'up':
+        velocity.y = speed;
+        break;
+      case 'down':
+        velocity.y = -speed;
+        break;
+      case 'left':
+        velocity.x = -speed;
+        break;
+      case 'right':
+        velocity.x = speed;
+        break;
+      case 'zoom_in':
+        velocity.z = speed;
+        break;
+      case 'zoom_out':
+        velocity.z = -speed;
+        break;
+      case 'stop':
+        await device.ptzStop({ profileToken: token, panTilt: true, zoom: true });
+        return res.json({ success: true, action: 'stopped' });
+      default:
+        return res.status(400).json({ success: false, error: 'Invalid direction' });
+    }
+
+    // Perform PTZ move
     const result = await device.ptzMove({
       profileToken: token,
-      speed: {
-        x: pan ?? 0.0,   // pan speed -1.0 to 1.0
-        y: tilt ?? 0.0,   // tilt speed -1.0 to 1.0
-        z: zoom ?? 0.0   // zoom speed -1.0 to 1.0
-      },
-
-      timeout: time ? `PT${time}S` : undefined // ONVIF expects "PTxS"
+      speed: velocity,
+      timeout: time ? `PT${time}S` : 'PT1S' // default 1 second if not provided
     });
-
-    console.log("PTZ Move result:", result);
-
-    // Optionally stop after timeout
-    if (stop) {
-      await device.ptzStop({
-        profileToken: token,
-        panTilt: true,
-        zoom: true
-      });
-    }
 
     res.json({ success: true, result });
   } catch (err: any) {
@@ -89,6 +101,7 @@ app.post('/ptz/:camId', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 
 async function getDevice(camId:string) {
