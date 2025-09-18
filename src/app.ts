@@ -4,16 +4,15 @@ import { CameraInfo, cameras,type VideoEncoderConfig } from "./util/camera";
 import { getVideoEncoderConfiguration, setVideoEncoderConfiguration } from "./util/api";
 import onvif from 'node-onvif';
 //{"pan":0.5,"tilt":0.2,"zoom":0.1,"time":2,"stop":true}
-
 async function discoverCameras() {
+  console.log("Starting ONVIF discovery...");
   try {
-    console.log("Starting ONVIF discovery...");
-    const devices = await onvif.startProbe();
-    console.log("Discovered devices:", JSON.stringify(devices, null, 2));
-    return devices;
+    onvif.startDiscovery(
+      (deviceInfo) => console.log(deviceInfo),
+      { iface: "192.168.11.104" } // your server IP on camera subnet
+    );
   } catch (err) {
-    console.error("Error during discovery:", err);
-    return [];
+    console.error(err);
   }
 }
 
@@ -96,9 +95,9 @@ app.post('/ptz/:camId', async (req, res) => {
 async function getDevice(camId:string) {
     const cfg :CameraInfo = cameras[camId] as CameraInfo;
     if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
-    console.log(`http://${cfg.ip}:8899/onvif/device_service`)
+    console.log(`http://${cfg.ip}:80/onvif/device_service`)
     const device = new onvif.OnvifDevice({
-      xaddr: `http://${cfg.ip}:8899/onvif/device_service`,
+      xaddr: `http://${cfg.ip}:80/onvif/device_service`,
       user: cfg?.username,
       pass: cfg?.password
     });
