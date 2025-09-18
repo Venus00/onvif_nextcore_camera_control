@@ -63,7 +63,7 @@ app.post('/ptz/:camId', async (req, res) => {
     // Perform PTZ Move
     const result = await device.ptzMove({
       profileToken: token,
-      velocity: {
+      speed: {
         x: pan ?? 0.0,   // pan speed -1.0 to 1.0
         y: tilt ?? 0.0,   // tilt speed -1.0 to 1.0
         z: zoom ?? 0.0   // zoom speed -1.0 to 1.0
