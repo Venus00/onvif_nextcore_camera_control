@@ -137,8 +137,13 @@ async function getDevice(camId:string) {
       pass: cfg?.password
     });
   
-    console.log("service",device.services.getCapabilities())
+  
     await device.init();
+    device.services.device.getCapabilities().then((result) => {
+      console.log(result);
+    }).catch((error) => {
+      console.error(error);
+    });
     return device;
 }
 app.post('/focus/:camId/in', async (req, res) => {
