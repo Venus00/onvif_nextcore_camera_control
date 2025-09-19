@@ -114,14 +114,15 @@ export async function focusMove(camId: string, speed: number,token:string) {
   <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
     <s:Header>${securityHeader}</s:Header>
     <s:Body>
-      <timg:Move xmlns:timg="http://www.onvif.org/ver20/imaging/wsdl">
-        <timg:VideoSourceToken>${token}</timg:VideoSourceToken>
-        <timg:Focus>
-          <timg:Continuous>
-            <timg:Speed>${speed}</timg:Speed>
-          </timg:Continuous>
-        </timg:Focus>
-      </timg:Move>
+   
+      <ptz:SetFocus xmlns:ptz="http://www.onvif.org/ver20/ptz/wsdl">
+         <ptz:ProfileToken>PROFILE_TOKEN</ptz:ProfileToken>
+         <ptz:Focus>
+            <tt:FocusNear>
+               <tt:Speed>5</tt:Speed> <!-- Adjust this based on how fast you want the focus to change -->
+            </tt:FocusNear>
+         </ptz:Focus>
+      </ptz:SetFocus>
     </s:Body>
   </s:Envelope>`;
 
