@@ -136,12 +136,8 @@ async function getDevice(camId:string) {
       user: cfg?.username,
       pass: cfg?.password
     });
-    const service = new onvif.OnvifServiceDevice({
-      xaddr: `http://${cfg.ip}:80/onvif/device_service`,
-      user: cfg?.username,
-      pass: cfg?.password
-    });
-    console.log("service",service.getCapabilities())
+  
+    console.log("service",device.services.getCapabilities())
     await device.init();
     return device;
 }
