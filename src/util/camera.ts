@@ -10,7 +10,7 @@ export const cameras: Record<string, CameraInfo> = {
    cam2: {
         id: "cam1",
         ip: "192.168.1.108",
-        port: 8899,
+        port: 80,
 
         username: "admin",
         password: "2899100*-+"
@@ -18,7 +18,7 @@ export const cameras: Record<string, CameraInfo> = {
   cam1: {
     id: "cam2",
     ip: "192.168.1.109",
-    port: 8899,
+    port: 80,
     username: "admin",
     password: "2899100*-+"
 },  
