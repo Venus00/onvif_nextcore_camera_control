@@ -114,9 +114,8 @@ export async function focusMove(camId: string, speed: number,token:string) {
   <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
     <s:Header>${securityHeader}</s:Header>
     <s:Body>
-   
       <ptz:SetFocus xmlns:ptz="http://www.onvif.org/ver20/ptz/wsdl">
-         <ptz:ProfileToken>PROFILE_TOKEN</ptz:ProfileToken>
+         <ptz:ProfileToken>${token}</ptz:ProfileToken>
          <ptz:Focus>
             <tt:FocusNear>
                <tt:Speed>5</tt:Speed> <!-- Adjust this based on how fast you want the focus to change -->
