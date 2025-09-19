@@ -63,7 +63,6 @@ app.post('/ptz/:camId/move', async (req, res) => {
     const token = profile.token;
     let focus = 0.0;
     // Default speed values
-
     let velocity = { x: 0.0, y: 0.0, z: 0.0 };
 
     switch (direction) {
@@ -112,7 +111,6 @@ app.post('/ptz/:camId/move', async (req, res) => {
       default:
         return res.status(400).json({ success: false, error: 'Invalid direction' });
     }
-
     // Perform PTZ move
     const result = await device.ptzMove({
       profileToken: token,
@@ -138,7 +136,12 @@ async function getDevice(camId:string) {
       user: cfg?.username,
       pass: cfg?.password
     });
-  
+    const service = new onvif.OnvifServiceDevice({
+      xaddr: `http://${cfg.ip}:80/onvif/device_service`,
+      user: cfg?.username,
+      pass: cfg?.password
+    });
+    console.log("service",service.getCapabilities())
     await device.init();
     return device;
 }
