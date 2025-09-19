@@ -85,11 +85,15 @@ app.post('/ptz/:camId/move', async (req, res) => {
         break;
       case 'focus_in':
         focus = speed / 5;
-        await device.ptzMove({
-          profileToken: token,
-          speed: { x: 0.0, y: 0.0, z: 0.0 },
-          focus: { x: focus },
-          timeout: time ? `PT${time}S` : 'PT1S'
+        await device.services.imaging?.move({
+          VideoSourceToken: profile.videoSource.token,
+          Focus: { Continuous: { Speed: 0.5 } }
+        });
+        
+        // Stop focusing
+        await device.services.imaging?.stop({
+          VideoSourceToken: profile.videoSource.token,
+          Focus: true
         });
         return res.json({ success: true, action: 'focus_in' });
       case 'focus_out':
