@@ -102,3 +102,63 @@ export async function setVideoEncoderConfiguration(camId: string, config: VideoE
     throw new Error("Failed to parse response: " + err?.message);
   }
 }
+
+
+export async function focusMove(camId: string, speed: number,token:string) {
+  const cam = cameras[camId];
+  if (!cam) throw new Error("Camera not found");
+
+  const securityHeader = buildSecurityHeader(cam.username, cam.password);
+
+  const xml = `
+  <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
+    <s:Header>${securityHeader}</s:Header>
+    <s:Body>
+      <timg:Move xmlns:timg="http://www.onvif.org/ver20/imaging/wsdl">
+        <timg:VideoSourceToken>${token}</timg:VideoSourceToken>
+        <timg:Focus>
+          <timg:Continuous>
+            <timg:Speed>${speed}</timg:Speed>
+          </timg:Continuous>
+        </timg:Focus>
+      </timg:Move>
+    </s:Body>
+  </s:Envelope>`;
+
+  const responseXml = await sendSoapRequest(
+    cam.ip,
+    cam.port || 80,
+    xml,
+    "http://www.onvif.org/ver20/imaging/wsdl/Move"
+  );
+
+  return responseXml;
+}
+export async function focusStop(camId: string,token:string) {
+  const cam = cameras[camId];
+  if (!cam) throw new Error("Camera not found");
+
+  const securityHeader = buildSecurityHeader(cam.username, cam.password);
+
+  const xml = `
+  <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
+    <s:Header>${securityHeader}</s:Header>
+    <s:Body>
+      <timg:Stop xmlns:timg="http://www.onvif.org/ver20/imaging/wsdl">
+        <timg:VideoSourceToken>${token}</timg:VideoSourceToken>
+        <timg:Focus>true</timg:Focus>
+      </timg:Stop>
+    </s:Body>
+  </s:Envelope>`;
+
+  const responseXml = await sendSoapRequest(
+    cam.ip,
+    cam.port || 80,
+    xml,
+    "http://www.onvif.org/ver20/imaging/wsdl/Stop"
+  );
+
+  return responseXml;
+}
+
+

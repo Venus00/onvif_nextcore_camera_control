@@ -1,7 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import { CameraInfo, cameras,type VideoEncoderConfig } from "./util/camera";
-import { getVideoEncoderConfiguration, setVideoEncoderConfiguration } from "./util/api";
+import { focusMove, focusStop, getVideoEncoderConfiguration, setVideoEncoderConfiguration } from "./util/api";
 import onvif from 'node-onvif';
 import cors from 'cors';
 
@@ -140,7 +140,45 @@ async function getDevice(camId:string) {
     await device.init();
     return device;
 }
+app.post('/focus/:camId/in', async (req, res) => {
+  try {
+    const { camId } = req.params;
+    const device = await getDevice(camId);
+    const profile = device.getCurrentProfile();
+    const token = profile.token;
+    const response = await focusMove(camId, 0.5,token); // speed 0.5 = focus in
+    res.json({ message: "Focus in started", response });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
+app.post('/focus/:camId/out', async (req, res) => {
+  try {
+    const { camId } = req.params;
+    const device = await getDevice(camId);
+    const profile = device.getCurrentProfile();
+    const token = profile.token;
+    const response = await focusMove(camId, -0.5,token); // speed -0.5 = focus out
+    res.json({ message: "Focus out started", response });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/focus/:camId/stop', async (req, res) => {
+  try {
+    const { camId } = req.params;
+
+    const device = await getDevice(camId);
+    const profile = device.getCurrentProfile();
+    const token = profile.token;
+    const response = await focusStop(camId,token);
+    res.json({ message: "Focus stopped", response });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 app.listen(PORT, async () => {
