@@ -59,7 +59,7 @@ app.post('/ptz/:camId/move', async (req, res) => {
     const device = await getDevice(camId);
     const profile = device.getCurrentProfile();
     const token = profile.token;
-
+    let focus = 0.0;
     // Default speed values
 
     let velocity = { x: 0.0, y: 0.0, z: 0.0 };
@@ -83,6 +83,23 @@ app.post('/ptz/:camId/move', async (req, res) => {
       case 'zoom_out':
         velocity.z = -speed / 5;
         break;
+      case 'focus_in':
+        focus = speed / 5;
+        await device.ptzMove({
+          profileToken: token,
+          speed: { x: 0.0, y: 0.0, z: 0.0 },
+          focus: { x: focus },
+          timeout: time ? `PT${time}S` : 'PT1S'
+        });
+        return res.json({ success: true, action: 'focus_in' });
+      case 'focus_out':
+        focus = -(speed / 5);
+        await device.ptzMove({
+          profileToken: token,
+          speed: { x: 0.0, y: 0.0, z: 0.0 },
+          focus: { x: focus },
+          timeout: time ? `PT${time}S` : 'PT1S'
+        });
       case 'stop':
         await device.ptzStop({ profileToken: token, panTilt: true, zoom: true });
         return res.json({ success: true, action: 'stopped' });
