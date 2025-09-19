@@ -146,7 +146,7 @@ app.post('/focus/:camId/in', async (req, res) => {
     const device = await getDevice(camId);
     const profile = device.getCurrentProfile();
     const token = profile.token;
-    const response = await focusMove(camId, 0.5,token); // speed 0.5 = focus in
+    const response = await focusMove(camId, 1,token); // speed 0.5 = focus in
     res.json({ message: "Focus in started", response });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -159,7 +159,7 @@ app.post('/focus/:camId/out', async (req, res) => {
     const device = await getDevice(camId);
     const profile = device.getCurrentProfile();
     const token = profile.token;
-    const response = await focusMove(camId, -0.5,token); // speed -0.5 = focus out
+    const response = await focusMove(camId, 1,token); // speed -0.5 = focus out
     res.json({ message: "Focus out started", response });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
