@@ -67,22 +67,22 @@ app.post('/ptz/:camId/move', async (req, res) => {
 
     switch (direction) {
       case 'up':
-        velocity.y = speed;
+        velocity.y = speed / 5;
         break;
       case 'down':
-        velocity.y = -speed;
+        velocity.y = -speed / 5;
         break;
       case 'left':
-        velocity.x = -speed;
+        velocity.x = -speed / 5;
         break;
       case 'right':
-        velocity.x = speed;
+        velocity.x = speed / 5;
         break;
       case 'zoom_in':
-        velocity.z = speed;
+        velocity.z = speed / 5;
         break;
       case 'zoom_out':
-        velocity.z = -speed;
+        velocity.z = -speed / 5;
         break;
       case 'stop':
         await device.ptzStop({ profileToken: token, panTilt: true, zoom: true });
