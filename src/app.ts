@@ -76,9 +76,9 @@ app.post('/ptz/:camId', async (req, res) => {
       // Move PTZ
       const result =await device.ptzMove({
         speed: {
-          x: pan ?? 0.0,  // pan speed -1 to 1
-          y: tilt ?? 0.0, // tilt speed -1 to 1
-          z: zoom ?? 0.0  // zoom speed -1 to 1
+          x: pan * (speed / 5) || 0.0,  // pan speed -1 to 1
+          y: tilt * (speed / 5) || 0.0, // tilt speed -1 to 1
+          z: zoom * (speed / 5) || 0.0  // zoom speed -1 to 1
         },
         timeout: time   // in seconds
       });
