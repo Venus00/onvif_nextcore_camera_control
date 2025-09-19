@@ -57,7 +57,9 @@ app.post('/ptz/:camId/move', async (req, res) => {
     const { direction, time,speed } = req.body; // direction: "up", "down", "left", "right", "zoom_in", "zoom_out", "stop"
 
     const device = await getDevice(camId);
+    console.log("device",device)
     const profile = device.getCurrentProfile();
+    console.log("profile",profile)
     const token = profile.token;
     let focus = 0.0;
     // Default speed values
