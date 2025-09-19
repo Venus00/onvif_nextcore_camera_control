@@ -54,14 +54,13 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
 app.post('/ptz/:camId/move', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { direction, time } = req.body; // direction: "up", "down", "left", "right", "zoom_in", "zoom_out", "stop"
+    const { direction, time,speed } = req.body; // direction: "up", "down", "left", "right", "zoom_in", "zoom_out", "stop"
 
     const device = await getDevice(camId);
     const profile = device.getCurrentProfile();
     const token = profile.token;
 
     // Default speed values
-    const speed = 0.5; // adjust as needed
 
     let velocity = { x: 0.0, y: 0.0, z: 0.0 };
 
