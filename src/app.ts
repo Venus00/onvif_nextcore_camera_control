@@ -3,35 +3,24 @@ import bodyParser from "body-parser";
 import { CameraInfo, cameras,type VideoEncoderConfig } from "./util/camera";
 import { getVideoEncoderConfiguration, setVideoEncoderConfiguration } from "./util/api";
 import onvif from 'node-onvif';
+import cors from 'cors';
+
 //{"pan":0.5,"tilt":0.2,"zoom":0.1,"time":2,"stop":true}
-//rtsp://192.168.10.57:8554/cam1
 async function discoverCameras() {
+  console.log("Starting ONVIF discovery...");
   try {
-    console.log('Starting ONVIF discovery...');
-    
-    onvif.startDiscovery((info) => {
-        // Show the information of the found device
-        console.log("here is the result")
-        console.log(JSON.stringify(info, null, '  '));
-        onvif.startProbe().then((device_list) => {
-            // Show the information of the found devices
-            console.log(JSON.stringify(device_list, null, '  '));
-          }).catch((error) => {
-            console.error(error);
-          });
-      });
-      setTimeout(() => {
-           onvif.startDiscovery()
-      }, 3000);
-     
+    onvif.startDiscovery(
+      (deviceInfo) => console.log(deviceInfo),
+      { iface: "192.168.11.104" } // your server IP on camera subnet
+    );
   } catch (err) {
-    console.error('Error during discovery:', err);
+    console.error(err);
   }
 }
 
 // Run the scan
-//discoverCameras();
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 const PORT = 3000;
 
@@ -62,49 +51,68 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
 });
 
 
-app.post('/ptz/:camId', async (req, res) => {
-    try {
-      const camId = req.params.camId;
-      const { pan, tilt, zoom, speed, time } = req.body;
-  
-      const device = await getDevice(camId);
-  
-      // Get first profile (most cameras have at least one)
-      const profile = device.getCurrentProfile();
-      const token = profile.token;
-      console.log(token)
-      // Move PTZ
-      const result =await device.ptzMove({
-        speed: {
-          x: pan * (speed / 5) || 0.0,  // pan speed -1 to 1
-          y: tilt * (speed / 5) || 0.0, // tilt speed -1 to 1
-          z: zoom * (speed / 5) || 0.0  // zoom speed -1 to 1
-        },
-        timeout: time   // in seconds
-      });
-      console.log("result")
-    //   // Stop PTZ after timeout if requested
-      if (req.body.stop) {
-        await device.ptzStop({
-            profileToken: token,
-            panTilt: true,
-            zoom: true
-          });
-      }
-  
-      res.json({ success: true, result });
-    } catch (err:any) {
-      console.error(err);
-      res.status(500).json({ success: false, error: err.message });
+app.post('/ptz/:camId/move', async (req, res) => {
+  try {
+    const camId = req.params.camId;
+    const { direction, time } = req.body; // direction: "up", "down", "left", "right", "zoom_in", "zoom_out", "stop"
+
+    const device = await getDevice(camId);
+    const profile = device.getCurrentProfile();
+    const token = profile.token;
+
+    // Default speed values
+    const speed = 0.5; // adjust as needed
+
+    let velocity = { x: 0.0, y: 0.0, z: 0.0 };
+
+    switch (direction) {
+      case 'up':
+        velocity.y = speed;
+        break;
+      case 'down':
+        velocity.y = -speed;
+        break;
+      case 'left':
+        velocity.x = -speed;
+        break;
+      case 'right':
+        velocity.x = speed;
+        break;
+      case 'zoom_in':
+        velocity.z = speed;
+        break;
+      case 'zoom_out':
+        velocity.z = -speed;
+        break;
+      case 'stop':
+        await device.ptzStop({ profileToken: token, panTilt: true, zoom: true });
+        return res.json({ success: true, action: 'stopped' });
+      default:
+        return res.status(400).json({ success: false, error: 'Invalid direction' });
     }
-  });
+
+    // Perform PTZ move
+    const result = await device.ptzMove({
+      profileToken: token,
+      speed: velocity,
+      timeout: time ? `PT${time}S` : 'PT1S' // default 1 second if not provided
+    });
+
+    res.json({ success: true, result });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
 
 async function getDevice(camId:string) {
     const cfg :CameraInfo = cameras[camId] as CameraInfo;
     if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
-    console.log(`http://${cfg.ip}:8899/onvif/device_service`)
+    console.log(`http://${cfg.ip}:80/onvif/device_service`)
     const device = new onvif.OnvifDevice({
-      xaddr: `http://${cfg.ip}:8899/onvif/device_service`,
+      xaddr: `http://${cfg.ip}:80/onvif/device_service`,
       user: cfg?.username,
       pass: cfg?.password
     });
@@ -115,4 +123,7 @@ async function getDevice(camId:string) {
 
 
 
-app.listen(PORT, () => console.log(`Service Backend server running on http://localhost:${PORT}`));
+app.listen(PORT, async () => {
+  await  discoverCameras()
+  
+  console.log(`Service Backend server running on http://localhost:${PORT}`)});
