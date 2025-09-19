@@ -94,7 +94,11 @@ app.post('/ptz/:camId/move', async (req, res) => {
             }
           }
         });
-        
+        await device.services.imaging?.move({
+          VideoSourceToken: profile.videoSource.token,
+          Focus: { Continuous: { Speed: 0.5 } } // +far / -near
+        });
+      
         return res.json({ success: true, action: 'focus_in' });
       case 'focus_out':
         focus = -(speed / 5);
