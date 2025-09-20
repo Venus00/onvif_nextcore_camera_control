@@ -75,8 +75,8 @@ app.post('/focus/:camId/move', async (req, res) => {
       client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}`);
     }, 1000);
 
-    res.json({ success: true, camera: id, response: text });
-  } catch (err) {
+    res.json({ success: true, camera: camId, response: text });
+  } catch (err:any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
