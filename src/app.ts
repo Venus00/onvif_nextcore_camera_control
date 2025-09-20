@@ -4,6 +4,7 @@ import { CameraInfo, cameras,type VideoEncoderConfig } from "./util/camera";
 import { focusMove, focusStop, getVideoEncoderConfiguration, setVideoEncoderConfiguration } from "./util/api";
 import onvif from 'node-onvif';
 import cors from 'cors';
+import DigestFetch from 'digest-fetch';
 
 //{"pan":0.5,"tilt":0.2,"zoom":0.1,"time":2,"stop":true}
 async function discoverCameras() {
@@ -51,6 +52,37 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
 });
 
 
+app.post('/focus/:camId/move', async (req, res) => {
+  try {
+    const camId = req.params.camId;
+
+    const { direction, speed = 5, channel = 0 } = req.body;
+
+    const { client, ip } = getCameraClient(camId);
+
+    let code;
+    if (direction === 'in') code = 'FocusNear';
+    else if (direction === 'out') code = 'FocusFar';
+    else throw new Error("Invalid direction (use 'in' or 'out')");
+
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=${speed}&arg2=0&arg3=0`;
+
+    const response = await client.fetch(url);
+    const text = await response.text();
+
+    // stop after 1s (you can adjust)
+    setTimeout(() => {
+      client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}`);
+    }, 1000);
+
+    res.json({ success: true, camera: id, response: text });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+
 app.post('/ptz/:camId/move', async (req, res) => {
   try {
     const camId = req.params.camId;
@@ -84,30 +116,6 @@ app.post('/ptz/:camId/move', async (req, res) => {
       case 'zoom_out':
         velocity.z = -speed / 5;
         break;
-      case 'focus_in':
-        await device.services.imaging?.setImagingSettings({
-          VideoSourceToken: profile.videoSource.token,
-          ImagingSettings: {
-            Focus: {
-              AutoFocusMode: "MANUAL",
-              DefaultPosition: 0.7 // 0.0 (near) to 1.0 (far)
-            }
-          }
-        });
-        await device.services.imaging?.move({
-          VideoSourceToken: profile.videoSource.token,
-          Focus: { Continuous: { Speed: 0.5 } } // +far / -near
-        });
-      
-        return res.json({ success: true, action: 'focus_in' });
-      case 'focus_out':
-        focus = -(speed / 5);
-        await device.ptzMove({
-          profileToken: token,
-          speed: { x: 0.0, y: 0.0, z: 0.0 },
-          focus: { x: focus },
-          timeout: time ? `PT${time}S` : 'PT1S'
-        });
       case 'stop':
         await device.ptzStop({ profileToken: token, panTilt: true, zoom: true });
         return res.json({ success: true, action: 'stopped' });
@@ -128,7 +136,11 @@ app.post('/ptz/:camId/move', async (req, res) => {
   }
 });
 
-
+function getCameraClient(camId:string) {
+  const cfg :CameraInfo = cameras[camId] as CameraInfo;
+  if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
+  return { client: new DigestFetch(cfg.username, cfg.password), ip: cfg.ip };
+}
 
 async function getDevice(camId:string) {
     const cfg :CameraInfo = cameras[camId] as CameraInfo;
