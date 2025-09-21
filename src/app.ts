@@ -52,7 +52,7 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
 app.post('/focus/:camId/move', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { direction, speed = 1, channel = 0 } = req.body;
+    const { direction, speed = 5, channel = 0 } = req.body;
     const { client, ip } = getCameraClient(camId);
     let code;
     if (direction === 'focus_in') code = 'FocusNear';
@@ -64,7 +64,7 @@ app.post('/focus/:camId/move', async (req, res) => {
     const text = await response.text();
     // stop after 1s (you can adjust)
     setTimeout(() => {
-      client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}`);
+      client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}&arg1=${speed}&arg2=0&arg3=0`);
     }, 10);
 
     res.json({ success: true, camera: camId, response: text });
