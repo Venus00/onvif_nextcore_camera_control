@@ -112,7 +112,7 @@ app.post('/ptz/:camId/move', async (req, res) => {
       default: throw new Error("Invalid direction");
     }
 
-    const startUrl = `http://${ip}/cgi-bin/ptz.cgi?action=start&code=${code}&arg1=${args[0]}&arg2=${args[1]}&arg3=${args[2]}`;
+    const startUrl = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=${args[0]}&arg2=${args[1]}&arg3=${args[2]}`;
 
     const response = await client.fetch(startUrl);
     const text = await response.text();
