@@ -124,7 +124,7 @@ app.post('/ptz/:camId/move', async (req, res) => {
 app.post('/ptz/:camId/stop', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { direction, channel = 0 } = req.body;
+    const { direction, channel = 0,speed } = req.body;
     const { client, ip } = getCameraClient(camId);
 
     let code;
@@ -137,7 +137,7 @@ app.post('/ptz/:camId/stop', async (req, res) => {
       case 'zoom_out': code = 'ZoomWide'; break;
       default: throw new Error("Invalid direction");
     }
-    const url = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3=0`;
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}&arg1=${speed}&arg2=0&arg3=0`;
     const response = await client.fetch(url);
     const text = await response.text();
 
