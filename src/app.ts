@@ -65,7 +65,7 @@ app.post('/focus/:camId/move', async (req, res) => {
     // stop after 1s (you can adjust)
     setTimeout(() => {
       client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}`);
-    }, 1000);
+    }, 10);
 
     res.json({ success: true, camera: camId, response: text });
   } catch (err:any) {
