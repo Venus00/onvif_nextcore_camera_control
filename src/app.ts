@@ -105,10 +105,10 @@ app.post('/ptz/:camId/move', async (req, res) => {
     switch (direction) {
       case 'up':    code = 'Up'; args = [0, speed, 0]; break;
       case 'down':  code = 'Down'; args = [0, speed, 0]; break;
-      case 'left':  code = 'Left'; args = [speed, 0, 0]; break;
-      case 'right': code = 'Right'; args = [speed, 0, 0]; break;
-      case 'zoom_in':  code = 'ZoomTele'; args = [0, 0, speed]; break;
-      case 'zoom_out': code = 'ZoomWide'; args = [0, 0, speed]; break;
+      case 'left':  code = 'Left'; args = [0, speed, 0]; break;
+      case 'right': code = 'Right'; args = [0, speed, 0]; break;
+      case 'zoom_in':  code = 'ZoomTele'; args = [0, 0, 0]; break;
+      case 'zoom_out': code = 'ZoomWide'; args = [0, 0, 0]; break;
       default: throw new Error("Invalid direction");
     }
 
@@ -124,7 +124,7 @@ app.post('/ptz/:camId/move', async (req, res) => {
 app.post('/ptz/:camId/stop', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { direction, channel = 0,speed } = req.body;
+    const { direction, channel = 0,speed=8 } = req.body;
     const { client, ip } = getCameraClient(camId);
 
     let code;
