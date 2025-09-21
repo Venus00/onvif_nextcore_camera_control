@@ -74,59 +74,94 @@ app.post('/focus/:camId/move', async (req, res) => {
 });
 
 
-
 app.post('/ptz/:camId/move', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { direction, time,speed } = req.body; // direction: "up", "down", "left", "right", "zoom_in", "zoom_out", "stop"
 
-    const device = await getDevice(camId);
-    console.log("device",device)
-    const profile = device.getCurrentProfile();
-    console.log("profile",profile)
-    const token = profile.token;
-    let focus = 0.0;
-    // Default speed values
-    let velocity = { x: 0.0, y: 0.0, z: 0.0 };
+    const { direction, speed =8, channel = 0, duration = 200 } = req.body;
+
+    const { client, ip } = getCameraClient(camId);
+
+    let code, args = [0, 0, 0];
 
     switch (direction) {
-      case 'up':
-        velocity.y = speed / 5;
-        break;
-      case 'down':
-        velocity.y = -speed / 5;
-        break;
-      case 'left':
-        velocity.x = -speed / 5;
-        break;
-      case 'right':
-        velocity.x = speed / 5;
-        break;
-      case 'zoom_in':
-        velocity.z = speed / 5;
-        break;
-      case 'zoom_out':
-        velocity.z = -speed / 5;
-        break;
-      case 'stop':
-        await device.ptzStop({ profileToken: token, panTilt: true, zoom: true });
-        return res.json({ success: true, action: 'stopped' });
-      default:
-        return res.status(400).json({ success: false, error: 'Invalid direction' });
+      case 'up':    code = 'Up'; args = [0, speed, 0]; break;
+      case 'down':  code = 'Down'; args = [0, speed, 0]; break;
+      case 'left':  code = 'Left'; args = [speed, 0, 0]; break;
+      case 'right': code = 'Right'; args = [speed, 0, 0]; break;
+      case 'zoom_in':  code = 'ZoomTele'; args = [0, 0, speed]; break;
+      case 'zoom_out': code = 'ZoomWide'; args = [0, 0, speed]; break;
+      default: throw new Error("Invalid direction");
     }
-    // Perform PTZ move
-    const result = await device.ptzMove({
-      profileToken: token,
-      speed: velocity,
-      timeout: time ? `PT${time}S` : 'PT1S' // default 1 second if not provided
-    });
 
-    res.json({ success: true, result });
-  } catch (err: any) {
-    console.error(err);
+    const startUrl = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=${args[0]}&arg2=${args[1]}&arg3=${args[2]}`;
+    const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}`;
+
+    const response = await client.fetch(startUrl);
+    const text = await response.text();
+    // Auto stop after short duration (default 200ms)
+    setTimeout(() => {
+      client.fetch(stopUrl);
+    }, 1000);
+
+    res.json({ success: true, camera: camId, action: direction, response: text, stoppedAfter: duration });
+  } catch (err:any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// app.post('/ptz/:camId/move', async (req, res) => {
+//   try {
+//     const camId = req.params.camId;
+//     const { direction, time,speed } = req.body; // direction: "up", "down", "left", "right", "zoom_in", "zoom_out", "stop"
+
+//     const device = await getDevice(camId);
+//     console.log("device",device)
+//     const profile = device.getCurrentProfile();
+//     console.log("profile",profile)
+//     const token = profile.token;
+//     let focus = 0.0;
+//     // Default speed values
+//     let velocity = { x: 0.0, y: 0.0, z: 0.0 };
+
+//     switch (direction) {
+//       case 'up':
+//         velocity.y = speed / 5;
+//         break;
+//       case 'down':
+//         velocity.y = -speed / 5;
+//         break;
+//       case 'left':
+//         velocity.x = -speed / 5;
+//         break;
+//       case 'right':
+//         velocity.x = speed / 5;
+//         break;
+//       case 'zoom_in':
+//         velocity.z = speed / 5;
+//         break;
+//       case 'zoom_out':
+//         velocity.z = -speed / 5;
+//         break;
+//       case 'stop':
+//         await device.ptzStop({ profileToken: token, panTilt: true, zoom: true });
+//         return res.json({ success: true, action: 'stopped' });
+//       default:
+//         return res.status(400).json({ success: false, error: 'Invalid direction' });
+//     }
+//     // Perform PTZ move
+//     const result = await device.ptzMove({
+//       profileToken: token,
+//       speed: velocity,
+//       timeout: time ? `PT${time}S` : 'PT1S' // default 1 second if not provided
+//     });
+
+//     res.json({ success: true, result });
+//   } catch (err: any) {
+//     console.error(err);
+//     res.status(500).json({ success: false, error: err.message });
+//   }
+// });
 
 function getCameraClient(camId:string) {
   const cfg :CameraInfo = cameras[camId] as CameraInfo;
