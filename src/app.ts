@@ -63,9 +63,7 @@ app.post('/focus/:camId/move', async (req, res) => {
     const response = await client.fetch(url);
     const text = await response.text();
     // stop after 1s (you can adjust)
-    setTimeout(() => {
-      client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}&arg1=${speed}&arg2=0&arg3=0`);
-    }, 10);
+
 
     res.json({ success: true, camera: camId, response: text });
   } catch (err:any) {
@@ -73,6 +71,26 @@ app.post('/focus/:camId/move', async (req, res) => {
   }
 });
 
+app.post('/focus/:camId/stop', async (req, res) => {
+  try {
+    const camId = req.params.camId;
+    const { direction, channel = 0 } = req.body;
+    const { client, ip } = getCameraClient(camId);
+
+    let code;
+    if (direction === 'focus_in') code = 'FocusNear';
+    else if (direction === 'focus_out') code = 'FocusFar';
+    else throw new Error("Invalid direction (use 'focus_in' or 'focus_out')");
+
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3=0`;
+    const response = await client.fetch(url);
+    const text = await response.text();
+
+    res.json({ success: true, camera: camId, stopped: direction, response: text });
+  } catch (err:any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 app.post('/ptz/:camId/move', async (req, res) => {
   try {
@@ -95,21 +113,39 @@ app.post('/ptz/:camId/move', async (req, res) => {
     }
 
     const startUrl = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=${args[0]}&arg2=${args[1]}&arg3=${args[2]}`;
-    const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}&arg1=${args[0]}&arg2=${args[1]}&arg3=${args[2]}`;
 
     const response = await client.fetch(startUrl);
     const text = await response.text();
-    // Auto stop after short duration (default 200ms)
-    setTimeout(() => {
-      client.fetch(stopUrl);
-    }, 1000);
-
     res.json({ success: true, camera: camId, action: direction, response: text, stoppedAfter: duration });
   } catch (err:any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+app.post('/ptz/:camId/stop', async (req, res) => {
+  try {
+    const camId = req.params.camId;
+    const { direction, channel = 0 } = req.body;
+    const { client, ip } = getCameraClient(camId);
 
+    let code;
+    switch (direction) {
+      case 'up':    code = 'Up'; break;
+      case 'down':  code = 'Down'; break;
+      case 'left':  code = 'Left'; break;
+      case 'right': code = 'Right'; break;
+      case 'zoom_in':  code = 'ZoomTele'; break;
+      case 'zoom_out': code = 'ZoomWide'; break;
+      default: throw new Error("Invalid direction");
+    }
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3=0`;
+    const response = await client.fetch(url);
+    const text = await response.text();
+
+    res.json({ success: true, camera: camId, stopped: direction, response: text });
+  } catch (err:any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 // app.post('/ptz/:camId/move', async (req, res) => {
 //   try {
 //     const camId = req.params.camId;
