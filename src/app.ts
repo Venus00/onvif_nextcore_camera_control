@@ -52,7 +52,7 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
 app.post('/focus/:camId/move', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { direction, speed = 5, channel = 0 } = req.body;
+    const { direction, speed = 1, channel = 0 } = req.body;
     const { client, ip } = getCameraClient(camId);
     let code;
     if (direction === 'focus_in') code = 'FocusNear';
@@ -60,10 +60,8 @@ app.post('/focus/:camId/move', async (req, res) => {
     else throw new Error("Invalid direction (use 'in' or 'out')");
 
     const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=${speed}&arg2=0&arg3=0`;
-
     const response = await client.fetch(url);
     const text = await response.text();
-
     // stop after 1s (you can adjust)
     setTimeout(() => {
       client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}`);
