@@ -107,8 +107,8 @@ app.post('/ptz/:camId/move', async (req, res) => {
       case 'down':  code = 'Down'; args = [0, speed, 0]; break;
       case 'left':  code = 'Left'; args = [0, speed, 0]; break;
       case 'right': code = 'Right'; args = [0, speed, 0]; break;
-      case 'zoom_in':  code = 'ZoomTele'; args = [0, 0, 0]; break;
-      case 'zoom_out': code = 'ZoomWide'; args = [0, 0, 0]; break;
+      case 'zoom_in':  code = 'ZoomTele'; args = [0, 0, speed]; break;
+      case 'zoom_out': code = 'ZoomWide'; args = [0, 0, speed]; break;
       default: throw new Error("Invalid direction");
     }
 
