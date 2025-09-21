@@ -38,10 +38,7 @@ app.get("/camera/:camId/video-encoder", async (req, res) => {
 app.post("/camera/:camId/video-encoder", async (req, res) => {
     const cam = cameras[req.params.camId];
     if (!cam) return res.status(404).json({ error: "Camera not found" });
-
-
     try {
-
         const config:VideoEncoderConfig  = req.body; // {encoding, width, height, framerate, bitrate, quality, govLength, profile}
         const result = await setVideoEncoderConfiguration("cam1",config);
         console.log("Set Response:", result);
@@ -55,14 +52,11 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
 app.post('/focus/:camId/move', async (req, res) => {
   try {
     const camId = req.params.camId;
-
     const { direction, speed = 5, channel = 0 } = req.body;
-
     const { client, ip } = getCameraClient(camId);
-
     let code;
-    if (direction === 'in') code = 'FocusNear';
-    else if (direction === 'out') code = 'FocusFar';
+    if (direction === 'focus_in') code = 'FocusNear';
+    else if (direction === 'focus_out') code = 'FocusFar';
     else throw new Error("Invalid direction (use 'in' or 'out')");
 
     const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=${speed}&arg2=0&arg3=0`;
