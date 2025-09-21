@@ -59,7 +59,7 @@ app.post('/focus/:camId/move', async (req, res) => {
     else if (direction === 'focus_out') code = 'FocusFar';
     else throw new Error("Invalid direction (use 'in' or 'out')");
 
-    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=${speed}&arg2=0&arg3=0`;
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3=0`;
     const response = await client.fetch(url);
     const text = await response.text();
     // stop after 1s (you can adjust)
@@ -74,7 +74,7 @@ app.post('/focus/:camId/move', async (req, res) => {
 app.post('/focus/:camId/stop', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { direction, channel = 0 } = req.body;
+    const { direction, channel = 0,speed=3 } = req.body;
     const { client, ip } = getCameraClient(camId);
 
     let code;
