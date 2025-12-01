@@ -34,7 +34,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
     const { client, ip } = getCameraClient(camId);
 
     // Configurable target and tolerance
-    const target = typeof req.body.target === 'number' ? req.body.target : 10;
+    const target = typeof req.body.target === 'number' ? req.body.target : 44;
     const tolerance = typeof req.body.tolerance === 'number' ? req.body.tolerance : 0;
     const maxTries = typeof req.body.maxTries === 'number' ? req.body.maxTries : 30;
     const pollInterval = typeof req.body.pollInterval === 'number' ? req.body.pollInterval : 100; // ms
@@ -49,6 +49,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
     // Fetch initial zoom value
     const statusResInit = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
     const statusTextInit = await statusResInit.text();
+    console.log(statusTextInit)
     const matchInit = statusTextInit.match(/status\.ZoomValue=([\d\.\-]+)/);
     if (matchInit) {
       zoomValue = parseFloat(matchInit[1]);
