@@ -1,3 +1,4 @@
+
 import express from "express";
 import bodyParser from "body-parser";
 import { CameraInfo, cameras, type VideoEncoderConfig } from "./util/camera";
@@ -87,6 +88,24 @@ app.post('/focus/:camId/stop', async (req, res) => {
     const text = await response.text();
 
     res.json({ success: true, camera: camId, stopped: direction, response: text });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PTZ preset movement handler
+app.post('/ptz/:camId/preset', async (req, res) => {
+  try {
+    const camId = req.params.camId;
+    const { preset } = req.body; // expects a number, e.g., 100 or 35
+    const { client, ip } = getCameraClient(camId);
+
+    // Move to preset using CGI configManager API (GotoPreset)
+    // Example: http://<ip>/cgi-bin/configManager.cgi?action=setConfig&PtzPreset[0][<preset>].Enable=true
+    const url = `http://${ip}/cgi-bin/configManager.cgi?action=setConfig&PtzPreset[0][${preset}].Enable=true`;
+    const response = await client.fetch(url, { method: 'GET' });
+    const text = await response.text();
+    res.json({ success: true, camera: camId, preset, response: text });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
