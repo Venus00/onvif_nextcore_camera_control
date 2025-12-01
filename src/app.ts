@@ -36,12 +36,10 @@ const PORT = 3000;
 app.post('/ptz/:camId/position3d', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { arg1, arg2, arg3 } = req.body; // arg1: x, arg2: y, arg3: z (zoom)
+    const { arg3 } = req.body; // arg1: x, arg2: y, arg3: z (zoom)
     const { client, ip } = getCameraClient(camId);
 
     // Clamp values to [-8191, 8191] for x and y
-    const x = Math.max(-8191, Math.min(8191, Number(arg1)));
-    const y = Math.max(-8191, Math.min(8191, Number(arg2)));
     // z (zoom) can be positive, negative, or 0
     const z = Number(arg3);
 
