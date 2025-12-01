@@ -52,10 +52,10 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
     // Decide direction
     if (zoomValue < 44) {
       direction = 'in';
-      code = 'ZoomTele';
+      code = 'ZoomWide';
     } else if (zoomValue > 44) {
       direction = 'out';
-      code = 'ZoomWide';
+      code = 'ZoomTele';
     } else {
       // Already at target
       return res.json({ success: true, camera: camId, zoomValue, stopped: true });
