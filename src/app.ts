@@ -1,28 +1,7 @@
 // 3D PTZ Positioning
 // POST /ptz/:camId/position3d
 // Body: { arg1: number, arg2: number, arg3: number }
-app.post('/ptz/:camId/position3d', async (req, res) => {
-  try {
-    const camId = req.params.camId;
-    const { arg1, arg2, arg3 } = req.body; // arg1: x, arg2: y, arg3: z (zoom)
-    const { client, ip } = getCameraClient(camId);
 
-    // Clamp values to [-8191, 8191] for x and y
-    const x = Math.max(-8191, Math.min(8191, Number(arg1)));
-    const y = Math.max(-8191, Math.min(8191, Number(arg2)));
-    // z (zoom) can be positive, negative, or 0
-    const z = Number(arg3);
-
-    // Send PTZ 3D positioning command
-    // Example: http://<ip>/cgi-bin/ptz.cgi?action=start&code=Position3D&arg1=x&arg2=y&arg3=z
-    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&code=Position3D&arg1=${null}&arg2=${null}&arg3=${z}`;
-    const response = await client.fetch(url);
-    const text = await response.text();
-    res.json({ success: true, camera: camId, url, response: text });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
 
 import express from "express";
 import bodyParser from "body-parser";
@@ -52,6 +31,31 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 const PORT = 3000;
+
+
+app.post('/ptz/:camId/position3d', async (req, res) => {
+  try {
+    const camId = req.params.camId;
+    const { arg1, arg2, arg3 } = req.body; // arg1: x, arg2: y, arg3: z (zoom)
+    const { client, ip } = getCameraClient(camId);
+
+    // Clamp values to [-8191, 8191] for x and y
+    const x = Math.max(-8191, Math.min(8191, Number(arg1)));
+    const y = Math.max(-8191, Math.min(8191, Number(arg2)));
+    // z (zoom) can be positive, negative, or 0
+    const z = Number(arg3);
+
+    // Send PTZ 3D positioning command
+    // Example: http://<ip>/cgi-bin/ptz.cgi?action=start&code=Position3D&arg1=x&arg2=y&arg3=z
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&code=Position3D&arg1=${null}&arg2=${null}&arg3=${z}`;
+    const response = await client.fetch(url);
+    const text = await response.text();
+    res.json({ success: true, camera: camId, url, response: text });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 app.get("/camera/:camId/video-encoder", async (req, res) => {
   const cam = cameras[req.params.camId];
