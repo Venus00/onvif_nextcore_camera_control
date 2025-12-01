@@ -297,11 +297,11 @@ app.post('/focus/:camId/stop', async (req, res) => {
 // PTZ preset movement handler
 // Preset-specific zoom/focus targets
 const presetTargets: Record<number, { zoom?: number, focus?: number }> = {
-  1: { zoom: 1000, focus: 5000 },
-  2: { zoom: 2000, focus: 10000 },
-  3: { zoom: 3000, focus: 15000 },
-  4: { zoom: 4000, focus: 20000 },
-  5: { zoom: 5000, focus: 25000 },
+  1: { zoom: 44, focus: 25137 },
+  2: { zoom: 44, focus: 25137 },
+  3: { zoom: 44, focus: 25137 },
+  4: { zoom: 44, focus: 25137 },
+  5: { zoom: 44, focus: 25137 },
 };
 
 app.post('/ptz/:camId/preset', async (req, res) => {
