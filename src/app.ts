@@ -43,9 +43,9 @@ app.get('/thermal/:camId/thermometry', async (req, res) => {
   }
 });
 
-// Poll Isotherm.SaturationTemp every 5 seconds and log to console
+// Poll all temperature-related values every 5 seconds and log to console
 let pollingInterval: NodeJS.Timeout | null = null;
-function startSaturationTempPolling(camId: string) {
+function startTemperaturePolling(camId: string) {
   if (pollingInterval) return; // Only one poller
   pollingInterval = setInterval(async () => {
     try {
@@ -53,20 +53,25 @@ function startSaturationTempPolling(camId: string) {
       const url = `http://${ip}/cgi-bin/configManager.cgi?action=getConfig&name=HeatImagingThermometry`;
       const response = await client.fetch(url);
       const text = await response.text();
-      const match = text.match(/table\.HeatImagingThermometry\.Isotherm\.SaturationTemp=([\d\.\-]+)/);
-      if (match) {
-        console.log(`SaturationTemp: ${match[1]}`);
-      } else {
-        console.log('SaturationTemp not found');
+      // Find all temperature-related values
+      const regex = /table\.HeatImagingThermometry\.([A-Za-z0-9_.\[\]]*Temperature|Temp|AtmosphericTransmissivity|Altitude|DistanceDecimalPart)=([\d\.\-]+)/g;
+      let match;
+      let found = false;
+      while ((match = regex.exec(text)) !== null) {
+        found = true;
+        console.log(`${match[1]}: ${match[2]}`);
+      }
+      if (!found) {
+        console.log('No temperature-related values found');
       }
     } catch (err) {
-      console.log('Error polling SaturationTemp:', err.message);
+      console.log('Error polling temperature values:', err.message);
     }
   }, 5000);
 }
 
-// Start polling for a specific camera (e.g., cam2) on server start
-startSaturationTempPolling('cam1');
+// Start polling for a specific camera (e.g., cam1) on server start
+startTemperaturePolling('cam1');
 
 
 app.post('/ptz/:camId/zoom', async (req, res) => {
