@@ -71,11 +71,14 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
     // Start zoom in or out
     let currentZoomCommand = code;
     let zooming = true;
+    const zoomActionDelay = typeof req.body.zoomActionDelay === 'number' ? req.body.zoomActionDelay : 200; // ms
+
     await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentZoomCommand}&arg1=0&arg2=0&arg3=1`);
 
     // Poll every pollInterval ms, continue until zoom value is within tolerance
     while (tries < maxTries && zooming) {
-      await new Promise(r => setTimeout(r, pollInterval));
+      // Delay between each zoom action and status check
+      await new Promise(r => setTimeout(r, zoomActionDelay));
       const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
       const statusText = await statusRes.text();
       console.log(statusText)
@@ -84,7 +87,6 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
         zoomValue = parseFloat(match[1]);
         if (zoomValue >= target - tolerance && zoomValue <= target + tolerance) {
           // Stop zoom
-
           const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${0}&code=${currentZoomCommand}&arg1=${1}&arg2=0&arg3=0`;
           await client.fetch(stopUrl);
           stopped = true;
