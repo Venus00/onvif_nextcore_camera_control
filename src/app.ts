@@ -8,8 +8,7 @@ import onvif from 'node-onvif';
 import cors from 'cors';
 // Use require for digest-fetch to avoid ESM/CJS import issues
 // @ts-ignore
-const DigestFetch = require('digest-fetch');
-
+import DigestFetch from 'digest-fetch'
 //{"pan":0.5,"tilt":0.2,"zoom":0.1,"time":2,"stop":true}
 async function discoverCameras() {
   console.log("Starting ONVIF discovery...");
