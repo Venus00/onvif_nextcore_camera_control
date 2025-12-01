@@ -1,4 +1,5 @@
 
+
 import express from "express";
 import bodyParser from "body-parser";
 import { CameraInfo, cameras, type VideoEncoderConfig } from "./util/camera";
@@ -114,6 +115,95 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// Focus auto-move endpoint (like zoom)
+app.post('/focus/:camId/auto', async (req, res) => {
+  try {
+    const camId = req.params.camId;
+    const { client, ip } = getCameraClient(camId);
+
+    // Configurable target and tolerance
+    const target = typeof req.body.target === 'number' ? req.body.target : 1000;
+    const tolerance = typeof req.body.tolerance === 'number' ? req.body.tolerance : 1;
+    const maxTries = typeof req.body.maxTries === 'number' ? req.body.maxTries : 100;
+    const pollInterval = typeof req.body.pollInterval === 'number' ? req.body.pollInterval : 100; // ms
+
+    // Get initial focus value
+    let focusValue: number | null = null;
+    let stopped = false;
+    let tries = 0;
+    let direction: 'in' | 'out' | null = null;
+    let code: string | null = null;
+
+    // Fetch initial focus value
+    const statusResInit = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
+    const statusTextInit = await statusResInit.text();
+    console.log(statusTextInit)
+    const matchInit = statusTextInit.match(/status\.FocusValue=([\d\.\-]+)/);
+    if (matchInit) {
+      focusValue = parseFloat(matchInit[1]);
+    }
+    if (focusValue === null) throw new Error('Could not read initial focus value');
+
+    // Decide initial direction
+    if (focusValue < target - tolerance) {
+      direction = 'in';
+      code = 'FocusNear';
+    } else if (focusValue > target + tolerance) {
+      direction = 'out';
+      code = 'FocusFar';
+    } else {
+      // Already within range
+      return res.json({ success: true, camera: camId, focusValue, stopped: true, message: 'Already within target range' });
+    }
+
+    // Start focus in or out, then stop, then check
+    let currentFocusCommand = code;
+    let focusing = true;
+    while (tries < maxTries && focusing) {
+      // Dynamically adjust speed, fixed burst time
+      let diff = Math.abs((focusValue ?? target) - target);
+      let speed = 1;
+      if (diff > 100) speed = 5;
+      else if (diff > 30) speed = 3;
+      else if (diff > 10) speed = 2;
+      // else speed = 1;
+      const burst = 200;
+
+      await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentFocusCommand}&arg1=0&arg2=0&arg3=${speed}`);
+      await new Promise(r => setTimeout(r, burst));
+      await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=0&code=${currentFocusCommand}&arg1=${speed}&arg2=0&arg3=0`);
+      // Wait a moment for camera to settle
+      await new Promise(r => setTimeout(r, 50));
+      // Check status
+      const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
+      const statusText = await statusRes.text();
+      console.log(statusText)
+      const match = statusText.match(/status\.FocusValue=([\d\.\-]+)/);
+      if (match) {
+        focusValue = parseFloat(match[1]);
+        if (focusValue >= target - tolerance && focusValue <= target + tolerance) {
+          stopped = true;
+          break;
+        }
+        // If we cross the range, change direction
+        if (direction === 'in' && focusValue > target + tolerance) {
+          direction = 'out';
+          currentFocusCommand = 'FocusFar';
+        } else if (direction === 'out' && focusValue < target - tolerance) {
+          direction = 'in';
+          currentFocusCommand = 'FocusNear';
+        }
+      }
+      tries++;
+    }
+
+    res.json({ success: true, camera: camId, focusValue, stopped, target, tolerance });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 app.post('/ptz/:camId/position3d', async (req, res) => {
   try {
