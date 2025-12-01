@@ -69,7 +69,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
     // Start zoom in or out
     let currentZoomCommand = code;
     let zooming = true;
-    await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentZoomCommand}&arg1=0&arg2=0&arg3=5`);
+    await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentZoomCommand}&arg1=0&arg2=0&arg3=1`);
 
     // Poll every pollInterval ms, continue until zoom value is within tolerance
     while (tries < maxTries && zooming) {
