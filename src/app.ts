@@ -295,21 +295,60 @@ app.post('/focus/:camId/stop', async (req, res) => {
 });
 
 // PTZ preset movement handler
+// Preset-specific zoom/focus targets
+const presetTargets: Record<number, { zoom?: number, focus?: number }> = {
+  1: { zoom: 1000, focus: 5000 },
+  2: { zoom: 2000, focus: 10000 },
+  3: { zoom: 3000, focus: 15000 },
+  4: { zoom: 4000, focus: 20000 },
+  5: { zoom: 5000, focus: 25000 },
+};
+
 app.post('/ptz/:camId/preset', async (req, res) => {
   try {
     console.log("preset", req.body)
     const camId = req.params.camId;
-    const { preset } = req.body; // expects a number, e.g., 100 or 35
+    const { preset } = req.body; // expects a number, e.g., 1, 2, 3, 4, 5
     const { client, ip } = getCameraClient('cam1');
 
     // Move to preset using CGI configManager API (GotoPreset)
-    // Example: http://<ip>/cgi-bin/configManager.cgi?action=setConfig&PtzPreset[0][<preset>].Enable=true
-    // http://192.168.1.108/cgi-bin/ptz.cgi?action=start&channel=1&code=PositionABSHDX&arg1=0&arg2=0&arg3=100
     const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=GotoPreset&arg1=0&arg2=${preset}&arg3=0&arg4=null`;
     const response = await client.fetch(url);
     const text = await response.text();
     console.log(text)
-    res.json({ success: true, camera: camId, preset, response: text });
+
+    // After preset move, trigger zoom/focus if targets defined
+    const targets = presetTargets[preset];
+    let zoomResult = null;
+    let focusResult = null;
+    if (targets) {
+      if (typeof targets.zoom === 'number') {
+        try {
+          const zoomRes = await fetch(`http://localhost:3000/ptz/${camId}/zoom`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target: targets.zoom })
+          });
+          zoomResult = await zoomRes.json();
+        } catch (e) {
+          zoomResult = { error: String(e) };
+        }
+      }
+      if (typeof targets.focus === 'number') {
+        try {
+          const focusRes = await fetch(`http://localhost:3000/focus/${camId}/auto`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target: targets.focus })
+          });
+          focusResult = await focusRes.json();
+        } catch (e) {
+          focusResult = { error: String(e) };
+        }
+      }
+    }
+
+    res.json({ success: true, camera: camId, preset, response: text, zoomResult, focusResult });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
