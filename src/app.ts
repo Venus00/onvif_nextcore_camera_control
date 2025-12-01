@@ -106,7 +106,7 @@ app.post('/ptz/:camId/preset', async (req, res) => {
     // Move to preset using CGI configManager API (GotoPreset)
     // Example: http://<ip>/cgi-bin/configManager.cgi?action=setConfig&PtzPreset[0][<preset>].Enable=true
     const url = `http://${ip}/cgi-bin/configManager.cgi?action=setConfig&PtzPreset[0][0].Name=No1`;
-    const response = await client.fetch(url, { method: 'GET' });
+    const response = await client.fetch(url, { method: 'POST' });
     const text = await response.text();
     console.log(text)
     res.json({ success: true, camera: camId, preset, response: text });
