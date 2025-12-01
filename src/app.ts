@@ -146,7 +146,7 @@ app.post('/ptz/:camId/stop', async (req, res) => {
   try {
     const camId = req.params.camId;
     const { direction, channel = 0, speed = 8 } = req.body;
-    const { client, ip } = getCameraClient(camId);
+    const { client, ip } = getCameraClient('cam1');
 
     let code;
     switch (direction) {
