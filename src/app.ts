@@ -78,6 +78,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
       await new Promise(r => setTimeout(r, pollInterval));
       const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
       const statusText = await statusRes.text();
+      console.log(statusText)
       const match = statusText.match(/status\.ZoomValue=([\d\.\-]+)/);
       if (match) {
         zoomValue = parseFloat(match[1]);
