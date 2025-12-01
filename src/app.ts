@@ -309,22 +309,22 @@ app.post('/ptz/:camId/preset', async (req, res) => {
     console.log("preset", req.body)
     const camId = req.params.camId;
     const { preset } = req.body; // expects a number, e.g., 1, 2, 3, 4, 5
-    const { client, ip } = getCameraClient('cam1');
 
+    const { client, ip } = getCameraClient(camId);
     // Move to preset using CGI configManager API (GotoPreset)
     const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=GotoPreset&arg1=0&arg2=${preset}&arg3=0&arg4=null`;
     const response = await client.fetch(url);
     const text = await response.text();
     console.log(text)
-
     // After preset move, trigger zoom/focus if targets defined
     const targets = presetTargets[preset];
     let zoomResult = null;
     let focusResult = null;
     if (targets) {
+
       if (typeof targets.zoom === 'number') {
         try {
-          const zoomRes = await fetch(`http://localhost:3000/ptz/${camId}/zoom`, {
+          const zoomRes = await fetch(`http://localhost:3000/ptz/cam2/zoom`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ target: targets.zoom })
@@ -336,7 +336,7 @@ app.post('/ptz/:camId/preset', async (req, res) => {
       }
       if (typeof targets.focus === 'number') {
         try {
-          const focusRes = await fetch(`http://localhost:3000/focus/${camId}/auto`, {
+          const focusRes = await fetch(`http://localhost:3000/focus/cam2/auto`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ target: targets.focus })
