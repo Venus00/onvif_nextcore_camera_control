@@ -75,7 +75,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
       const match = statusText.match(/status\.ZoomValue=([\d\.\-]+)/);
       if (match) {
         zoomValue = parseFloat(match[1]);
-        if (zoomValue === 44) {
+        if (zoomValue < 50 && zoomValue > 40) {
           // Stop zoom
           const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&code=${code}`;
           await client.fetch(stopUrl);
