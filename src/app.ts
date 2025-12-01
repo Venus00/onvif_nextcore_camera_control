@@ -106,7 +106,7 @@ app.post('/ptz/:camId/preset', async (req, res) => {
     // Move to preset using CGI configManager API (GotoPreset)
     // Example: http://<ip>/cgi-bin/configManager.cgi?action=setConfig&PtzPreset[0][<preset>].Enable=true
     // http://192.168.1.108/cgi-bin/ptz.cgi?action=start&channel=1&code=PositionABSHDX&arg1=0&arg2=0&arg3=100
-    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=GotoPreset&arg1=0&arg2=1&arg3=0&arg4=null`;
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=GotoPreset&arg1=0&arg2=${preset}&arg3=0&arg4=null`;
     const response = await client.fetch(url);
     const text = await response.text();
     console.log(text)
@@ -118,27 +118,28 @@ app.post('/ptz/:camId/preset', async (req, res) => {
 
 app.post('/ptz/:camId/move', async (req, res) => {
   try {
-    const camId = req.params.camId;
+    let camId = req.params.camId;
 
     const { direction, speed = 8, channel = 0, duration = 200 } = req.body;
-
-    const { client, ip } = getCameraClient("cam1");
 
     let code, args = [0, 0, 0];
 
     switch (direction) {
-      case 'up': code = 'Up'; args = [0, speed, 0]; break;
-      case 'down': code = 'Down'; args = [0, speed, 0]; break;
-      case 'left': code = 'Left'; args = [0, speed, 0]; break;
-      case 'right': code = 'Right'; args = [0, speed, 0]; break;
+      case 'up': code = 'Up'; args = [0, speed, 0]; camId = "cam1"; break;
+      case 'down': code = 'Down'; args = [0, speed, 0]; camId = "cam1"; break;
+      case 'left': code = 'Left'; args = [0, speed, 0]; camId = "cam1"; break;
+      case 'right': code = 'Right'; args = [0, speed, 0]; camId = "cam1"; break;
       case 'zoom_in': code = 'ZoomTele'; args = [0, 0, speed]; break;
       case 'zoom_out': code = 'ZoomWide'; args = [0, 0, speed]; break;
+
       default: throw new Error("Invalid direction");
     }
+    const { client, ip } = getCameraClient(camId);
 
     const startUrl = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=${args[0]}&arg2=${args[1]}&arg3=${args[2]}`;
 
     const response = await client.fetch(startUrl);
+    console.log(response)
     const text = await response.text();
     res.json({ success: true, camera: camId, action: direction, response: text, stoppedAfter: duration });
   } catch (err: any) {
