@@ -108,6 +108,7 @@ app.post('/ptz/:camId/preset', async (req, res) => {
     const url = `http://${ip}/cgi-bin/configManager.cgi?action=setConfig&PtzPreset[0][${preset}].Enable=true`;
     const response = await client.fetch(url, { method: 'GET' });
     const text = await response.text();
+    console.log(text)
     res.json({ success: true, camera: camId, preset, response: text });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
