@@ -80,7 +80,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
       else if (diff > 30) speed = 3;
       else if (diff > 10) speed = 2;
       // else speed = 1;
-      const burst = 200;
+      const burst = 50;
 
       await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentZoomCommand}&arg1=0&arg2=0&arg3=${speed}`);
       await new Promise(r => setTimeout(r, burst));
