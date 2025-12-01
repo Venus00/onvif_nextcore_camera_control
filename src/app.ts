@@ -68,17 +68,20 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
       return res.json({ success: true, camera: camId, zoomValue, stopped: true, message: 'Already within target range' });
     }
 
-    // Start zoom in or out
+    // Start zoom in or out, then stop, then check
     let currentZoomCommand = code;
     let zooming = true;
     const zoomActionDelay = typeof req.body.zoomActionDelay === 'number' ? req.body.zoomActionDelay : 200; // ms
 
-    await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentZoomCommand}&arg1=0&arg2=0&arg3=1`);
-
-    // Poll every pollInterval ms, continue until zoom value is within tolerance
     while (tries < maxTries && zooming) {
-      // Delay between each zoom action and status check
+      // Start zoom for a short burst
+      await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentZoomCommand}&arg1=0&arg2=0&arg3=1`);
       await new Promise(r => setTimeout(r, zoomActionDelay));
+      // Stop zoom
+      await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=0&code=${currentZoomCommand}&arg1=1&arg2=0&arg3=0`);
+      // Wait a moment for camera to settle
+      await new Promise(r => setTimeout(r, 100));
+      // Check status
       const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
       const statusText = await statusRes.text();
       console.log(statusText)
@@ -86,27 +89,16 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
       if (match) {
         zoomValue = parseFloat(match[1]);
         if (zoomValue >= target - tolerance && zoomValue <= target + tolerance) {
-          // Stop zoom
-          const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${0}&code=${currentZoomCommand}&arg1=${1}&arg2=0&arg3=0`;
-          await client.fetch(stopUrl);
           stopped = true;
           break;
         }
         // If we cross the range, change direction
         if (direction === 'in' && zoomValue > target + tolerance) {
-          // Stop current zoom in
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${0}&code=${currentZoomCommand}&arg1=${1}&arg2=0&arg3=0`);
-          // Start zoom out
           direction = 'out';
           currentZoomCommand = 'ZoomWide';
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=ZoomWide&arg1=0&arg2=0&arg3=1`);
         } else if (direction === 'out' && zoomValue < target - tolerance) {
-          // Stop current zoom out
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${0}&code=${currentZoomCommand}&arg1=${1}&arg2=0&arg3=0`);
-          // Start zoom in
           direction = 'in';
           currentZoomCommand = 'ZoomTele';
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=ZoomTele&arg1=0&arg2=0&arg3=1`);
         }
       }
       tries++;
