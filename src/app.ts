@@ -172,7 +172,8 @@ app.post('/focus/:camId/auto', async (req, res) => {
 
       await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentFocusCommand}&arg1=0&arg2=0&arg3=${speed}`);
       await new Promise(r => setTimeout(r, burst));
-      await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=0&code=${currentFocusCommand}&arg1=${speed}&arg2=0&arg3=0`);
+
+      await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=0&code=${currentFocusCommand}&arg1=0&arg2=0&arg3=0`);
       // Wait a moment for camera to settle
       await new Promise(r => setTimeout(r, 50));
       // Check status
