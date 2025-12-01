@@ -45,7 +45,7 @@ app.post('/ptz/:camId/position3d', async (req, res) => {
 
     // Send PTZ 3D positioning command
     // Example: http://<ip>/cgi-bin/ptz.cgi?action=start&code=Position3D&arg1=x&arg2=y&arg3=z
-    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&code=Position3D&arg1=${0}&arg2=${0}&arg3=${z}`;
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&code=Position3D&arg1=${0}&arg2=${0}&arg3=${z}$arg4=null`;
     const response = await client.fetch(url);
     const text = await response.text();
     res.json({ success: true, camera: camId, url, response: text });
