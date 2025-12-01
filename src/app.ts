@@ -72,19 +72,20 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
     let currentZoomCommand = code;
     let zooming = true;
     while (tries < maxTries && zooming) {
-      // Dynamically adjust burst duration
+      // Dynamically adjust speed, fixed burst time
       let diff = Math.abs((zoomValue ?? target) - target);
-      let burst = 50;
-      if (diff > 100) burst = 300;
-      else if (diff > 30) burst = 150;
-      else if (diff > 10) burst = 80;
-      // else burst = 50;
+      let speed = 1;
+      if (diff > 100) speed = 5;
+      else if (diff > 30) speed = 3;
+      else if (diff > 10) speed = 2;
+      // else speed = 1;
+      const burst = 50;
 
-      await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentZoomCommand}&arg1=0&arg2=0&arg3=1`);
+      await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentZoomCommand}&arg1=0&arg2=0&arg3=${speed}`);
       await new Promise(r => setTimeout(r, burst));
-      await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=0&code=${currentZoomCommand}&arg1=1&arg2=0&arg3=0`);
+      await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=0&code=${currentZoomCommand}&arg1=${speed}&arg2=0&arg3=0`);
       // Wait a moment for camera to settle
-      await new Promise(r => setTimeout(r, 50));
+      await new Promise(r => setTimeout(r, 300));
       // Check status
       const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
       const statusText = await statusRes.text();
@@ -114,91 +115,6 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
   }
 });
 
-// Auto focus endpoint: moves focus in or out to reach a target value within a tolerance, changing direction if overshot
-app.post('/focus/:camId/auto', async (req, res) => {
-  try {
-    const camId = req.params.camId;
-    const { client, ip } = getCameraClient(camId);
-
-    // Configurable target and tolerance
-    const target = typeof req.body.target === 'number' ? req.body.target : 1000;
-    const tolerance = typeof req.body.tolerance === 'number' ? req.body.tolerance : 10;
-    const maxTries = typeof req.body.maxTries === 'number' ? req.body.maxTries : 30;
-    const pollInterval = typeof req.body.pollInterval === 'number' ? req.body.pollInterval : 100; // ms
-
-    // Get initial focus value
-    let focusValue = null;
-    let stopped = false;
-    let tries = 0;
-    let direction = null;
-    let code = null;
-
-    // Fetch initial focus value
-    const statusResInit = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
-    const statusTextInit = await statusResInit.text();
-    const matchInit = statusTextInit.match(/status\.FocusValue=([\d\.\-]+)/);
-    if (matchInit) {
-      focusValue = parseFloat(matchInit[1]);
-    }
-    if (focusValue === null) throw new Error('Could not read initial focus value');
-
-    // Decide initial direction
-    if (focusValue < target - tolerance) {
-      direction = 'in';
-      code = 'FocusNear';
-    } else if (focusValue > target + tolerance) {
-      direction = 'out';
-      code = 'FocusFar';
-    } else {
-      // Already within range
-      return res.json({ success: true, camera: camId, focusValue, stopped: true, message: 'Already within target range' });
-    }
-
-    // Start focus in or out
-    let currentFocusCommand = code;
-    let focusing = true;
-    await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentFocusCommand}&arg1=0&arg2=0&arg3=5`);
-
-    // Poll every pollInterval ms, continue until focus value is within tolerance
-    while (tries < maxTries && focusing) {
-      await new Promise(r => setTimeout(r, pollInterval));
-      const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
-      const statusText = await statusRes.text();
-      const match = statusText.match(/status\.FocusValue=([\d\.\-]+)/);
-      if (match) {
-        focusValue = parseFloat(match[1]);
-        if (focusValue >= target - tolerance && focusValue <= target + tolerance) {
-          // Stop focus
-          const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&code=${currentFocusCommand}`;
-          await client.fetch(stopUrl);
-          stopped = true;
-          break;
-        }
-        // If we cross the range, change direction
-        if (direction === 'in' && focusValue > target + tolerance) {
-          // Stop current focus in
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&code=FocusNear`);
-          // Start focus out
-          direction = 'out';
-          currentFocusCommand = 'FocusFar';
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=FocusFar&arg1=0&arg2=0&arg3=5`);
-        } else if (direction === 'out' && focusValue < target - tolerance) {
-          // Stop current focus out
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&code=FocusFar`);
-          // Start focus in
-          direction = 'in';
-          currentFocusCommand = 'FocusNear';
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=FocusNear&arg1=0&arg2=0&arg3=5`);
-        }
-      }
-      tries++;
-    }
-
-    res.json({ success: true, camera: camId, focusValue, stopped, target, tolerance });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
 app.post('/ptz/:camId/position3d', async (req, res) => {
   try {
     const camId = req.params.camId;
