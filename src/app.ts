@@ -50,10 +50,10 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
     if (zoomValue === null) throw new Error('Could not read initial zoom value');
 
     // Decide direction
-    if (zoomValue < 2250) {
+    if (zoomValue < 44) {
       direction = 'in';
       code = 'ZoomTele';
-    } else if (zoomValue > 2250) {
+    } else if (zoomValue > 44) {
       direction = 'out';
       code = 'ZoomWide';
     } else {
