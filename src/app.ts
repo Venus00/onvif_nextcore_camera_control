@@ -100,7 +100,7 @@ app.post('/ptz/:camId/preset', async (req, res) => {
   try {
     const camId = req.params.camId;
     const { preset } = req.body; // expects a number, e.g., 100 or 35
-    const { client, ip } = getCameraClient(camId);
+    const { client, ip } = getCameraClient('cam1');
 
     // Move to preset using CGI configManager API (GotoPreset)
     // Example: http://<ip>/cgi-bin/configManager.cgi?action=setConfig&PtzPreset[0][<preset>].Enable=true
