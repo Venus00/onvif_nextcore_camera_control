@@ -141,7 +141,16 @@ app.post('/ptz/:camId/move', async (req, res) => {
     const response = await client.fetch(startUrl);
     console.log(response)
     const text = await response.text();
-    res.json({ success: true, camera: camId, action: direction, response: text, stoppedAfter: duration });
+    // Fetch PTZ status after move
+    let ptzStatus = null;
+    try {
+      const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
+      ptzStatus = await statusRes.text();
+    } catch (statusErr) {
+      ptzStatus = `Failed to fetch PTZ status: ${statusErr}`;
+    }
+    console.log(ptzStatus)
+    res.json({ success: true, camera: camId, action: direction, response: text, ptzStatus, stoppedAfter: duration });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
