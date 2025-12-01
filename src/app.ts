@@ -63,7 +63,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
 
     // Start zoom in or out
 
-    const startUrl = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3=5`;
+    const startUrl = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${code}&arg1=0&arg2=0&arg3=5`;
     await client.fetch(startUrl);
 
     // Poll every 1 second, continue until zoom value reaches 2250
