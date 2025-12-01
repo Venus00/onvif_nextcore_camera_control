@@ -98,6 +98,7 @@ app.post('/focus/:camId/stop', async (req, res) => {
 // PTZ preset movement handler
 app.post('/ptz/:camId/preset', async (req, res) => {
   try {
+    console.log("preset", req.body)
     const camId = req.params.camId;
     const { preset } = req.body; // expects a number, e.g., 100 or 35
     const { client, ip } = getCameraClient('cam1');
