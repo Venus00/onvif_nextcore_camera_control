@@ -1,5 +1,4 @@
 
-
 import express from "express";
 import bodyParser from "body-parser";
 import { CameraInfo, cameras, type VideoEncoderConfig } from "./util/camera";
@@ -28,6 +27,47 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 const PORT = 3000;
+
+
+// Get HeatImagingThermometry config
+app.get('/thermal/:camId/thermometry', async (req, res) => {
+  try {
+    const camId = req.params.camId;
+    const { client, ip } = getCameraClient(camId);
+    const url = `http://${ip}/cgi-bin/configManager.cgi?action=getConfig&name=HeatImagingThermometry`;
+    const response = await client.fetch(url);
+    const text = await response.text();
+    res.type('text/plain').send(text);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Poll Isotherm.SaturationTemp every 5 seconds and log to console
+let pollingInterval: NodeJS.Timeout | null = null;
+function startSaturationTempPolling(camId: string) {
+  if (pollingInterval) return; // Only one poller
+  pollingInterval = setInterval(async () => {
+    try {
+      const { client, ip } = getCameraClient(camId);
+      const url = `http://${ip}/cgi-bin/configManager.cgi?action=getConfig&name=HeatImagingThermometry`;
+      const response = await client.fetch(url);
+      const text = await response.text();
+      const match = text.match(/table\.HeatImagingThermometry\.Isotherm\.SaturationTemp=([\d\.\-]+)/);
+      if (match) {
+        console.log(`SaturationTemp: ${match[1]}`);
+      } else {
+        console.log('SaturationTemp not found');
+      }
+    } catch (err) {
+      console.log('Error polling SaturationTemp:', err.message);
+    }
+  }, 5000);
+}
+
+// Start polling for a specific camera (e.g., cam2) on server start
+startSaturationTempPolling('cam1');
+
 
 app.post('/ptz/:camId/zoom', async (req, res) => {
   try {
