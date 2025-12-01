@@ -50,20 +50,12 @@ function startTemperaturePolling(camId: string) {
   pollingInterval = setInterval(async () => {
     try {
       const { client, ip } = getCameraClient(camId);
+      // Use the correct endpoint as requested
       const url = `http://${ip}/cgi-bin/configManager.cgi?action=getConfig&name=HeatImagingThermometry`;
       const response = await client.fetch(url);
       const text = await response.text();
       // Find all temperature-related values
-      const regex = /table\.HeatImagingThermometry\.([A-Za-z0-9_.\[\]]*Temperature|Temp|AtmosphericTransmissivity|Altitude|DistanceDecimalPart)=([\d\.\-]+)/g;
-      let match;
-      let found = false;
-      while ((match = regex.exec(text)) !== null) {
-        found = true;
-        console.log(`${match[1]}: ${match[2]}`);
-      }
-      if (!found) {
-        console.log('No temperature-related values found');
-      }
+      console.log(text)
     } catch (err) {
       console.log('Error polling temperature values:', err.message);
     }
