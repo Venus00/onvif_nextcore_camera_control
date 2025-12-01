@@ -83,7 +83,15 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
           break;
         }
         // If direction is in and we overshoot, or out and we undershoot, stop
-        if ((direction === 'in' && zoomValue > 44) || (direction === 'out' && zoomValue < 44)) {
+        if (zoomValue > 50) {
+          code = 'ZoomWide';
+          const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&code=${code}`;
+          await client.fetch(stopUrl);
+          stopped = true;
+          break;
+        }
+        else if (zoomValue < 40) {
+          code = 'ZoomTele';
           const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&code=${code}`;
           await client.fetch(stopUrl);
           stopped = true;
