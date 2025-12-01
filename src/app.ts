@@ -75,7 +75,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
       const match = statusText.match(/status\.ZoomValue=([\d\.\-]+)/);
       if (match) {
         zoomValue = parseFloat(match[1]);
-        if (zoomValue === 2250) {
+        if (zoomValue === 44) {
           // Stop zoom
           const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&code=${code}`;
           await client.fetch(stopUrl);
@@ -83,7 +83,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
           break;
         }
         // If direction is in and we overshoot, or out and we undershoot, stop
-        if ((direction === 'in' && zoomValue > 2250) || (direction === 'out' && zoomValue < 2250)) {
+        if ((direction === 'in' && zoomValue > 44) || (direction === 'out' && zoomValue < 44)) {
           const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&code=${code}`;
           await client.fetch(stopUrl);
           stopped = true;
