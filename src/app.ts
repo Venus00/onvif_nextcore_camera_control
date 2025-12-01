@@ -34,7 +34,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
     const { client, ip } = getCameraClient(camId);
 
     // Configurable target and tolerance
-    const target = typeof req.body.target === 'number' ? req.body.target : 44;
+    const target = typeof req.body.target === 'number' ? req.body.target : 10;
     const tolerance = typeof req.body.tolerance === 'number' ? req.body.tolerance : 0;
     const maxTries = typeof req.body.maxTries === 'number' ? req.body.maxTries : 30;
     const pollInterval = typeof req.body.pollInterval === 'number' ? req.body.pollInterval : 100; // ms
