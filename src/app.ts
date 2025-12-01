@@ -81,7 +81,8 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
         zoomValue = parseFloat(match[1]);
         if (zoomValue >= target - tolerance && zoomValue <= target + tolerance) {
           // Stop zoom
-          const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&code=${currentZoomCommand}`;
+
+          const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${0}&code=${currentZoomCommand}&arg1=${1}&arg2=0&arg3=0`;
           await client.fetch(stopUrl);
           stopped = true;
           break;
@@ -89,18 +90,18 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
         // If we cross the range, change direction
         if (direction === 'in' && zoomValue > target + tolerance) {
           // Stop current zoom in
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&code=ZoomTele`);
+          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${0}&code=${currentZoomCommand}&arg1=${1}&arg2=0&arg3=0`);
           // Start zoom out
           direction = 'out';
           currentZoomCommand = 'ZoomWide';
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=ZoomWide&arg1=0&arg2=0&arg3=2`);
+          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=ZoomWide&arg1=0&arg2=0&arg3=1`);
         } else if (direction === 'out' && zoomValue < target - tolerance) {
           // Stop current zoom out
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&code=ZoomWide`);
+          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${0}&code=${currentZoomCommand}&arg1=${1}&arg2=0&arg3=0`);
           // Start zoom in
           direction = 'in';
           currentZoomCommand = 'ZoomTele';
-          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=ZoomTele&arg1=0&arg2=0&arg3=2`);
+          await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=ZoomTele&arg1=0&arg2=0&arg3=1`);
         }
       }
       tries++;
