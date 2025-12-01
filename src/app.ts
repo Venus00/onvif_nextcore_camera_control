@@ -4,17 +4,20 @@ import bodyParser from "body-parser";
 import { CameraInfo, cameras, type VideoEncoderConfig } from "./util/camera";
 import { focusMove, focusStop, getVideoEncoderConfiguration, setVideoEncoderConfiguration } from "./util/api";
 import onvif from 'node-onvif';
+// @ts-ignore
 import cors from 'cors';
-import DigestFetch from 'digest-fetch';
+// Use require for digest-fetch to avoid ESM/CJS import issues
+// @ts-ignore
+const DigestFetch = require('digest-fetch');
 
 //{"pan":0.5,"tilt":0.2,"zoom":0.1,"time":2,"stop":true}
 async function discoverCameras() {
   console.log("Starting ONVIF discovery...");
   try {
-    onvif.startDiscovery(
-      (deviceInfo) => console.log(deviceInfo),
-      { iface: "192.168.11.104" } // your server IP on camera subnet
-    );
+    // onvif.startDiscovery expects a callback or a timeout, not two arguments. Remove iface argument for compatibility.
+    onvif.startDiscovery((deviceInfo: any) => {
+      console.log(deviceInfo);
+    });
   } catch (err) {
     console.error(err);
   }
@@ -96,6 +99,7 @@ app.post('/focus/:camId/stop', async (req, res) => {
 // PTZ preset movement handler
 app.post('/ptz/:camId/preset', async (req, res) => {
   try {
+    console.log("start preseting mouvement", req.body)
     const camId = req.params.camId;
     const { preset } = req.body; // expects a number, e.g., 100 or 35
     const { client, ip } = getCameraClient(camId);
@@ -236,9 +240,9 @@ async function getDevice(camId: string) {
 
 
   await device.init();
-  device.services.device.getCapabilities().then((result) => {
+  device.services.device.getCapabilities().then((result: any) => {
     console.log(result);
-  }).catch((error) => {
+  }).catch((error: any) => {
     console.error(error);
   });
   return device;
