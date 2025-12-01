@@ -1,6 +1,6 @@
 import express from "express";
 import bodyParser from "body-parser";
-import { CameraInfo, cameras,type VideoEncoderConfig } from "./util/camera";
+import { CameraInfo, cameras, type VideoEncoderConfig } from "./util/camera";
 import { focusMove, focusStop, getVideoEncoderConfiguration, setVideoEncoderConfiguration } from "./util/api";
 import onvif from 'node-onvif';
 import cors from 'cors';
@@ -26,26 +26,26 @@ app.use(bodyParser.json());
 const PORT = 3000;
 
 app.get("/camera/:camId/video-encoder", async (req, res) => {
-    const cam = cameras[req.params.camId];
-    if (!cam) return res.status(404).json({ error: "Camera not found" });
+  const cam = cameras[req.params.camId];
+  if (!cam) return res.status(404).json({ error: "Camera not found" });
 
-    const response = await getVideoEncoderConfiguration(req.params.camId);
-    console.log("Current Encoder Config:", response);
-    res.status(200).json({ response });
- 
+  const response = await getVideoEncoderConfiguration(req.params.camId);
+  console.log("Current Encoder Config:", response);
+  res.status(200).json({ response });
+
 });
 
 app.post("/camera/:camId/video-encoder", async (req, res) => {
-    const cam = cameras[req.params.camId];
-    if (!cam) return res.status(404).json({ error: "Camera not found" });
-    try {
-        const config:VideoEncoderConfig  = req.body; // {encoding, width, height, framerate, bitrate, quality, govLength, profile}
-        const result = await setVideoEncoderConfiguration("cam1",config);
-        console.log("Set Response:", result);
-        res.status(200).json({ message: "Encoder configuration set successfully" });
-    } catch (err) {
-        res.status(500).json({ error: String(err) });
-    }
+  const cam = cameras[req.params.camId];
+  if (!cam) return res.status(404).json({ error: "Camera not found" });
+  try {
+    const config: VideoEncoderConfig = req.body; // {encoding, width, height, framerate, bitrate, quality, govLength, profile}
+    const result = await setVideoEncoderConfiguration("cam1", config);
+    console.log("Set Response:", result);
+    res.status(200).json({ message: "Encoder configuration set successfully" });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
 });
 
 
@@ -66,7 +66,7 @@ app.post('/focus/:camId/move', async (req, res) => {
 
 
     res.json({ success: true, camera: camId, response: text });
-  } catch (err:any) {
+  } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -74,7 +74,7 @@ app.post('/focus/:camId/move', async (req, res) => {
 app.post('/focus/:camId/stop', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { direction, channel = 0,speed=3 } = req.body;
+    const { direction, channel = 0, speed = 3 } = req.body;
     const { client, ip } = getCameraClient(camId);
 
     let code;
@@ -87,7 +87,7 @@ app.post('/focus/:camId/stop', async (req, res) => {
     const text = await response.text();
 
     res.json({ success: true, camera: camId, stopped: direction, response: text });
-  } catch (err:any) {
+  } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -96,18 +96,18 @@ app.post('/ptz/:camId/move', async (req, res) => {
   try {
     const camId = req.params.camId;
 
-    const { direction, speed =8, channel = 0, duration = 200 } = req.body;
+    const { direction, speed = 8, channel = 0, duration = 200 } = req.body;
 
-    const { client, ip } = getCameraClient(camId);
+    const { client, ip } = getCameraClient("cam1");
 
     let code, args = [0, 0, 0];
 
     switch (direction) {
-      case 'up':    code = 'Up'; args = [0, speed, 0]; break;
-      case 'down':  code = 'Down'; args = [0, speed, 0]; break;
-      case 'left':  code = 'Left'; args = [0, speed, 0]; break;
+      case 'up': code = 'Up'; args = [0, speed, 0]; break;
+      case 'down': code = 'Down'; args = [0, speed, 0]; break;
+      case 'left': code = 'Left'; args = [0, speed, 0]; break;
       case 'right': code = 'Right'; args = [0, speed, 0]; break;
-      case 'zoom_in':  code = 'ZoomTele'; args = [0, 0, speed]; break;
+      case 'zoom_in': code = 'ZoomTele'; args = [0, 0, speed]; break;
       case 'zoom_out': code = 'ZoomWide'; args = [0, 0, speed]; break;
       default: throw new Error("Invalid direction");
     }
@@ -117,23 +117,23 @@ app.post('/ptz/:camId/move', async (req, res) => {
     const response = await client.fetch(startUrl);
     const text = await response.text();
     res.json({ success: true, camera: camId, action: direction, response: text, stoppedAfter: duration });
-  } catch (err:any) {
+  } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 app.post('/ptz/:camId/stop', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { direction, channel = 0,speed=8 } = req.body;
+    const { direction, channel = 0, speed = 8 } = req.body;
     const { client, ip } = getCameraClient(camId);
 
     let code;
     switch (direction) {
-      case 'up':    code = 'Up'; break;
-      case 'down':  code = 'Down'; break;
-      case 'left':  code = 'Left'; break;
+      case 'up': code = 'Up'; break;
+      case 'down': code = 'Down'; break;
+      case 'left': code = 'Left'; break;
       case 'right': code = 'Right'; break;
-      case 'zoom_in':  code = 'ZoomTele'; break;
+      case 'zoom_in': code = 'ZoomTele'; break;
       case 'zoom_out': code = 'ZoomWide'; break;
       default: throw new Error("Invalid direction");
     }
@@ -142,7 +142,7 @@ app.post('/ptz/:camId/stop', async (req, res) => {
     const text = await response.text();
 
     res.json({ success: true, camera: camId, stopped: direction, response: text });
-  } catch (err:any) {
+  } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -199,30 +199,30 @@ app.post('/ptz/:camId/stop', async (req, res) => {
 //   }
 // });
 
-function getCameraClient(camId:string) {
-  const cfg :CameraInfo = cameras[camId] as CameraInfo;
+function getCameraClient(camId: string) {
+  const cfg: CameraInfo = cameras[camId] as CameraInfo;
   if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
   return { client: new DigestFetch(cfg.username, cfg.password), ip: cfg.ip };
 }
 
-async function getDevice(camId:string) {
-    const cfg :CameraInfo = cameras[camId] as CameraInfo;
-    if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
-    console.log(`http://${cfg.ip}:80/onvif/device_service`)
-    const device = new onvif.OnvifDevice({
-      xaddr: `http://${cfg.ip}:80/onvif/device_service`,
-      user: cfg?.username,
-      pass: cfg?.password
-    });
-  
-  
-    await device.init();
-    device.services.device.getCapabilities().then((result) => {
-      console.log(result);
-    }).catch((error) => {
-      console.error(error);
-    });
-    return device;
+async function getDevice(camId: string) {
+  const cfg: CameraInfo = cameras[camId] as CameraInfo;
+  if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
+  console.log(`http://${cfg.ip}:80/onvif/device_service`)
+  const device = new onvif.OnvifDevice({
+    xaddr: `http://${cfg.ip}:80/onvif/device_service`,
+    user: cfg?.username,
+    pass: cfg?.password
+  });
+
+
+  await device.init();
+  device.services.device.getCapabilities().then((result) => {
+    console.log(result);
+  }).catch((error) => {
+    console.error(error);
+  });
+  return device;
 }
 app.post('/focus/:camId/in', async (req, res) => {
   try {
@@ -230,7 +230,7 @@ app.post('/focus/:camId/in', async (req, res) => {
     const device = await getDevice(camId);
     const profile = device.getCurrentProfile();
     const token = profile.token;
-    const response = await focusMove(camId, 1,token); // speed 0.5 = focus in
+    const response = await focusMove(camId, 1, token); // speed 0.5 = focus in
     res.json({ message: "Focus in started", response });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -243,7 +243,7 @@ app.post('/focus/:camId/out', async (req, res) => {
     const device = await getDevice(camId);
     const profile = device.getCurrentProfile();
     const token = profile.token;
-    const response = await focusMove(camId, 1,token); // speed -0.5 = focus out
+    const response = await focusMove(camId, 1, token); // speed -0.5 = focus out
     res.json({ message: "Focus out started", response });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -257,7 +257,7 @@ app.post('/focus/:camId/stop', async (req, res) => {
     const device = await getDevice(camId);
     const profile = device.getCurrentProfile();
     const token = profile.token;
-    const response = await focusStop(camId,token);
+    const response = await focusStop(camId, token);
     res.json({ message: "Focus stopped", response });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -266,6 +266,7 @@ app.post('/focus/:camId/stop', async (req, res) => {
 
 
 app.listen(PORT, async () => {
-  await  discoverCameras()
-  
-  console.log(`Service Backend server running on http://localhost:${PORT}`)});
+  await discoverCameras()
+
+  console.log(`Service Backend server running on http://localhost:${PORT}`)
+});
