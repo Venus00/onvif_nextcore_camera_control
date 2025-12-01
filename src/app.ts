@@ -80,7 +80,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
       // Stop zoom
       await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=0&code=${currentZoomCommand}&arg1=1&arg2=0&arg3=0`);
       // Wait a moment for camera to settle
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 50));
       // Check status
       const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
       const statusText = await statusRes.text();
