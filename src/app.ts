@@ -68,7 +68,7 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
 
     // Poll every 1 second, continue until zoom value reaches 2250
     while (tries < 30) { // max 30 tries (about 30s)
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 100));
       const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
       const statusText = await statusRes.text();
       // Try to extract status.ZoomValue from response
