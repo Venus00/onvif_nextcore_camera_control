@@ -71,13 +71,10 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
     // Start zoom in or out, then stop, then check
     let currentZoomCommand = code;
     let zooming = true;
-    const zoomActionDelay = typeof req.body.zoomActionDelay === 'number' ? req.body.zoomActionDelay : 200; // ms
-
     while (tries < maxTries && zooming) {
-      // Start zoom for a short burst
+      // Always start, wait 50ms, stop, then check
       await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentZoomCommand}&arg1=0&arg2=0&arg3=1`);
-      await new Promise(r => setTimeout(r, zoomActionDelay));
-      // Stop zoom
+      await new Promise(r => setTimeout(r, 50));
       await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=0&code=${currentZoomCommand}&arg1=1&arg2=0&arg3=0`);
       // Wait a moment for camera to settle
       await new Promise(r => setTimeout(r, 50));
