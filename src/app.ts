@@ -123,7 +123,7 @@ app.post('/focus/:camId/auto', async (req, res) => {
     const { client, ip } = getCameraClient(camId);
 
     // Configurable target and tolerance
-    const target = typeof req.body.target === 'number' ? req.body.target : 1000;
+    const target = typeof req.body.target === 'number' ? req.body.target : 740;
     const tolerance = typeof req.body.tolerance === 'number' ? req.body.tolerance : 1;
     const maxTries = typeof req.body.maxTries === 'number' ? req.body.maxTries : 100;
     const pollInterval = typeof req.body.pollInterval === 'number' ? req.body.pollInterval : 100; // ms
@@ -139,7 +139,7 @@ app.post('/focus/:camId/auto', async (req, res) => {
     const statusResInit = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
     const statusTextInit = await statusResInit.text();
     console.log(statusTextInit)
-    const matchInit = statusTextInit.match(/status\.FocusValue=([\d\.\-]+)/);
+    const matchInit = statusTextInit.match(/status\.Focus=([\d\.\-]+)/);
     if (matchInit) {
       focusValue = parseFloat(matchInit[1]);
     }
