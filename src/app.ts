@@ -139,7 +139,7 @@ app.post('/focus/:camId/auto', async (req, res) => {
     const statusResInit = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
     const statusTextInit = await statusResInit.text();
     console.log(statusTextInit)
-    const matchInit = statusTextInit.match(/status\.Foci=([\d\.\-]+)/);
+    const matchInit = statusTextInit.match(/status\.PTZFocusHD=([\d\.\-]+)/);
     if (matchInit) {
       focusValue = parseFloat(matchInit[1]);
     }
@@ -168,7 +168,7 @@ app.post('/focus/:camId/auto', async (req, res) => {
       else if (diff > 30) speed = 3;
       else if (diff > 10) speed = 2;
       // else speed = 1;
-      const burst = 50;
+      const burst = 200;
 
       await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentFocusCommand}&arg1=0&arg2=0&arg3=${speed}`);
       await new Promise(r => setTimeout(r, burst));
@@ -179,7 +179,7 @@ app.post('/focus/:camId/auto', async (req, res) => {
       const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
       const statusText = await statusRes.text();
       console.log(statusText)
-      const match = statusText.match(/status\.Foci=([\d\.\-]+)/);
+      const match = statusText.match(/status\.PTZFocusHD=([\d\.\-]+)/);
       if (match) {
         focusValue = parseFloat(match[1]);
         if (focusValue >= target - tolerance && focusValue <= target + tolerance) {
