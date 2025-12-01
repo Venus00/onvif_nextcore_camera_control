@@ -1,12 +1,3 @@
-// PTZ Zoom In/Out with stop at zoom value 2250
-// POST /ptz/:camId/zoom
-// Body: { direction: 'in' | 'out' }
-
-// 3D PTZ Positioning
-// POST /ptz/:camId/position3d
-// Body: { arg1: number, arg2: number, arg3: number }
-
-
 import express from "express";
 import bodyParser from "body-parser";
 import { CameraInfo, cameras, type VideoEncoderConfig } from "./util/camera";
@@ -39,22 +30,45 @@ const PORT = 3000;
 app.post('/ptz/:camId/zoom', async (req, res) => {
   try {
     const camId = req.params.camId;
-    const { direction } = req.body;
     const { client, ip } = getCameraClient(camId);
-    let code;
-    if (direction === 'in') code = 'ZoomTele';
-    else if (direction === 'out') code = 'ZoomWide';
-    else throw new Error('Invalid direction, use "in" or "out"');
 
-    // Start zoom
-    const startUrl = `http://${ip}/cgi-bin/ptz.cgi?action=start&code=${code}&arg1=0&arg2=0&arg3=5`;
-    await client.fetch(startUrl);
-
-    // Poll zoom value and stop when it reaches 2250
+    // Get initial zoom value
     let zoomValue = null;
     let stopped = false;
-    for (let i = 0; i < 20; i++) { // max 20 tries (about 2s)
-      await new Promise(r => setTimeout(r, 100));
+    let tries = 0;
+    let direction = null;
+    let code = null;
+
+    // Fetch initial zoom value
+    const statusResInit = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
+    const statusTextInit = await statusResInit.text();
+    const matchInit = statusTextInit.match(/status\.ZoomValue=([\d\.\-]+)/);
+    if (matchInit) {
+      zoomValue = parseFloat(matchInit[1]);
+    }
+
+    if (zoomValue === null) throw new Error('Could not read initial zoom value');
+
+    // Decide direction
+    if (zoomValue < 2250) {
+      direction = 'in';
+      code = 'ZoomTele';
+    } else if (zoomValue > 2250) {
+      direction = 'out';
+      code = 'ZoomWide';
+    } else {
+      // Already at target
+      return res.json({ success: true, camera: camId, zoomValue, stopped: true });
+    }
+
+    // Start zoom in or out
+
+    const startUrl = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3=5`;
+    await client.fetch(startUrl);
+
+    // Poll every 1 second, continue until zoom value reaches 2250
+    while (tries < 30) { // max 30 tries (about 30s)
+      await new Promise(r => setTimeout(r, 1000));
       const statusRes = await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=getStatus`);
       const statusText = await statusRes.text();
       // Try to extract status.ZoomValue from response
@@ -68,10 +82,18 @@ app.post('/ptz/:camId/zoom', async (req, res) => {
           stopped = true;
           break;
         }
+        // If direction is in and we overshoot, or out and we undershoot, stop
+        if ((direction === 'in' && zoomValue > 2250) || (direction === 'out' && zoomValue < 2250)) {
+          const stopUrl = `http://${ip}/cgi-bin/ptz.cgi?action=stop&code=${code}`;
+          await client.fetch(stopUrl);
+          stopped = true;
+          break;
+        }
       }
+      tries++;
     }
 
-    res.json({ success: true, camera: camId, direction, zoomValue, stopped });
+    res.json({ success: true, camera: camId, zoomValue, stopped });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -230,7 +252,6 @@ app.post('/ptz/:camId/stop', async (req, res) => {
   try {
     let camId = req.params.camId;
     const { direction, channel = 0, speed = 8 } = req.body;
-    const { client, ip } = getCameraClient('cam1');
 
     let code;
     switch (direction) {
@@ -242,6 +263,9 @@ app.post('/ptz/:camId/stop', async (req, res) => {
       case 'zoom_out': code = 'ZoomWide'; break;
       default: throw new Error("Invalid direction");
     }
+
+    const { client, ip } = getCameraClient(camId);
+
     const url = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}&arg1=${speed}&arg2=0&arg3=0`;
     const response = await client.fetch(url);
     const text = await response.text();
