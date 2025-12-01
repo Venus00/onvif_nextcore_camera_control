@@ -146,14 +146,12 @@ app.post('/focus/:camId/auto', async (req, res) => {
     if (focusValue === null) throw new Error('Could not read initial focus value');
 
     // Decide initial direction
-
-    // Focus logic: FocusFar increases value (in), FocusNear decreases value (out)
     if (focusValue < target - tolerance) {
       direction = 'in';
-      code = 'FocusFar';
+      code = 'FocusNear';
     } else if (focusValue > target + tolerance) {
       direction = 'out';
-      code = 'FocusNear';
+      code = 'FocusFar';
     } else {
       // Already within range
       return res.json({ success: true, camera: camId, focusValue, stopped: true, message: 'Already within target range' });
@@ -170,11 +168,10 @@ app.post('/focus/:camId/auto', async (req, res) => {
       else if (diff > 30) speed = 3;
       else if (diff > 10) speed = 2;
       // else speed = 1;
-      const burst = 200;
+      const burst = 50;
 
       await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=start&channel=0&code=${currentFocusCommand}&arg1=0&arg2=0&arg3=${speed}`);
       await new Promise(r => setTimeout(r, burst));
-
       await client.fetch(`http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=0&code=${currentFocusCommand}&arg1=0&arg2=0&arg3=0`);
       // Wait a moment for camera to settle
       await new Promise(r => setTimeout(r, 50));
@@ -192,10 +189,10 @@ app.post('/focus/:camId/auto', async (req, res) => {
         // If we cross the range, change direction
         if (direction === 'in' && focusValue > target + tolerance) {
           direction = 'out';
-          currentFocusCommand = 'FocusNear';
+          currentFocusCommand = 'FocusFar';
         } else if (direction === 'out' && focusValue < target - tolerance) {
           direction = 'in';
-          currentFocusCommand = 'FocusFar';
+          currentFocusCommand = 'FocusNear';
         }
       }
       tries++;
