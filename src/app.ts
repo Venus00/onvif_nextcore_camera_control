@@ -146,12 +146,14 @@ app.post('/focus/:camId/auto', async (req, res) => {
     if (focusValue === null) throw new Error('Could not read initial focus value');
 
     // Decide initial direction
+
+    // Focus logic: FocusFar increases value (in), FocusNear decreases value (out)
     if (focusValue < target - tolerance) {
       direction = 'in';
-      code = 'FocusNear';
+      code = 'FocusFar';
     } else if (focusValue > target + tolerance) {
       direction = 'out';
-      code = 'FocusFar';
+      code = 'FocusNear';
     } else {
       // Already within range
       return res.json({ success: true, camera: camId, focusValue, stopped: true, message: 'Already within target range' });
@@ -190,10 +192,10 @@ app.post('/focus/:camId/auto', async (req, res) => {
         // If we cross the range, change direction
         if (direction === 'in' && focusValue > target + tolerance) {
           direction = 'out';
-          currentFocusCommand = 'FocusFar';
+          currentFocusCommand = 'FocusNear';
         } else if (direction === 'out' && focusValue < target - tolerance) {
           direction = 'in';
-          currentFocusCommand = 'FocusNear';
+          currentFocusCommand = 'FocusFar';
         }
       }
       tries++;
