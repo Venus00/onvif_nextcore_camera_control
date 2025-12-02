@@ -652,7 +652,7 @@ app.post("/focus/:camId/stop", async (req, res) => {
   }
 });
 
-app.post("/api/ptz", async (req: Request, res: Response) => {
+app.post("/pelcoD", async (req: Request, res: Response) => {
   const body = req.body as PtzCommand;
 
   try {
