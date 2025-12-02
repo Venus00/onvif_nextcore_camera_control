@@ -1,10 +1,10 @@
 // src/ptz.ts
 import { SerialPort } from "serialport";
 
-const DEFAULT_PORT = process.env.CAMERA_PORT ?? "/dev/ttyUSB0";
-const DEFAULT_BAUD = Number(process.env.CAMERA_BAUD ?? "9600");
+const DEFAULT_PORT = "/dev/ttyUSB0";
+const DEFAULT_BAUD = 9600;
 // Pelco-D camera address (1–255), usually set via camera OSD/DIP
-const CAMERA_ADDRESS = Number(process.env.CAMERA_ADDR ?? "1");
+const CAMERA_ADDRESS = 1;
 
 export type PtzCommand =
   | { type: "up"; speed?: number }
@@ -83,7 +83,8 @@ class PtzController {
 
   // ---- High-level PTZ actions ----
 
-  // speed: 0x00–0x3F usually, pan speed in data1, tilt speed in data2
+  // speed: 0x00–0x3F usually, pan speed in data1, tilt speed in data2 
+  // example up ::  FF 01 00 08 00 3F 48
   async up(speed = 0x20): Promise<void> {
     const cmd1 = 0x00;
     const cmd2 = 0x08; // bit3: Up :contentReference[oaicite:2]{index=2}
@@ -193,26 +194,26 @@ class PtzController {
     await this.write(frame);
   }
 
-async focusFar(): Promise<void> {
-  const cmd1 = 0x00;
-  const cmd2 = 0x80; // bit7 of Command 2: Focus Far
-  const frame = this.buildFrame(CAMERA_ADDRESS, cmd1, cmd2, 0x00, 0x00);
-  await this.write(frame);
-}
+  async focusFar(): Promise<void> {
+    const cmd1 = 0x00;
+    const cmd2 = 0x80; // bit7 of Command 2: Focus Far
+    const frame = this.buildFrame(CAMERA_ADDRESS, cmd1, cmd2, 0x00, 0x00);
+    await this.write(frame);
+  }
 
-async irisOpen(): Promise<void> {
-  const cmd1 = 0x02; // bit1: Iris Open
-  const cmd2 = 0x00;
-  const frame = this.buildFrame(CAMERA_ADDRESS, cmd1, cmd2, 0x00, 0x00);
-  await this.write(frame);
-}
+  async irisOpen(): Promise<void> {
+    const cmd1 = 0x02; // bit1: Iris Open
+    const cmd2 = 0x00;
+    const frame = this.buildFrame(CAMERA_ADDRESS, cmd1, cmd2, 0x00, 0x00);
+    await this.write(frame);
+  }
 
-async irisClose(): Promise<void> {
-  const cmd1 = 0x04; // bit2: Iris Close
-  const cmd2 = 0x00;
-  const frame = this.buildFrame(CAMERA_ADDRESS, cmd1, cmd2, 0x00, 0x00);
-  await this.write(frame);
-}
+  async irisClose(): Promise<void> {
+    const cmd1 = 0x04; // bit2: Iris Close
+    const cmd2 = 0x00;
+    const frame = this.buildFrame(CAMERA_ADDRESS, cmd1, cmd2, 0x00, 0x00);
+    await this.write(frame);
+  }
 
   /**
    * Send a raw 7-byte Pelco-D frame: [FF, addr, cmd1, cmd2, data1, data2, checksum]
