@@ -3,6 +3,8 @@
  * Works with external authenticated client (token-based)
  */
 
+import { profile } from "console";
+
 // ============ TYPES ============
 
 export interface CameraClient {
@@ -15,8 +17,9 @@ const VIDEO_COLOR_KEYMAP: Record<string, string> = {
   chromaCNT: "ChromaSuppress",
   gamma: "Gamma",
   hue: "Hue",
-  style: "Style",
-  timeSection: "TimeSection",
+
+  // style: "Style",
+  // timeSection: "TimeSection",
   // add others if needed
 };
 
@@ -299,7 +302,7 @@ async setVideoColor(
   }
 
   // use the 'table.' prefix which matches GET keys and most device expectations
-  return this.setConfig(this.formatParams("table.VideoColor", mapped, channel, config));
+  return this.setConfig(this.formatParams("table.VideoColor", mapped, channel, params.profile));
 }
 
 
