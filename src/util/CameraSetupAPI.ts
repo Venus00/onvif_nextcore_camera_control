@@ -320,7 +320,7 @@ export class CameraSetupAPI {
     const config = PROFILE_TO_INDEX[profileName];
     console.log("Mapped VideoColor params:", config, profileName);
     return this.setConfig(
-      this.formatParams("VideoColor[0]", mapped, channel, config)
+      this.formatParams("VideoColor", mapped, channel, config)
     );
   }
 
