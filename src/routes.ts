@@ -243,7 +243,15 @@ app.get(
   "/camera/:camId/video/flip",
   route(async ({ setup }) => ({ config: await setup.getVideoFlip() }))
 );
+app.post( 
+  "/camera/:camId/video/flip",
 
+  route(async ({ setup }, body) => {
+    const { channel = 0, config =0 ,...params } = body;
+    const response = await setup.setVideoFlip(params, channel, config);
+    return { response, ok: setup.isSuccess(response) };
+  })  
+);
 // Backlight
 app.get(
   "/camera/:camId/video/backlight",
