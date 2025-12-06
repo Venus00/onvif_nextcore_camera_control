@@ -329,18 +329,47 @@ export class CameraSetupAPI {
     return this.getConfig("VideoInSharpness");
   }
 
+  // Add to your backend client class (next to setVideoColor)
   async setVideoSharpness(
-    sharpness: number,
-    channel: Channel = 0,
-    config: ConfigProfile = 2
+    params: Record<string, any>,
+    channel: number = 0
   ): Promise<string> {
+    const PROFILE_TO_INDEX: Record<string, number> = {
+      daytime: 0,
+      nighttime: 1,
+      normal: 2,
+    };
+
+    // UI key -> camera parameter name
+    const SHARPNESS_KEYMAP: Record<string, string> = {
+      sharpness: "Sharpness",
+      sharpnessCNT: "Level", // sometimes called Level in device
+      mode: "Mode", // e.g. Mode=1
+      IDEGain: "IDEGain", // thermal / special params (if present)
+      IDELevel: "IDELevel",
+      IDEMode: "IDEMode",
+    };
+
+    let profileName: "daytime" | "nighttime" | "normal" = "normal";
+    const mapped: Record<string, any> = {};
+    for (const [k, v] of Object.entries(params)) {
+      if (k === "profile") {
+        if (
+          typeof v === "string" &&
+          (v === "daytime" || v === "nighttime" || v === "normal")
+        ) {
+          profileName = v;
+        }
+        continue;
+      }
+      const camKey = SHARPNESS_KEYMAP[k] ?? k;
+      mapped[camKey] = v;
+    }
+
+    const config = PROFILE_TO_INDEX[profileName];
+    // formatParams will construct: table.VideoInSharpness[0][<config>].<Param>=<value>
     return this.setConfig(
-      this.formatParams(
-        "VideoInSharpness",
-        { Sharpness: sharpness },
-        channel,
-        config
-      )
+      this.formatParams("VideoInSharpness", mapped, channel, config)
     );
   }
 
