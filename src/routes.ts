@@ -277,6 +277,15 @@ app.get(
   "/camera/:camId/encode",
   route(async ({ setup }) => ({ config: await setup.getEncode() }))
 );
+app.post(
+  "/camera/:camId/encode",
+  route(async ({ setup }, body) => {
+    const { channel = 0, config =0  ,...params } = body;
+    const response = await setup.setEncode(params, channel);
+    return { response, ok: setup.isSuccess(response) };
+  })
+);
+
 
 // Title
 app.get(

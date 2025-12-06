@@ -645,6 +645,14 @@ export class CameraSetupAPI {
     return this.getConfig("Encode");
   }
 
+  async setEncode(
+    params: EncodeVideoParams,
+    channel: Channel = 0  
+  ): Promise<string> {
+    const mainStreamResult = await this.setMainStreamEncode(params, channel);
+    const subStreamResult = await this.setSubStreamEncode(params, channel);
+    return `${mainStreamResult}\n${subStreamResult}`;
+  }
   async setMainStreamEncode(
     params: EncodeVideoParams,
     channel: Channel = 0,
