@@ -23,6 +23,49 @@ const VIDEO_COLOR_KEYMAP: Record<string, string> = {
   // add others if needed
 };
 
+
+export interface PictureSettingsBundle {
+  profile: "daytime" | "nighttime" | "normal";
+
+  // Color
+  brightness: number;
+  contrast: number;
+  saturability: number;
+  chromaCNT: number;
+  gamma: number;
+
+  // Sharpness
+  sharpness: number;
+  sharpnessCNT: number;
+
+  // Noise / Denoise
+  nr2D: number;
+  nr2DEnable: boolean;
+  nr3D: number;
+  grade: number;
+  aiEnable: boolean;
+  removeVerticalStripeEnable: boolean;
+  removeVerticalStripeLevel: number;
+
+  // Flip / ImageControl (channel-level)
+  flip: "normal" | "inverted";
+  horizontalFlip: boolean;
+  verticalFlip: boolean;
+  mirror: boolean;
+  rotate90: number;
+  freeze: boolean;
+  stable: number;
+
+  // Stabilizer
+  stabilizerEnable: boolean;
+  stabilizerMode: string | null;
+}
+const PROFILE_TO_INDEX: Record<string, number> = {
+  daytime: 0,
+  nighttime: 1,
+  normal: 2,
+};
+
 interface VideoModeParams {
   mode: number; // 0 = full-time, 1 = schedule
   config0: number; // 0=Day, 1=Night, 2=Normal
@@ -281,6 +324,98 @@ export class CameraSetupAPI {
   }
 
   // ============ 3.1 CAMERA CONDITIONS ============
+
+  private extractProfile(color: any): "daytime" | "nighttime" | "normal" {
+  if (!color) return "normal";
+
+  // if API contains a profile hint (some firmwares do this)
+  if (typeof color.profile === "string") {
+    const p = color.profile.toLowerCase();
+    if (p.includes("day")) return "daytime";
+    if (p.includes("night")) return "nighttime";
+    if (p.includes("normal")) return "normal";
+  }
+
+  // If UI posted "profile", your server route should pass it down
+  if (typeof (color as any).requestedProfile === "string") {
+    const p = (color as any).requestedProfile;
+    if (p === "daytime" || p === "nighttime" || p === "normal") return p;
+  }
+
+  // Otherwise default
+  return "normal";
+}
+
+private mergePictureSettings(
+  color: any,
+  sharp: any,
+  denoise: any,
+  imageCtrl: any,
+  stabilizer: any
+): PictureSettingsBundle {
+
+  const profile = this.extractProfile(color); // default logic: daytime/nighttime/normal
+
+  const cfg = PROFILE_TO_INDEX[profile];
+
+  return {
+    profile,
+
+    // COLOR
+    brightness: Number(color[`table.VideoColor[0][${cfg}].Brightness`]),
+    contrast: Number(color[`table.VideoColor[0][${cfg}].Contrast`]),
+    saturability: Number(color[`table.VideoColor[0][${cfg}].Saturation`]),
+    chromaCNT: Number(color[`table.VideoColor[0][${cfg}].ChromaSuppress`]),
+    gamma: Number(color[`table.VideoColor[0][${cfg}].Gamma`]),
+
+    // SHARPNESS
+    sharpness: Number(sharp[`table.VideoInSharpness[0][${cfg}].Sharpness`]),
+    sharpnessCNT: Number(sharp[`table.VideoInSharpness[0][${cfg}].Level`]),
+
+    // NOISE
+    nr2D: Number(denoise[`table.VideoInDenoise[0][${cfg}].2DLevel`]),
+    nr2DEnable: denoise[`table.VideoInDenoise[0][${cfg}].2DEnable`] === "true",
+    nr3D: Number(denoise[`table.VideoInDenoise[0][${cfg}].3DAutoType.AutoLevel`]),
+    grade: Number(denoise[`table.VideoInDenoise[0][${cfg}].Grade`]),
+    aiEnable: denoise[`table.VideoInDenoise[0][${cfg}].AI.Enable`] === "true",
+    removeVerticalStripeEnable: denoise[`table.VideoInDenoise[0][${cfg}].RemoveVerticalSripe.Enable`] === "true",
+    removeVerticalStripeLevel: Number(denoise[`table.VideoInDenoise[0][${cfg}].RemoveVerticalSripe.Level`]),
+
+    // IMAGE CONTROL
+    flip: imageCtrl["table.VideoImageControl[0].Flip"] === "true" ? "inverted" : "normal",
+    horizontalFlip: imageCtrl["table.VideoImageControl[0].HorizontalFlip"] === "true",
+    verticalFlip: imageCtrl["table.VideoImageControl[0].VerticalFlip"] === "true",
+    mirror: imageCtrl["table.VideoImageControl[0].Mirror"] === "true",
+    rotate90: Number(imageCtrl["table.VideoImageControl[0].Rotate90"]),
+    freeze: imageCtrl["table.VideoImageControl[0].Freeze"] === "true",
+    stable: Number(imageCtrl["table.VideoImageControl[0].Stable"]),
+
+    // STABILIZER
+    stabilizerEnable: stabilizer["table.VideoInStabilizer[0].Enable"] === "1",
+    stabilizerMode: stabilizer["table.VideoInStabilizer[0].Mode"] ?? null,
+  };
+}
+
+  async getPictureSettings(channel: number = 0): Promise<PictureSettingsBundle> {
+  const [
+    color,
+    sharp,
+    denoise,
+    imageCtrl,
+    stabilizer
+  ] = await Promise.all([
+    this.getVideoColor(),
+    this.getVideoSharpness(),
+    this.getVideoDenoise(),
+    this.getVideoFlip(),
+    this.getVideoStabilizer()
+  ]);
+
+  // Parse / merge all fields into ONE object.
+  const merged = this.mergePictureSettings(color, sharp, denoise, imageCtrl, stabilizer);
+
+  return merged;
+}
 
   // 3.1.1 VideoColor
   async getVideoColor(): Promise<ParsedConfig> {

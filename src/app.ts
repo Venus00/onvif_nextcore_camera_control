@@ -354,7 +354,7 @@ app.post("/focus/:camId/move", async (req, res) => {
     else if (direction === "focus_out") code = "FocusFar";
     else throw new Error("Invalid direction (use 'in' or 'out')");
 
-    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3=0`;
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3==${speed}`;
     const response = await client.fetch(url);
     const text = await response.text();
     // stop after 1s (you can adjust)
