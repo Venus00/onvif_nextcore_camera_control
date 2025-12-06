@@ -8,6 +8,17 @@
 export interface CameraClient {
   fetch(url: string): Promise<{ text(): Promise<string> }>;
 }
+const VIDEO_COLOR_KEYMAP: Record<string, string> = {
+  brightness: "Brightness",
+  contrast: "Contrast",
+  saturability: "Saturation",
+  chromaCNT: "ChromaSuppress",
+  gamma: "Gamma",
+  hue: "Hue",
+  style: "Style",
+  timeSection: "TimeSection",
+  // add others if needed
+};
 
 interface VideoModeParams {
   mode: number; // 0 = full-time, 1 = schedule
@@ -273,15 +284,24 @@ export class CameraSetupAPI {
     return this.getConfig("VideoColor");
   }
 
-  async setVideoColor(
-    params: VideoColorParams,
-    channel: Channel = 0,
-    config: ConfigProfile = 2
-  ): Promise<string> {
-    return this.setConfig(
-      this.formatParams("VideoColor", params, channel, config)
-    );
+  // helper map: frontendKey -> camera param name
+
+async setVideoColor(
+  params: Record<string, any>,
+  channel: number = 0,
+  config: number = 2
+): Promise<string> {
+  // translate keys to camera API names
+  const mapped: Record<string, any> = {};
+  for (const [k, v] of Object.entries(params)) {
+    const mappedKey = VIDEO_COLOR_KEYMAP[k] ?? k; // fallback to original if missing
+    mapped[mappedKey] = v;
   }
+
+  // use the 'table.' prefix which matches GET keys and most device expectations
+  return this.setConfig(this.formatParams("table.VideoColor", mapped, channel, config));
+}
+
 
   // 3.1.2 VideoSharpness
   async getVideoSharpness(): Promise<ParsedConfig> {
