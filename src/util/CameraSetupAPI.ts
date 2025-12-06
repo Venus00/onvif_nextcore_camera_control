@@ -310,7 +310,7 @@ export class CameraSetupAPI {
     const mapped: Record<string, any> = {};
     for (const [k, v] of Object.entries(params)) {
       if (k === "profile") {
-        profileName = k;
+        profileName = v;
         continue;
       } // ⛔ DO NOT send profile=...
       const camKey = VIDEO_COLOR_KEYMAP[k] ?? k;
