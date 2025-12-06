@@ -243,7 +243,7 @@ export class CameraSetupAPI {
         parts.push(`${prefix}${bracket}.${key}=${encodeURIComponent(value)}`);
       }
     }
-
+    console.log(parts);
     return parts.join("&");
   }
 
@@ -545,24 +545,8 @@ export class CameraSetupAPI {
       // Expect params.timeSection like: string[7][N]
       // e.g. "0 06:30:59-18:30:00" for each period
       parts.push(
-            `VideoInMode[${channel}].TimeSection[0][0]=${params.timeSection?.[0]?.[0]}`
-          );
-      // if (params.timeSection && Array.isArray(params.timeSection)) {
-      //   params.timeSection.forEach((day, dayIndex) => {
-      //     if (!Array.isArray(day)) return;
-      //     parts.push(
-      //       `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${period}`
-      //     );
-      //     day.forEach((period, periodIndex) => {
-      //       if (!period) return;
-      //       parts.push(
-      //         `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${
-      //           period
-      //         }`
-      //       );
-      //     });
-      //   });
-      // }
+        `VideoInMode[${channel}].TimeSection[0][0]=${params.timeSection?.[0]?.[0]}`
+      );
 
       return this.setConfig(parts.join("&"));
     }
