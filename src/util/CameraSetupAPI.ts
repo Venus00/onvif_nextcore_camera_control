@@ -290,8 +290,7 @@ export class CameraSetupAPI {
   // helper map: frontendKey -> camera param name
 async setVideoColor(
   params: Record<string, any>,
-  channel: number = 0,
-  profileName: "daytime" | "nighttime" | "normal" = "normal"
+  channel: number = 0
 ): Promise<string> {
 
   const PROFILE_TO_INDEX: Record<string, number> = {
@@ -308,10 +307,10 @@ async setVideoColor(
     gamma: "Gamma",
     hue: "Hue",
   };
-
+let profileName = "normal";
   const mapped: Record<string, any> = {};
   for (const [k, v] of Object.entries(params)) {
-    if (k === "profile") continue;         // ⛔ DO NOT send profile=...
+    if (k === "profile") profileName = k;         // ⛔ DO NOT send profile=...
     const camKey = VIDEO_COLOR_KEYMAP[k] ?? k;
     mapped[camKey] = v;
   }

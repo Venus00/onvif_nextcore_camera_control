@@ -118,8 +118,8 @@ app.get(
 app.post(
   "/camera/:camId/video/color",
   route(async ({ setup }, body) => {
-    const { channel = 0, config = 2, ...params } = body;
-    const response = await setup.setVideoColor(params, channel, config);
+    const { channel = 0, ...params } = body;
+    const response = await setup.setVideoColor(params, channel);
     return { response, ok: setup.isSuccess(response) };
   })
 );
