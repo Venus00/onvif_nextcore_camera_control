@@ -536,8 +536,34 @@ export class CameraSetupAPI {
   ): Promise<string> {
     const parts: string[] = [];
 
+
+    
     // Mode
     parts.push(`VideoInMode[${channel}].Mode=${params.mode}`);
+
+      // ========================
+  if (params.mode === 1) {
+    // Expect params.timeSection like: string[7][N]
+    // e.g. "0 06:30:59-18:30:00" for each period
+    if (params.timeSection && Array.isArray(params.timeSection)) {
+      params.timeSection.forEach((day, dayIndex) => {
+        if (!Array.isArray(day)) return;
+
+        day.forEach((period, periodIndex) => {
+          if (!period) return;
+          parts.push(
+            `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${(
+              period
+            )}`
+          );
+        });
+      });
+    }
+
+
+    return this.setConfig(parts.join("&"));
+  }
+
 
     // Config[0] and Config[1]
     parts.push(`VideoInMode[${channel}].Config[0]=${params.config0}`);
@@ -553,6 +579,8 @@ export class CameraSetupAPI {
         });
       });
     }
+
+
 
     return this.setConfig(parts.join("&"));
   }
