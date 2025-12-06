@@ -261,7 +261,7 @@ export class CameraSetupAPI {
     const url = this.buildUrl(
       `/cgi-bin/configManager.cgi?action=setConfig&${paramString}`
     );
-    console.log(paramString)
+    console.log(paramString);
     const text = await this.request(url);
     return text.trim();
   }
@@ -537,34 +537,35 @@ export class CameraSetupAPI {
   ): Promise<string> {
     const parts: string[] = [];
 
-
-    
     // Mode
     parts.push(`VideoInMode[${channel}].Mode=${params.mode}`);
 
-      // ========================
-  if (params.mode === 1) {
-    // Expect params.timeSection like: string[7][N]
-    // e.g. "0 06:30:59-18:30:00" for each period
-    if (params.timeSection && Array.isArray(params.timeSection)) {
-      params.timeSection.forEach((day, dayIndex) => {
-        if (!Array.isArray(day)) return;
-
-        day.forEach((period, periodIndex) => {
-          if (!period) return;
-          parts.push(
-            `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${(
-              period
-            )}`
+    // ========================
+    if (params.mode === 1) {
+      // Expect params.timeSection like: string[7][N]
+      // e.g. "0 06:30:59-18:30:00" for each period
+      parts.push(
+            `VideoInMode[${channel}].TimeSection[0][0]=${params.timeSection?.[0]?.[0]}`
           );
-        });
-      });
+      // if (params.timeSection && Array.isArray(params.timeSection)) {
+      //   params.timeSection.forEach((day, dayIndex) => {
+      //     if (!Array.isArray(day)) return;
+      //     parts.push(
+      //       `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${period}`
+      //     );
+      //     day.forEach((period, periodIndex) => {
+      //       if (!period) return;
+      //       parts.push(
+      //         `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${
+      //           period
+      //         }`
+      //       );
+      //     });
+      //   });
+      // }
+
+      return this.setConfig(parts.join("&"));
     }
-
-
-    return this.setConfig(parts.join("&"));
-  }
-
 
     // Config[0] and Config[1]
     parts.push(`VideoInMode[${channel}].Config[0]=${params.config0}`);
@@ -575,13 +576,11 @@ export class CameraSetupAPI {
       params.timeSection.forEach((day, dayIndex) => {
         day.forEach((period, periodIndex) => {
           parts.push(
-            `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${(period)}`
+            `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${period}`
           );
         });
       });
     }
-
-
 
     return this.setConfig(parts.join("&"));
   }
