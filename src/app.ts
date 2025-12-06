@@ -368,6 +368,7 @@ app.post("/focus/:camId/move", async (req, res) => {
 
 app.post("/focus/:camId/stop", async (req, res) => {
   try {
+    console.log("focus stop", req.body);
     const camId = req.params.camId;
     const { direction, channel = 0, speed = 3 } = req.body;
     const { client, ip } = getCameraClient(camId);
