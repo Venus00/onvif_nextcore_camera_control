@@ -203,8 +203,8 @@ app.get(
 app.post(
   "/camera/:camId/video/zoom",
   route(async ({ setup }, body) => {
-    const { channel = 0, ...params } = body;
-    const response = await setup.setVideoZoom(params, channel);
+    const { channel = 0, config =0 ,...params } = body;
+    const response = await setup.setVideoZoom(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
   })  
 );
@@ -218,8 +218,8 @@ app.post(
   "/camera/:camId/video/focus",
 
   route(async ({ setup }, body) => {
-    const { channel = 0, ...params } = body;
-    const response = await setup.setVideoFocus(params, channel);
+    const { channel = 0,config=0, ...params } = body;
+    const response = await setup.setVideoFocus(params, channel , config);
     return { response, ok: setup.isSuccess(response) };
   })
 );
