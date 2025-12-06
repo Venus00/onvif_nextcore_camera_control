@@ -187,7 +187,14 @@ app.get(
   "/camera/:camId/video/whitebalance",
   route(async ({ setup }) => ({ config: await setup.getVideoWhiteBalance() }))
 );
-
+app.post(
+  "/camera/:camId/video/whitebalance",
+  route(async ({ setup }, body) => {
+    const { channel = 0, config = 0, ...params } = body;
+    const response = await setup.setVideoWhiteBalance(params, channel, config);
+    return { response, ok: setup.isSuccess(response) };
+  })
+);
 // Zoom
 app.get(
   "/camera/:camId/video/zoom",
