@@ -288,41 +288,41 @@ export class CameraSetupAPI {
   }
 
   // helper map: frontendKey -> camera param name
-async setVideoColor(
-  params: Record<string, any>,
-  channel: number = 0
-): Promise<string> {
+  async setVideoColor(
+    params: Record<string, any>,
+    channel: number = 0
+  ): Promise<string> {
+    const PROFILE_TO_INDEX: Record<string, number> = {
+      daytime: 0,
+      nighttime: 1,
+      normal: 2,
+    };
 
-  const PROFILE_TO_INDEX: Record<string, number> = {
-    daytime: 0,
-    nighttime: 1,
-    normal: 2,
-  };
+    const VIDEO_COLOR_KEYMAP: Record<string, string> = {
+      brightness: "Brightness",
+      contrast: "Contrast",
+      saturability: "Saturation",
+      chromaCNT: "ChromaSuppress",
+      gamma: "Gamma",
+      hue: "Hue",
+    };
+    let profileName = "normal";
+    const mapped: Record<string, any> = {};
+    for (const [k, v] of Object.entries(params)) {
+      if (k === "profile") {
+        profileName = k;
+        continue;
+      } // ⛔ DO NOT send profile=...
+      const camKey = VIDEO_COLOR_KEYMAP[k] ?? k;
+      mapped[camKey] = v;
+    }
 
-  const VIDEO_COLOR_KEYMAP: Record<string, string> = {
-    brightness: "Brightness",
-    contrast: "Contrast",
-    saturability: "Saturation",
-    chromaCNT: "ChromaSuppress",
-    gamma: "Gamma",
-    hue: "Hue",
-  };
-let profileName = "normal";
-  const mapped: Record<string, any> = {};
-  for (const [k, v] of Object.entries(params)) {
-    if (k === "profile") profileName = k;         // ⛔ DO NOT send profile=...
-    const camKey = VIDEO_COLOR_KEYMAP[k] ?? k;
-    mapped[camKey] = v;
+    const config = PROFILE_TO_INDEX[profileName];
+
+    return this.setConfig(
+      this.formatParams("VideoColor[0]", mapped, channel, config)
+    );
   }
-
-  const config = PROFILE_TO_INDEX[profileName];
-
-  return this.setConfig(
-    this.formatParams("VideoColor[0]", mapped, channel, config)
-  );
-}
-
-
 
   // 3.1.2 VideoSharpness
   async getVideoSharpness(): Promise<ParsedConfig> {
