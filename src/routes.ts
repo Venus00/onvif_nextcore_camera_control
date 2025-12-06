@@ -200,11 +200,28 @@ app.get(
   "/camera/:camId/video/zoom",
   route(async ({ setup }) => ({ config: await setup.getVideoZoom() }))
 );
+app.post(
+  "/camera/:camId/video/zoom",
+  route(async ({ setup }, body) => {
+    const { channel = 0, ...params } = body;
+    const response = await setup.setVideoZoom(params, channel);
+    return { response, ok: setup.isSuccess(response) };
+  })  
+);
 
 // Focus
 app.get(
   "/camera/:camId/video/focus",
   route(async ({ setup }) => ({ config: await setup.getVideoFocus() }))
+);
+app.post(
+  "/camera/:camId/video/focus",
+
+  route(async ({ setup }, body) => {
+    const { channel = 0, ...params } = body;
+    const response = await setup.setVideoFocus(params, channel);
+    return { response, ok: setup.isSuccess(response) };
+  })
 );
 
 // Defog
