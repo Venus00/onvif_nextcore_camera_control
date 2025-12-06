@@ -229,6 +229,14 @@ app.get(
   "/camera/:camId/video/defog",
   route(async ({ setup }) => ({ config: await setup.getVideoDefog() }))
 );
+app.post( 
+  "/camera/:camId/video/defog",
+  route(async ({ setup }, body) => {
+    const { channel = 0, config=0,...params } = body;
+    const response = await setup.setVideoDefog(params, channel , config);
+    return { response, ok: setup.isSuccess(response) };
+  })
+);
 
 // Flip
 app.get(
