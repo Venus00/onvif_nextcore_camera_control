@@ -651,24 +651,12 @@ export class CameraSetupAPI {
   ): Promise<string> {
   console.log("setEncode params:", params);
     const mainStreamResult = await this.setMainStreamEncode(params, channel);
-    const subStreamResult = await this.setSubStreamEncode(params, channel);
-    return `${mainStreamResult}\n${subStreamResult}`;
-  }
-  async setMainStreamEncode(
-    params: EncodeVideoParams,
-    channel: Channel = 0,
-    recordType: number = 0
-  ): Promise<string> {
-    const parts: string[] = [];
-    for (const [key, value] of Object.entries(params)) {
-      parts.push(
-        v
-      );
-    }
-    return this.setConfig(parts.join("&"));
+    // const subStreamResult = await this.setSubStreamEncode(params, channel);
+    return `${mainStreamResult}`;
   }
 
-  async setSubStreamEncode(
+
+  async setMainStreamEncode(
     params: EncodeVideoParams,
     channel: Channel = 0,
     extraStream: number = 0
@@ -676,7 +664,7 @@ export class CameraSetupAPI {
     const parts: string[] = [];
     for (const [key, value] of Object.entries(params)) {
       parts.push(
-        `Encode[${channel}].ExtraFormat[${extraStream}].Video.${key}=${encodeURIComponent(String(value))}`
+        `${key}=${encodeURIComponent(String(value))}`
       );
     }
     return this.setConfig(parts.join("&"));
