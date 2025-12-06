@@ -346,6 +346,7 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
 
 app.post("/focus/:camId/move", async (req, res) => {
   try {
+    console.log("focus move", req.body);
     const camId = req.params.camId;
     const { direction, speed = 5, channel = 0 } = req.body;
     const { client, ip } = getCameraClient(camId);
