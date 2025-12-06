@@ -261,6 +261,7 @@ export class CameraSetupAPI {
     const url = this.buildUrl(
       `/cgi-bin/configManager.cgi?action=setConfig&${paramString}`
     );
+    console.log(paramString)
     const text = await this.request(url);
     return text.trim();
   }
