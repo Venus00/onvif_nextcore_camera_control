@@ -649,7 +649,7 @@ export class CameraSetupAPI {
     params: EncodeVideoParams,
     channel: Channel = 0  
   ): Promise<string> {
-  console.log("setEncode params:", params);
+  // console.log("setEncode params:", params);
     const mainStreamResult = await this.setMainStreamEncode(params, channel);
     // const subStreamResult = await this.setSubStreamEncode(params, channel);
     return `${mainStreamResult}`;
@@ -667,6 +667,8 @@ export class CameraSetupAPI {
         `${key}=${encodeURIComponent(String(value))}`
       );
     }
+      console.log("setEncode params:", parts.join("&"));
+
     return this.setConfig(parts.join("&"));
   }
 
