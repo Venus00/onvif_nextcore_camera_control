@@ -123,7 +123,19 @@ app.post(
     return { response, ok: setup.isSuccess(response) };
   })
 );
-
+// video Sharpness
+app.get(
+  "/camera/:camId/video/sharpness",
+  route(async ({ setup }) => ({ config: await setup.getVideoSharpness() }))
+);
+app.post(
+  "/camera/:camId/video/sharpness",
+  route(async ({ setup }, body) => {
+    const { channel = 0, ...params } = body;
+    const response = await setup.setVideoSharpness(params, channel);
+    return { response, ok: setup.isSuccess(response) };
+  })
+);
 //vide mode
 app.get(
   "/camera/:camId/video/mode", // Changed from /video/inMode
