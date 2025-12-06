@@ -252,6 +252,20 @@ app.post(
     return { response, ok: setup.isSuccess(response) };
   })  
 );
+
+// denoise
+app.get(  
+  "/camera/:camId/video/denoise",
+  route(async ({ setup }) => ({ config: await setup.getVideoDenoise() }))
+);
+app.post(
+  "/camera/:camId/video/denoise",
+  route(async ({ setup }, body) => {
+    const { channel = 0, config=0, ...params } = body;
+    const response = await setup.setVideoDenoise(params, channel , config);
+    return { response, ok: setup.isSuccess(response) };
+  })
+);
 // Backlight
 app.get(
   "/camera/:camId/video/backlight",
