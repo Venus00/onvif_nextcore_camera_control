@@ -1,4 +1,6 @@
 import express from "express";
+import cors from "cors"; // <-- add this
+
 import CameraSetupAPI, {
   NetworkAPI,
   PTZAPI,
@@ -9,9 +11,21 @@ import CameraSetupAPI, {
   CameraClient,
 } from "./util";
 
+
 const app = express();
 app.use(express.json());
-app.use('cors');
+app.use(cors());
+// ============ CAMERA CONFIGURATION ============
+
+interface CameraInfo {
+  ip: string;
+  username: string;
+  password: string;
+}
+
+
+app.use(express.json());
+
 // ============ CAMERA CONFIGURATION ============
 
 interface CameraInfo {
@@ -760,3 +774,5 @@ app.listen(PORT, () => {
 });
 
 export default app;
+
+
