@@ -14,7 +14,6 @@ import cors from "cors";
 // @ts-ignore
 import DigestFetch from "digest-fetch";
 import { executeCommand, PtzCommand } from "./util/pelcoD";
-import CameraSetupAPI, { VideoColorParams } from "./util/cameraSetup";
 //{"pan":0.5,"tilt":0.2,"zoom":0.1,"time":2,"stop":true}
 async function discoverCameras() {
   console.log("Starting ONVIF discovery...");
