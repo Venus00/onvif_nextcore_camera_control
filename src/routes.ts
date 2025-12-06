@@ -1,6 +1,13 @@
-
 import express from "express";
-import CameraSetupAPI, { NetworkAPI, PTZAPI, EventsAPI, SystemAPI, StorageAPI, LiveAPI, CameraClient } from "./util";
+import CameraSetupAPI, {
+  NetworkAPI,
+  PTZAPI,
+  EventsAPI,
+  SystemAPI,
+  StorageAPI,
+  LiveAPI,
+  CameraClient,
+} from "./util";
 
 const app = express();
 app.use(express.json());
@@ -93,10 +100,7 @@ app.get(
   "/camera/:camId/video/color",
   route(async ({ setup }) => ({ config: await setup.getVideoColor() }))
 );
-app.get(
-  "/camera/:camId/video/inMode",
-  route(async ({ setup }) => ({ config: await setup.getVideoMode() }))
-);
+
 app.post(
   "/camera/:camId/video/color",
   route(async ({ setup }, body) => {
@@ -106,6 +110,24 @@ app.post(
   })
 );
 
+//vide mode
+app.get(
+  "/camera/:camId/video/mode", // Changed from /video/inMode
+  route(async ({ setup }) => ({ config: await setup.getVideoMode() }))
+);
+
+// Add POST route
+app.post(
+  "/camera/:camId/video/mode",
+  route(async ({ setup }, body) => {
+    const { channel = 0, mode, config0, config1, timeSection } = body;
+    const response = await setup.setVideoMode(
+      { mode, config0, config1, timeSection },
+      channel
+    );
+    return { response, ok: setup.isSuccess(response) };
+  })
+);
 // Day/Night
 app.get(
   "/camera/:camId/video/daynight",
