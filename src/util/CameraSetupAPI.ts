@@ -261,6 +261,7 @@ export class CameraSetupAPI {
     const url = this.buildUrl(
       `/cgi-bin/configManager.cgi?action=setConfig&${paramString}`
     );
+    console.log(paramString)
     const text = await this.request(url);
     return text.trim();
   }
@@ -574,7 +575,7 @@ export class CameraSetupAPI {
       params.timeSection.forEach((day, dayIndex) => {
         day.forEach((period, periodIndex) => {
           parts.push(
-            `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${encodeURIComponent(period)}`
+            `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${(period)}`
           );
         });
       });
