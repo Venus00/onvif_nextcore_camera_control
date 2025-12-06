@@ -176,7 +176,7 @@ app.get(
 app.post(
   "/camera/:camId/video/exposure",
   route(async ({ setup }, body) => {
-    const { channel = 0, config = 2, ...params } = body;
+    const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoExposure(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
   })
