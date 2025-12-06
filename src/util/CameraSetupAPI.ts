@@ -288,22 +288,41 @@ export class CameraSetupAPI {
   }
 
   // helper map: frontendKey -> camera param name
-
 async setVideoColor(
   params: Record<string, any>,
   channel: number = 0,
-  config: number = 2
+  profileName: "daytime" | "nighttime" | "normal" = "normal"
 ): Promise<string> {
-  // translate keys to camera API names
+
+  const PROFILE_TO_INDEX: Record<string, number> = {
+    daytime: 0,
+    nighttime: 1,
+    normal: 2,
+  };
+
+  const VIDEO_COLOR_KEYMAP: Record<string, string> = {
+    brightness: "Brightness",
+    contrast: "Contrast",
+    saturability: "Saturation",
+    chromaCNT: "ChromaSuppress",
+    gamma: "Gamma",
+    hue: "Hue",
+  };
+
   const mapped: Record<string, any> = {};
   for (const [k, v] of Object.entries(params)) {
-    const mappedKey = VIDEO_COLOR_KEYMAP[k] ?? k; // fallback to original if missing
-    mapped[mappedKey] = v;
+    if (k === "profile") continue;         // ⛔ DO NOT send profile=...
+    const camKey = VIDEO_COLOR_KEYMAP[k] ?? k;
+    mapped[camKey] = v;
   }
 
-  // use the 'table.' prefix which matches GET keys and most device expectations
-  return this.setConfig(this.formatParams("table.VideoColor", mapped, channel, params.profile));
+  const config = PROFILE_TO_INDEX[profileName];
+
+  return this.setConfig(
+    this.formatParams("VideoColor", mapped, channel, config)
+  );
 }
+
 
 
   // 3.1.2 VideoSharpness
