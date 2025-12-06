@@ -1,0 +1,48 @@
+{
+    "id": 341,
+    "params": [
+        {
+            "id": 339,
+            "params": {
+                "table": {
+                    "DSTEnable": false,
+                    "DSTEnd": {
+                        "Day": 2,
+                        "Hour": 0,
+                        "Minute": 0,
+                        "Month": 1,
+                        "Week": 0,
+                        "Year": 2025
+                    },
+                    "DSTStart": {
+                        "Day": 1,
+                        "Hour": 0,
+                        "Minute": 0,
+                        "Month": 1,
+                        "Week": 0,
+                        "Year": 2025
+                    },
+                    "TimeFormat": "yyyy-MM-dd HH:mm:ss"
+                }
+            },
+            "result": true,
+            "session": 52915397
+        },
+        {
+            "id": 340,
+            "params": {
+                "table": {
+                    "Address": "clock.isc.org",
+                    "Enable": false,
+                    "Port": 123,
+                    "TimeZone": 13,
+                    "UpdatePeriod": 10
+                }
+            },
+            "result": true,
+            "session": 52915397
+        }
+    ],
+    "result": true,
+    "session": 52915397
+}

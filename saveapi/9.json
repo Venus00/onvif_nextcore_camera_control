@@ -1,0 +1,127 @@
+{
+  "method": "system.multicall",
+  "params": [
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoColor"
+      },
+      "id": 175,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoImageControl"
+      },
+      "id": 176,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInSharpness"
+      },
+      "id": 177,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInDenoise"
+      },
+      "id": 178,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInFFC"
+      },
+      "id": 179,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInZoom"
+      },
+      "id": 180,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInPseudoColorThreshold"
+      },
+      "id": 181,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInExposure"
+      },
+      "id": 182,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInIRExposure"
+      },
+      "id": 183,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInBacklight"
+      },
+      "id": 184,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInWhiteBalance"
+      },
+      "id": 185,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInDayNight"
+      },
+      "id": 186,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInFocus"
+      },
+      "id": 187,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInDefog"
+      },
+      "id": 188,
+      "session": 904602562
+    },
+    {
+      "method": "configManager.getConfig",
+      "params": {
+        "name": "VideoInDewave"
+      },
+      "id": 189,
+      "session": 904602562
+    }
+  ],
+  "id": 190,
+  "session": 904602562
+}

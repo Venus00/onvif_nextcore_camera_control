@@ -20,14 +20,23 @@ export async function getVideoEncoderConfiguration(camId: string) {
     </s:Body>
   </s:Envelope>`;
 
-  const responseXml = await sendSoapRequest(cam.ip, cam.port || 80, xml, "http://www.onvif.org/ver10/media/wsdl/GetVideoEncoderConfiguration");
+  const responseXml = await sendSoapRequest(
+    cam.ip,
+    cam.port || 80,
+    xml,
+    "http://www.onvif.org/ver10/media/wsdl/GetVideoEncoderConfiguration"
+  );
 
   // Parse SOAP response
-  const json = await parseStringPromise(responseXml || '', { explicitArray: false });
+  const json = await parseStringPromise(responseXml || "", {
+    explicitArray: false,
+  });
 
   try {
     const config =
-      json["SOAP-ENV:Envelope"]["SOAP-ENV:Body"]["trt:GetVideoEncoderConfigurationResponse"]["trt:Configuration"];
+      json["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][
+        "trt:GetVideoEncoderConfigurationResponse"
+      ]["trt:Configuration"];
 
     return {
       token: config.$.token,
@@ -53,10 +62,18 @@ export async function getVideoEncoderConfiguration(camId: string) {
   }
 }
 
-export async function setVideoEncoderConfiguration(camId: string, config: VideoEncoderConfig) {
+export async function setVideoEncoderConfiguration(
+  camId: string,
+  config: VideoEncoderConfig
+) {
   const cam = cameras[camId];
   if (!cam) throw new Error("Camera not found");
-  console.log("settings configuration for video enconfing foir cam : ", camId, " : ", config)
+  console.log(
+    "settings configuration for video enconfing foir cam : ",
+    camId,
+    " : ",
+    config
+  );
   const securityHeader = buildSecurityHeader(cam.username, cam.password);
 
   const xml = `<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
@@ -89,22 +106,27 @@ export async function setVideoEncoderConfiguration(camId: string, config: VideoE
 `;
 
   try {
-    console.log("to")
+    console.log("to");
 
-    const responseXml = await sendSoapRequest(cam.ip, cam.port || 80, xml, "http://www.onvif.org/ver10/media/wsdl/SetVideoEncoderConfiguration");
-    console.log(responseXml)
+    const responseXml = await sendSoapRequest(
+      cam.ip,
+      cam.port || 80,
+      xml,
+      "http://www.onvif.org/ver10/media/wsdl/SetVideoEncoderConfiguration"
+    );
+    // console.log(responseXml)
 
-    const json = await parseStringPromise(responseXml || '', { explicitArray: false });
+    const json = await parseStringPromise(responseXml || "", {
+      explicitArray: false,
+    });
 
-
-    return {message:"camera has been succefully applied configuration"}
+    return { message: "camera has been succefully applied configuration" };
   } catch (err: any) {
     throw new Error("Failed to parse response: " + err?.message);
   }
 }
 
-
-export async function focusMove(camId: string, speed: number,token:string) {
+export async function focusMove(camId: string, speed: number, token: string) {
   const cam = cameras[camId];
   if (!cam) throw new Error("Camera not found");
 
@@ -134,7 +156,7 @@ export async function focusMove(camId: string, speed: number,token:string) {
 
   return responseXml;
 }
-export async function focusStop(camId: string,token:string) {
+export async function focusStop(camId: string, token: string) {
   const cam = cameras[camId];
   if (!cam) throw new Error("Camera not found");
 
@@ -160,5 +182,3 @@ export async function focusStop(camId: string,token:string) {
 
   return responseXml;
 }
-
-

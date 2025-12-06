@@ -1,0 +1,536 @@
+{
+    "id": 190,
+    "params": [
+        {
+            "id": 175,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "Brightness": 25,
+                            "ChromaSuppress": 50,
+                            "Contrast": 50,
+                            "Gamma": 50,
+                            "Hue": 50,
+                            "Saturation": 50,
+                            "Style": "Standard",
+                            "TimeSection": "0 00:00:00-24:00:00"
+                        },
+                        {
+                            "Brightness": 50,
+                            "ChromaSuppress": 50,
+                            "Contrast": 50,
+                            "Gamma": 50,
+                            "Hue": 50,
+                            "Saturation": 50,
+                            "Style": "Standard",
+                            "TimeSection": "0 00:00:00-24:00:00"
+                        },
+                        {
+                            "Brightness": 60,
+                            "ChromaSuppress": 50,
+                            "Contrast": 50,
+                            "Gamma": 50,
+                            "Hue": 50,
+                            "Saturation": 50,
+                            "Style": "Standard",
+                            "TimeSection": "1 00:00:00-24:00:00"
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 176,
+            "params": {
+                "table": [
+                    {
+                        "Flip": false,
+                        "Freeze": false,
+                        "HorizontalFlip": false,
+                        "Mirror": false,
+                        "Rotate90": 0,
+                        "Stable": 0,
+                        "VerticalFlip": false
+                    }
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 177,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "Level": 50,
+                            "Mode": 1,
+                            "Sharpness": 50
+                        },
+                        {
+                            "Level": 50,
+                            "Mode": 1,
+                            "Sharpness": 50
+                        },
+                        {
+                            "Level": 50,
+                            "Mode": 1,
+                            "Sharpness": 50
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 178,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "2DEnable": true,
+                            "2DLevel": 50,
+                            "3DAutoType": {
+                                "AutoLevel": 50
+                            },
+                            "3DManulType": {
+                                "SnfLevel": 0,
+                                "TnfLevel": 0
+                            },
+                            "3DType": "Auto",
+                            "DenoiseAlgorithm1": {
+                                "SnfLevel": 50,
+                                "TnfLevel": 50,
+                                "Type": "Manual"
+                            }
+                        },
+                        {
+                            "2DEnable": true,
+                            "2DLevel": 50,
+                            "3DAutoType": {
+                                "AutoLevel": 50
+                            },
+                            "3DManulType": {
+                                "SnfLevel": 0,
+                                "TnfLevel": 0
+                            },
+                            "3DType": "Auto",
+                            "DenoiseAlgorithm1": {
+                                "SnfLevel": 50,
+                                "TnfLevel": 50,
+                                "Type": "Manual"
+                            }
+                        },
+                        {
+                            "2DEnable": true,
+                            "2DLevel": 50,
+                            "3DAutoType": {
+                                "AutoLevel": 50
+                            },
+                            "3DManulType": {
+                                "SnfLevel": 0,
+                                "TnfLevel": 0
+                            },
+                            "3DType": "Auto",
+                            "DenoiseAlgorithm1": {
+                                "SnfLevel": 50,
+                                "TnfLevel": 50,
+                                "Type": "Manual"
+                            }
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 179,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "HLP": {
+                                "Duration": "300",
+                                "Enable": false,
+                                "Threshold": 800
+                            },
+                            "Mode": "Auto",
+                            "Period": 600
+                        },
+                        {
+                            "HLP": {
+                                "Duration": "300",
+                                "Enable": false,
+                                "Threshold": 800
+                            },
+                            "Mode": "Auto",
+                            "Period": 600
+                        },
+                        {
+                            "HLP": {
+                                "Duration": "300",
+                                "Enable": false,
+                                "Threshold": 800
+                            },
+                            "Mode": "Auto",
+                            "Period": 600
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 180,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "DigitalZoom": true,
+                            "Speed": 100,
+                            "ZoomLimit": 4
+                        },
+                        {
+                            "DigitalZoom": false,
+                            "Speed": 100,
+                            "ZoomLimit": 4
+                        },
+                        {
+                            "DigitalZoom": false,
+                            "Speed": 100,
+                            "ZoomLimit": 4
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 181,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "WarningBlue": 80,
+                            "WarningGreen": 200,
+                            "WarningRed": 200
+                        },
+                        {
+                            "WarningBlue": 80,
+                            "WarningGreen": 200,
+                            "WarningRed": 200
+                        },
+                        {
+                            "WarningBlue": 80,
+                            "WarningGreen": 200,
+                            "WarningRed": 200
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 182,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "AntiFlicker": 0,
+                            "Compensation": 50,
+                            "DoubleExposure": 0,
+                            "Gain": 50,
+                            "GainMax": 50,
+                            "GainMin": 0,
+                            "Iris": 50,
+                            "IrisAuto": false,
+                            "IrisMax": 50,
+                            "IrisMin": 10,
+                            "Mode": 8,
+                            "RecoveryTime": 900,
+                            "SlowAutoExposure": 50,
+                            "SlowShutter": false,
+                            "SlowSpeed": 25,
+                            "Speed": 25,
+                            "Value1": 0,
+                            "Value2": 40
+                        },
+                        {
+                            "AntiFlicker": 0,
+                            "Compensation": 50,
+                            "DoubleExposure": 0,
+                            "Gain": 50,
+                            "GainMax": 50,
+                            "GainMin": 0,
+                            "Iris": 50,
+                            "IrisAuto": false,
+                            "IrisMax": 50,
+                            "IrisMin": 10,
+                            "Mode": 0,
+                            "RecoveryTime": 900,
+                            "SlowAutoExposure": 50,
+                            "SlowShutter": false,
+                            "SlowSpeed": 25,
+                            "Speed": 25,
+                            "Value1": 0,
+                            "Value2": 40
+                        },
+                        {
+                            "AntiFlicker": 0,
+                            "Compensation": 50,
+                            "DoubleExposure": 0,
+                            "Gain": 50,
+                            "GainMax": 50,
+                            "GainMin": 0,
+                            "Iris": 50,
+                            "IrisAuto": false,
+                            "IrisMax": 50,
+                            "IrisMin": 10,
+                            "Mode": 0,
+                            "RecoveryTime": 900,
+                            "SlowAutoExposure": 50,
+                            "SlowShutter": false,
+                            "SlowSpeed": 25,
+                            "Speed": 25,
+                            "Value1": 0,
+                            "Value2": 40
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 183,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "SmartIRExposure": false
+                        },
+                        {
+                            "SmartIRExposure": false
+                        },
+                        {
+                            "SmartIRExposure": false
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 184,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "BacklightMode": "Default",
+                            "BacklightRegion": [
+                                3096,
+                                3096,
+                                5096,
+                                5096
+                            ],
+                            "GlareInhibition": 50,
+                            "Intensity": 50,
+                            "IntensityMode": "AutoIntensity",
+                            "Mode": "Off",
+                            "WideDynamicRange": 50
+                        },
+                        {
+                            "BacklightMode": "Default",
+                            "BacklightRegion": [
+                                3096,
+                                3096,
+                                5096,
+                                5096
+                            ],
+                            "GlareInhibition": 50,
+                            "Intensity": 50,
+                            "IntensityMode": "AutoIntensity",
+                            "Mode": "Off",
+                            "WideDynamicRange": 50
+                        },
+                        {
+                            "BacklightMode": "Default",
+                            "BacklightRegion": [
+                                3096,
+                                3096,
+                                5096,
+                                5096
+                            ],
+                            "GlareInhibition": 50,
+                            "Intensity": 50,
+                            "IntensityMode": "AutoIntensity",
+                            "Mode": "Off",
+                            "WideDynamicRange": 50
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 185,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "ColorTemperatureLevel": 50,
+                            "GainBlue": 50,
+                            "GainGreen": 50,
+                            "GainRed": 50,
+                            "Mode": "Auto"
+                        },
+                        {
+                            "ColorTemperatureLevel": 50,
+                            "GainBlue": 50,
+                            "GainGreen": 50,
+                            "GainRed": 50,
+                            "Mode": "Auto"
+                        },
+                        {
+                            "ColorTemperatureLevel": 50,
+                            "GainBlue": 50,
+                            "GainGreen": 50,
+                            "GainRed": 50,
+                            "Mode": "Auto"
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 186,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "Delay": 10,
+                            "Mode": "Color",
+                            "Sensitivity": 2,
+                            "Type": "Mechanism"
+                        },
+                        {
+                            "Delay": 10,
+                            "Mode": "Brightness",
+                            "Sensitivity": 2,
+                            "Type": "Mechanism"
+                        },
+                        {
+                            "Delay": 10,
+                            "Mode": "Brightness",
+                            "Sensitivity": 2,
+                            "Type": "Mechanism"
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 187,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "AutoFocusTrace": 0,
+                            "FocusLimit": 5000,
+                            "FocusLimitSelectMode": "Auto",
+                            "IRCorrection": 2,
+                            "Mode": 2,
+                            "Sensitivity": 0
+                        },
+                        {
+                            "AutoFocusTrace": 0,
+                            "FocusLimit": 5000,
+                            "FocusLimitSelectMode": "Auto",
+                            "IRCorrection": 2,
+                            "Mode": 3,
+                            "Sensitivity": 0
+                        },
+                        {
+                            "AutoFocusTrace": 0,
+                            "FocusLimit": 5000,
+                            "FocusLimitSelectMode": "Auto",
+                            "IRCorrection": 2,
+                            "Mode": 3,
+                            "Sensitivity": 0
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 188,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "Intensity": 1,
+                            "LightIntensityLevel": 12,
+                            "LightIntensityMode": "Auto",
+                            "Mode": "Auto"
+                        },
+                        {
+                            "Intensity": 1,
+                            "LightIntensityLevel": 12,
+                            "LightIntensityMode": "Auto",
+                            "Mode": "Off"
+                        },
+                        {
+                            "Intensity": 1,
+                            "LightIntensityLevel": 12,
+                            "LightIntensityMode": "Auto",
+                            "Mode": "Off"
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        },
+        {
+            "id": 189,
+            "params": {
+                "table": [
+                    [
+                        {
+                            "Intensity": 0,
+                            "Mode": "Auto"
+                        },
+                        {
+                            "Intensity": 0,
+                            "Mode": "Off"
+                        },
+                        {
+                            "Intensity": 0,
+                            "Mode": "Off"
+                        }
+                    ]
+                ]
+            },
+            "result": true,
+            "session": 904602562
+        }
+    ],
+    "result": true,
+    "session": 904602562
+}

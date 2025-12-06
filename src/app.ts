@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
 import { CameraInfo, cameras, type VideoEncoderConfig } from "./util/camera";
 import {
@@ -14,6 +14,7 @@ import cors from "cors";
 // @ts-ignore
 import DigestFetch from "digest-fetch";
 import { executeCommand, PtzCommand } from "./util/pelcoD";
+import CameraSetupAPI, { VideoColorParams } from "./util/cameraSetup";
 //{"pan":0.5,"tilt":0.2,"zoom":0.1,"time":2,"stop":true}
 async function discoverCameras() {
   console.log("Starting ONVIF discovery...");
@@ -67,7 +68,7 @@ function startTemperaturePolling(camId: string) {
 }
 
 // Start polling for a specific camera (e.g., cam1) on server start
-startTemperaturePolling("cam1");
+// startTemperaturePolling("cam1");
 
 app.post("/ptz/:camId/zoom", async (req, res) => {
   try {
@@ -534,6 +535,27 @@ app.post("/ptz/:camId/move", async (req, res) => {
   }
 });
 
+app.post("/test/:camId/test", async (req, res) => {
+  try {
+    // console.log("test", req.body);
+    let camId = req.params.camId;
+
+    const connection = getCameraClient(camId);
+
+    const api = new CameraSetupAPI(connection);
+
+    // const result = await api.getVideoColor();
+    // console.log(result);
+   const result = await  api.setVideoColor({ Brightness: 60 },1, 2);
+  console.log (result);
+    const result2 = await api.getVideoColor();
+    console.log(result2);
+    res.json({ success: true });
+    // SET
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 app.post("/ptz/:camId/stop", async (req, res) => {
   try {
     let camId = req.params.camId;

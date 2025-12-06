@@ -1,0 +1,50 @@
+{
+    "id": 332,
+    "params": [
+        {
+            "id": 328,
+            "params": {
+                "table": {
+                    "LocalNo": 8,
+                    "LockLoginEnable": true,
+                    "LockLoginTimes": 5,
+                    "LoginFailLockTime": 300,
+                    "MachineName": "HG0438PAZ00098",
+                    "MaxOnlineTime": 3600
+                }
+            },
+            "result": true,
+            "session": 52915397
+        },
+        {
+            "id": 329,
+            "params": {
+                "table": "English"
+            },
+            "result": true,
+            "session": 52915397
+        },
+        {
+            "id": 330,
+            "params": {
+                "table": "PAL"
+            },
+            "result": true,
+            "session": 52915397
+        },
+        {
+            "error": {
+                "code": 268894210,
+                "message": ""
+            },
+            "id": 331,
+            "params": {
+                "table": null
+            },
+            "result": false,
+            "session": 52915397
+        }
+    ],
+    "result": true,
+    "session": 52915397
+}
