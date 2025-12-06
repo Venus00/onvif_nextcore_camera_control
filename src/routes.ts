@@ -11,7 +11,7 @@ import CameraSetupAPI, {
 
 const app = express();
 app.use(express.json());
-app.enable('cors');
+app.use('cors');
 // ============ CAMERA CONFIGURATION ============
 
 interface CameraInfo {
