@@ -627,32 +627,18 @@ app.post(
     console.log("Setting preset", presetId, "on channel", channel);
     let params = { Name: presetId.Name }  ;
 
-  //     'status.Foci': '2688',
-  // 'status.Focus.Focus.FocusPosition': '0.000000',
-  // 'status.Focus.Focus.Status': 'Unknown',
-  // 'status.HFov': '0',
-  // 'status.Iris.Iris.IrisValue': '0.000000',
-  // 'status.Iris.Iris.Status': 'Unknown',
-  // 'status.PTZFocusHD': '7322',
-  // 'status.PTZZoomHD': '15166',
-  // 'status.PanAngleHD': '0',
-  // 'status.Postion[0]': '0.000000',
-  // 'status.Postion[1]': '0.000000',
-  // 'status.Postion[2]': '118.484375',
-  // 'status.TiltAngleHD': '0',
-  // 'status.VFov': '0',
-  // 'status.ZoomValue': '167'
+
 
   
     const ptzActual = await ptz.getPTZStatus(channel);
     console.log("PTZ Actual Position:", ptzActual);
 
     const coordinate = {
-    Name: presetId.Name
+    Enable: true
   };
 
   let response = await ptz.setPresetConfig(params, channel, presetId.id);
-
+   await ptz.setPresetConfig(coordinate, channel, presetId.id);
     return { response, ok: ptz.isSuccess(response) };
   })
 );
