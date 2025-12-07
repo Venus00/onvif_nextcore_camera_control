@@ -611,7 +611,8 @@ app.post(
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
     console.log("Setting preset", presetId, "on channel", channel);
-    const response = await ptz.setPreset(presetId.id, channel);
+    const params = {enable: presetId.enable, Name: presetId.name }  ;
+    const response = await ptz.setPresetConfig(params , channel, presetId.id);
     return { response, ok: ptz.isSuccess(response) };
   })
 );
