@@ -632,7 +632,7 @@ app.post(
   
     const ptzActual = await ptz.getPTZStatus(channel);
     console.log("PTZ Actual Position:", ptzActual);
-    let position [] = {3};
+
     const cordinate = {
       Name: presetId.Name ,
       Enable : true ,
