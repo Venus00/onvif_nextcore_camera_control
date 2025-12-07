@@ -180,15 +180,43 @@ export class PTZAPI {
     action: 'start' | 'stop',
     channel: PTZChannel,
     code: PTZCode,
-    speed ?: number,
-    arg1: number = 0,
-    arg2: number = 0,
-    arg3: number = 0,
-    arg4?: number
+    speed : number =4,
+
   ): Promise<string> {
-    if (speed ) arg1 = speed;
+    
+    let  args = [0, 0, 0];
+
+    switch (code) {
+      case "Up":
+        code = "Down";
+        args = [0, speed, 0];
+        break;
+      case "Down":
+        code = "Up";
+        args = [0, speed, 0];
+        break;
+      case "Left":
+        code = "Left";
+        args = [0, speed, 0];
+        break;
+      case "Right":
+        code = "Right";
+        args = [0, speed, 0];
+        break;
+      case "ZoomTele":
+        code = "ZoomTele";
+        args = [0, 0, speed];
+        break;
+      case "ZoomWide":
+        code = "ZoomWide";
+        args = [0, 0, speed];
+        break;
+
+      default:
+        throw new Error("Invalid direction");
+    }
     let url = this.buildUrl(
-      `/cgi-bin/ptz.cgi?action=${action}&channel=0&code=${code}&arg1=0&arg2=4&arg3=${arg3}`
+      `/cgi-bin/ptz.cgi?action=${action}&channel=${channel}&code=${code}&arg1=${args[0]}&arg2=${args[1]}&arg3=${args[2]}`
     );
     // if (arg4 !== undefined) url += `&arg4=${arg4}`;
     return (await this.request(url)).trim();
