@@ -188,7 +188,7 @@ export class PTZAPI {
   ): Promise<string> {
     if (speed ) arg1 = speed;
     let url = this.buildUrl(
-      `/cgi-bin/ptz.cgi?action=${action}&channel=0&code=${code}&arg1=${arg1}&arg2=${arg2}&arg3=${arg3}`
+      `/cgi-bin/ptz.cgi?action=${action}&channel=0&code=${code}&arg1=4&arg2=${arg2}&arg3=${arg3}`
     );
     // if (arg4 !== undefined) url += `&arg4=${arg4}`;
     return (await this.request(url)).trim();
