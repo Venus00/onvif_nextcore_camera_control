@@ -175,7 +175,7 @@ export function createUDPClient(config: UDPClientConfig = {}): {
         initialMessage
     } = config;
 
-    const client = dgram.createSocket('udp4');
+    const client = dgram.createSocket({ type: 'udp4', reuseAddr: true });
     const wsServer = createWebSocketServer(wsPort);
 
     client.on('error', (err) => {
