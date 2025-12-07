@@ -612,6 +612,9 @@ app.post(
     const { presetId, channel = 0 } = body;
     console.log("Setting preset", presetId, "on channel", channel);
     let params = { Name: presetId.Name }  ;
+
+    const ptzActual = await ptz.getPTZStatus(channel);
+    console.log("PTZ Actual Position:", ptzActual);
     let response = await ptz.setPresetConfig(params , channel, presetId.id);
      let paramss = { Enable : presetId.Enable }  ;
      response = await ptz.setPresetConfig(paramss , channel, presetId.id);
