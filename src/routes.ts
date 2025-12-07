@@ -25,7 +25,7 @@ async function monitorPTZFocusHD(camId: string) {
 
     if (match) {
       const focusValue = parseFloat(match[1]);
-      console.log(`PTZFocusHD: ${focusValue}`);
+      // console.log(`PTZFocusHD: ${focusValue}`);
     }
   } catch (err: any) {
     console.error("Error fetching PTZFocusHD:", err.message);
