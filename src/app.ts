@@ -989,9 +989,9 @@ app.listen(PORT, async () => {
   // WebSocket server on port 8080 for real-time streaming
   const { udpClient, wsServer } = createUDPClient({
     wsPort: 8080,
-    localPort: 5012,        // Local port to receive data on
-    remoteHost: 'localhost',  // Remote server IP
-    remotePort: 5012        // Remote server port (for logging)
+    localPort: 5013,        // Local port to receive data on (different from Python server)
+    remoteHost: '127.0.0.1',  // Python server IP
+    remotePort: 5012        // Python server port
   });
 
   console.log(`Service Backend server running on http://localhost:${PORT}`);

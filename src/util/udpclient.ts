@@ -184,18 +184,6 @@ export function createUDPClient(config: UDPClientConfig = {}): {
     });
 
     client.on('message', (msg, rinfo) => {
-        // Accept from localhost variations (127.0.0.1, ::1, localhost)
-        const isLocalhost = rinfo.address === '127.0.0.1' ||
-            rinfo.address === 'localhost' ||
-            rinfo.address === '::1' ||
-            rinfo.address === '::ffff:127.0.0.1';
-
-        // Optional: Filter messages from specific remote host
-        if (remoteHost && remoteHost !== '0.0.0.0' && !isLocalhost && rinfo.address !== remoteHost) {
-            console.log(`[UDP] Ignoring message from ${rinfo.address}:${rinfo.port} (expecting ${remoteHost})`);
-            return;
-        }
-
         console.log(`\n[UDP] Received ${msg.length} bytes from ${rinfo.address}:${rinfo.port}`);
 
         const parsed = parseFrame(msg);
