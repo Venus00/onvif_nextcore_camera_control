@@ -13,7 +13,8 @@ import cors from "cors";
 // Use require for digest-fetch to avoid ESM/CJS import issues
 // @ts-ignore
 import DigestFetch from "digest-fetch";
-import { executeCommand, PtzCommand } from "./util/pelcoD";
+// import { executeCommand, PtzCommand } from "./util/pelcoD";
+import { createUDPClient } from "./util/udpclient";
 //{"pan":0.5,"tilt":0.2,"zoom":0.1,"time":2,"stop":true}
 async function discoverCameras() {
   console.log("Starting ONVIF discovery...");
@@ -628,9 +629,9 @@ async function monitorPTZFocusHD(camId: string) {
 }
 
 // Start monitoring PTZFocusHD every 1 second
-setInterval(() => {
-  monitorPTZFocusHD("cam2");
-}, 1000);
+// setInterval(() => {
+//   monitorPTZFocusHD("cam2");
+// }, 1000);
 
 async function getDevice(camId: string) {
   const cfg: CameraInfo = cameras[camId] as CameraInfo;
@@ -982,7 +983,17 @@ app.get("/smart/error-codes", (req: Request, res: Response) => {
 });
 
 app.listen(PORT, async () => {
-  await discoverCameras();
+  // await discoverCameras();
+
+  // Start UDP client for object tracking data (AI-MAP stream)
+  // WebSocket server on port 8080 for real-time streaming
+  const { udpClient, wsServer } = createUDPClient({
+    wsPort: 8080,
+    localPort: 5012,        // Local port to receive data on
+    remoteHost: '192.168.1.223',  // Remote server IP
+    remotePort: 5012        // Remote server port (for logging)
+  });
 
   console.log(`Service Backend server running on http://localhost:${PORT}`);
+  console.log(`WebSocket server running on ws://localhost:8080`);
 });
