@@ -176,140 +176,104 @@ export class PTZAPI {
     return this.parseResponse(await this.request(url));
   }
 
-  async ptzControl(
-    action: 'start' | 'stop',
-    channel: PTZChannel,
-    code: PTZCode,
-    speed : number =4,
+ async ptzControl(
+  action: 'start' | 'stop',
+  channel: PTZChannel,
+  code: PTZCode,
+  arg1: number = 0,
+  arg2: number = 0,
+  arg3: number = 0,
+  arg4?: number
+): Promise<string> {
+  const url = this.buildUrl(
+    `/cgi-bin/ptz.cgi?action=${action}&channel=${channel}&code=${code}&arg1=${arg1}&arg2=${arg2}&arg3=${arg3}${arg4 !== undefined ? `&arg4=${arg4}` : ''}`
+  );
+  return (await this.request(url)).trim();
+}
 
-  ): Promise<string> {
-    
-    let  args = [0, 0, 0];
+// Convenience methods for common PTZ operations
+async moveUp(channel: PTZChannel = 0, speed: number = 4): Promise<string> {
+  return this.ptzControl('start', channel, 'Up', 0, speed, 0);
+}
 
-    switch (code) {
-      case "Up":
-        code = "Down";
-        args = [0, speed, 0];
-        break;
-      case "Down":
-        code = "Up";
-        args = [0, speed, 0];
-        break;
-      case "Left":
-        code = "Left";
-        args = [0, speed, 0];
-        break;
-      case "Right":
-        code = "Right";
-        args = [0, speed, 0];
-        break;
-      case "ZoomTele":
-        code = "ZoomTele";
-        args = [0, 0, 0];
-        break;
-      case "ZoomWide":
-        code = "ZoomWide";
-        args = [0, 0, 0];
-        break;
-      case "FocusNear":
-        code = "FocusNear";
-        args = [0, 0, 0];
-        break;
-      case "FocusFar":
-        code = "FocusFar";
-        args = [0, 0, 0];
-        break;
-      default:
-        throw new Error("Invalid direction");
-    }
-    let url = this.buildUrl(
-      `/cgi-bin/ptz.cgi?action=${action}&channel=${channel}&code=${code}&arg1=${args[0]}&arg2=${args[1]}&arg3=${args[2]}`
-    );
-    // if (arg4 !== undefined) url += `&arg4=${arg4}`;
-    return (await this.request(url)).trim();
-  }
+async moveDown(channel: PTZChannel = 0, speed: number = 4): Promise<string> {
+  return this.ptzControl('start', channel, 'Down', 0, speed, 0);
+}
 
-  // Convenience methods for common PTZ operations
-  async moveUp(channel: PTZChannel = 0, speed: number = 4): Promise<string> {
-    return this.ptzControl('start', channel, 'Up', speed);
-  }
+async moveLeft(channel: PTZChannel = 0, speed: number = 4): Promise<string> {
+  return this.ptzControl('start', channel, 'Left', 0, speed, 0);
+}
 
-  async moveDown(channel: PTZChannel = 0, speed: number = 4): Promise<string> {
-    return this.ptzControl('start', channel, 'Down', speed);
-  }
+async moveRight(channel: PTZChannel = 0, speed: number = 4): Promise<string> {
+  return this.ptzControl('start', channel, 'Right', 0, speed, 0);
+}
 
-  async moveLeft(channel: PTZChannel = 0, speed: number = 4): Promise<string> {
-    return this.ptzControl('start', channel, 'Left', speed);
-  }
+async stopMove(channel: PTZChannel = 0, code: PTZCode = 'Up'): Promise<string> {
+  return this.ptzControl('stop', channel, code, 0, 0, 0);
+}
 
-  async moveRight(channel: PTZChannel = 0, speed: number = 4): Promise<string> {
-    return this.ptzControl('start', channel, 'Right', speed);
-  }
+async zoomIn(channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'ZoomTele');
+}
 
-  async stopMove(channel: PTZChannel = 0, code: PTZCode = 'Up'): Promise<string> {
-    return this.ptzControl('stop', channel, code );
-  }
+async zoomOut(channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'ZoomWide');
+}
 
-  async zoomIn(channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'ZoomTele');
-  }
+async stopZoom(channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('stop', channel, 'ZoomTele');
+}
 
-  async zoomOut(channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'ZoomWide');
-  }
+async focusNear(channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'FocusNear');
+}
 
-  async stopZoom(channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('stop', channel, 'ZoomTele');
-  }
+async focusFar(channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'FocusFar');
+}
 
-  async focusNear(channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'FocusNear');
-  }
+async stopFocus(channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('stop', channel, 'FocusNear');
+}
 
-  async focusFar(channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'FocusFar');
-  }
+async gotoPreset(presetId: number, channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'GotoPreset', 0, presetId, 0);
+}
 
-  async stopFocus(channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('stop', channel, 'FocusNear');
-  }
+async setPreset(presetId: number, channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'SetPreset', 0, presetId, 0);
+}
 
-  async gotoPreset(presetId: number, channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'GotoPreset', presetId);
-  }
+async clearPreset(presetId: number, channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'ClearPreset', 0, presetId, 0);
+}
 
-  async setPreset(presetId: number, channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'SetPreset', presetId);
-  }
+async startTour(tourId: number, channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'StartTour', 0,tourId, 0);
+}
 
-  async clearPreset(presetId: number, channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'ClearPreset', presetId);
-  }
+async stopTour(tourId: number, channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'StopTour', tourId, 0, 0);
+}
 
-  async startTour(tourId: number, channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'StartTour', tourId);
-  }
+async clearTour(tourId: number, channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'ClearTour',  tourId,0, 0);
+}
+async position3D(x: number, y: number, zoom: number, channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'Position', x, y, zoom);
+}
 
-  async stopTour(tourId: number, channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'StopTour', tourId);
-  }
+async positionAbsolute(pan: number, tilt: number, zoom: number, channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'PositionABS', pan, tilt, zoom);
+}
 
-  async position3D(x: number, y: number, zoom: number, channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'Position', x, y, zoom);
-  }
+async positionAbsoluteHD(pan: number, tilt: number, zoom: number, channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'PositionABSHD', pan, tilt, zoom);
+}
 
-  async positionAbsolute(pan: number, tilt: number, zoom: number, channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'PositionABS', pan, tilt, zoom);
-  }
-
-  async positionAbsoluteHD(pan: number, tilt: number, zoom: number, channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'PositionABSHD', pan, tilt, zoom);
-  }
-
-  async continuousMove(hSpeed: number, vSpeed: number, zSpeed: number, timeout: number, channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl('start', channel, 'Continuously', hSpeed, vSpeed, zSpeed, timeout);
-  }
-
+async continuousMove(hSpeed: number, vSpeed: number, zSpeed: number, timeout: number, channel: PTZChannel = 0): Promise<string> {
+  return this.ptzControl('start', channel, 'Continuously', hSpeed, vSpeed, zSpeed, timeout);
+}
   // ========== 5.3.1 Preset ==========
 
   async getPresets(): Promise<ParsedConfig> {
