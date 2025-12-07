@@ -280,17 +280,28 @@ async continuousMove(hSpeed: number, vSpeed: number, zSpeed: number, timeout: nu
     return this.getConfig('PtzPreset');
   }
 
-  async setPresetConfig(params: PresetParams, channel: number = 0, presetId: number = 0): Promise<string> {
-    const parts: string[] = [];
-    for (const [key, value] of Object.entries(params)) {
-      if (key === 'Position' && Array.isArray(value)) {
-        value.forEach((v, i) => parts.push(`PtzPreset[${channel}][${presetId}].Position[${i}]=${v}`));
-      } else {
-        parts.push(`PtzPreset[${channel}][${presetId}].${key}=${encodeURIComponent(String(value))}`);
+ async setPresetConfig(params: PresetParams, channel: number = 0, presetId: number = 0): Promise<string[]> {
+  const responses: string[] = [];
+  
+  for (const [key, value] of Object.entries(params)) {
+    if (key === 'Position' && Array.isArray(value)) {
+      // Set each position element separately
+      for (let i = 0; i < value.length; i++) {
+        const param = `table.PtzPreset[${channel}][${presetId}].Position[${i}]=${value[i]}`;
+        const response = await this.setConfig(param);
+        responses.push(response);
       }
+    } else {
+      // Handle boolean Enable field
+      const val = key === 'Enable' ? (value ? 'true' : 'false') : encodeURIComponent(String(value));
+      const param = `table.PtzPreset[${channel}][${presetId}].${key}=${val}`;
+      const response = await this.setConfig(param);
+      responses.push(response);
     }
-    return this.setConfig(parts.join('&'));
   }
+  
+  return responses;
+}
 
   // ========== 5.3.2 Tour ==========
 
