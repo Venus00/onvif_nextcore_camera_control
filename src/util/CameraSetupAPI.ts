@@ -713,7 +713,7 @@ export class CameraSetupAPI {
 
   // 3.2.9 VideoROI
   async getVideoROI(): Promise<ParsedConfig> {
-    return this.getConfig("VideoInROI");
+    return this.getConfig("VideoEncodeROI");
   }
 
   async setVideoROI(
