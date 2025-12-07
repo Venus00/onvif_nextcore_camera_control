@@ -91,10 +91,10 @@ export interface TrackedObject {
     classificationName: string;
     trackId: number;
     x: number;
+    x1: number;
     y: number;
+    y1: number;
     z: number;
-    x2: number;
-    y2: number;
 }
 
 export interface ParsedFrame {
@@ -123,10 +123,10 @@ function calculateChecksum(buffer: Buffer): number {
  * Frame structure:
  * - Header (1B) - Must be 0xFB
  * - Object Count (1B)
- * - Objects (22B each): [CLS(1B), ID_TRACK(1B), X(4B), Y(4B), Z(4B), X2(4B), Y2(4B)]
+ * - Objects (14B each): [CLS(1B), ID_TRACK(1B), X(2B), X1(2B), Y(2B), Y1(2B), Z(4B)]
  * - Checksum (1B)
  * 
- * Total size formula: 2 + (22 × nb_objects) + 1
+ * Total size formula: 2 + (14 × nb_objects) + 1
  * Minimum size: 3 bytes (Header + NbObj + Checksum, no objects)
  */
 function parseFrame(buffer: Buffer): ParsedFrame | null {
@@ -153,8 +153,8 @@ function parseFrame(buffer: Buffer): ParsedFrame | null {
         const objectCount = buffer.readUInt8(offset);
         offset += 1;
 
-        // Expected size: 2 (header + count) + (22 * objectCount) + 1 (checksum)
-        const expectedSize = 2 + (22 * objectCount) + 1;
+        // Expected size: 2 (header + count) + (14 * objectCount) + 1 (checksum)
+        const expectedSize = 2 + (14 * objectCount) + 1;
         if (buffer.length !== expectedSize) {
             console.error(`Invalid frame size. Expected ${expectedSize}, got ${buffer.length}`);
             return null;
@@ -172,24 +172,24 @@ function parseFrame(buffer: Buffer): ParsedFrame | null {
             const trackId = buffer.readUInt8(offset);
             offset += 1;
 
-            // X (4 bytes, float)
-            const x = buffer.readInt32BE(offset);
-            offset += 4;
+            // X (2 bytes)
+            const x = buffer.readInt16BE(offset);
+            offset += 2;
 
-            // Y (4 bytes, float)
-            const y = buffer.readInt32BE(offset);
-            offset += 4;
+            // X1 (2 bytes)
+            const x1 = buffer.readInt16BE(offset);
+            offset += 2;
 
-            // Z (4 bytes, float)
+            // Y (2 bytes)
+            const y = buffer.readInt16BE(offset);
+            offset += 2;
+
+            // Y1 (2 bytes)
+            const y1 = buffer.readInt16BE(offset);
+            offset += 2;
+
+            // Z (4 bytes)
             const z = buffer.readInt32BE(offset);
-            offset += 4;
-
-            // X2 (4 bytes, float) - diagonal corner X coordinate
-            const x2 = buffer.readInt32BE(offset);
-            offset += 4;
-
-            // Y2 (4 bytes, float) - diagonal corner Y coordinate
-            const y2 = buffer.readInt32BE(offset);
             offset += 4;
 
             objects.push({
@@ -197,10 +197,10 @@ function parseFrame(buffer: Buffer): ParsedFrame | null {
                 classificationName: OBJECT_CLASSES[classification] || "Unknown",
                 trackId,
                 x,
+                x1,
                 y,
+                y1,
                 z,
-                x2,
-                y2,
             });
         }
 
