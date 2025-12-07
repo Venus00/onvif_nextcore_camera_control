@@ -658,9 +658,9 @@ app.post(
     ptzActual['status.Postion[1]'],
     ptzActual['status.Postion[2]']
   ],
-  ZoomValue: ptzActual['status.ZoomValue']
+  ZoomMapValue : ptzActual['status.ZoomValue']
 };
-    let response = await ptz.setPresetConfig(coordinate , channel, presetId.id);
+    let response = await ptz.setPresetConfig(coordinate , 1, presetId.id);
 
     return { response, ok: ptz.isSuccess(response) };
   })
