@@ -644,21 +644,21 @@ app.post(
   // 'status.ZoomValue': '167'
 
   
-    const ptzActual = await ptz.getPTZStatus(channel);
-    console.log("PTZ Actual Position:", ptzActual);
+    // const ptzActual = await ptz.getPTZStatus(channel);
+    // console.log("PTZ Actual Position:", ptzActual);
 
-  const coordinate = {
-  Name: presetId.Name,
-  Enable: true,
+//   const coordinate = {
+//   Name: presetId.Name,
+//   Enable: true,
 
-  Position: [
-    ptzActual['status.Postion[0]'],  // Note: API has typo "Postion" not "Position"
-    ptzActual['status.Postion[1]'],
-    ptzActual['status.PTZZoomHD']
-  ],
+//   Position: [
+//     ptzActual['status.Postion[0]'],  // Note: API has typo "Postion" not "Position"
+//     ptzActual['status.Postion[1]'],
+//     ptzActual['status.PTZZoomHD']
+//   ],
 
-};
-    let response = await ptz.setPresetConfig(coordinate , channel, presetId.id);
+// };
+    let response = await ptz.setPreset( presetId.id, channel, presetId.id);
 
     return { response, ok: ptz.isSuccess(response) };
   })
