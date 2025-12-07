@@ -726,7 +726,7 @@ export class CameraSetupAPI {
     roiIndex: number = 0
   ): Promise<string> {
     const parts: string[] = [];
-    const prefix = `VideoInROI[${channel}][${stream}].ROI[${roiIndex}]`;
+    const prefix = `VideoInROI[${channel}][${stream}]`;
 
     for (const [key, value] of Object.entries(params)) {
       if (key === "Rect" && Array.isArray(value)) {
