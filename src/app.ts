@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
 import { CameraInfo, cameras, type VideoEncoderConfig } from "./util/camera";
 import {
@@ -46,7 +46,6 @@ app.get("/thermal/:camId/thermometry", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 app.post("/ptz/:camId/zoom", async (req, res) => {
   try {
@@ -170,9 +169,9 @@ app.get("/focus/:camId/monitor", async (req, res) => {
     const { client, ip } = getCameraClient(camId);
 
     // Set headers for Server-Sent Events (SSE)
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
 
     const intervalId = setInterval(async () => {
       try {
@@ -185,7 +184,9 @@ app.get("/focus/:camId/monitor", async (req, res) => {
         if (match) {
           const focusValue = parseFloat(match[1]);
           console.log(`PTZFocusHD: ${focusValue}`);
-          res.write(`data: ${JSON.stringify({ focusValue, timestamp: Date.now() })}\n\n`);
+          res.write(
+            `data: ${JSON.stringify({ focusValue, timestamp: Date.now() })}\n\n`
+          );
         }
       } catch (err: any) {
         console.error("Error fetching PTZFocusHD:", err.message);
@@ -193,7 +194,7 @@ app.get("/focus/:camId/monitor", async (req, res) => {
     }, 1000);
 
     // Clean up on client disconnect
-    req.on('close', () => {
+    req.on("close", () => {
       clearInterval(intervalId);
       res.end();
     });
@@ -366,7 +367,7 @@ app.post("/focus/cam2/move", async (req, res) => {
   try {
     // const camId = req.params.camId;
     const { direction, speed = 5, channel = 0 } = req.body;
-    const { client, ip } = getCameraClient('cam2');
+    const { client, ip } = getCameraClient("cam2");
     let code;
     if (direction === "focus_in") code = "FocusNear";
     else if (direction === "focus_out") code = "FocusFar";
@@ -524,7 +525,7 @@ app.post("/ptz/:camId/move", async (req, res) => {
     const { client, ip } = getCameraClient(camId);
 
     const startUrl = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=${args[0]}&arg2=${args[1]}&arg3=${args[2]}`;
-
+    console.log("PTZ Move URL:", startUrl);
     const response = await client.fetch(startUrl);
     console.log(response);
     const text = await response.text();
@@ -680,8 +681,6 @@ app.post("/focus/:camId/out", async (req, res) => {
   }
 });
 
-
-
 app.post("/pelcoD", async (req: Request, res: Response) => {
   const body = req.body as PtzCommand;
 
@@ -704,7 +703,7 @@ app.post("/smart/:camId/command", async (req: Request, res: Response) => {
     const { data } = req.body;
 
     // Validate data is string
-    if (!data || typeof data !== 'string') {
+    if (!data || typeof data !== "string") {
       return res.status(400).json({
         success: false,
         error: "Invalid Pelco-D frame data. Expected hex string.",
@@ -714,9 +713,10 @@ app.post("/smart/:camId/command", async (req: Request, res: Response) => {
 
     // Convert hex string to byte array
     // Remove any spaces, 0x prefixes, and convert to bytes
-    const cleanHex = data.replace(/[\s]/g, '').replace(/0x/gi, '');
-    console.log(cleanHex)
-    if (cleanHex.length !== 14) { // 7 bytes = 14 hex chars
+    const cleanHex = data.replace(/[\s]/g, "").replace(/0x/gi, "");
+    console.log(cleanHex);
+    if (cleanHex.length !== 14) {
+      // 7 bytes = 14 hex chars
       return res.status(400).json({
         success: false,
         error: `Invalid Pelco-D frame data. Expected 7 bytes (14 hex characters), got ${cleanHex.length / 2} bytes.`,
@@ -747,7 +747,13 @@ app.post("/smart/:camId/command", async (req: Request, res: Response) => {
     const receivedChecksum = bytes[6];
 
     // Validate required parameters are defined
-    if (cameraId === undefined || smartCmd === undefined || param1 === undefined || param2 === undefined || param3 === undefined) {
+    if (
+      cameraId === undefined ||
+      smartCmd === undefined ||
+      param1 === undefined ||
+      param2 === undefined ||
+      param3 === undefined
+    ) {
       return res.status(400).json({
         success: false,
         error: "Invalid frame data: missing required parameters",
@@ -769,13 +775,14 @@ app.post("/smart/:camId/command", async (req: Request, res: Response) => {
     if (smartCmd === undefined || !validCommands.includes(smartCmd)) {
       return res.status(400).json({
         success: false,
-        error: `Invalid SMART command: 0x${smartCmd !== undefined ? smartCmd.toString(16).toUpperCase() : 'undefined'}`,
+        error: `Invalid SMART command: 0x${smartCmd !== undefined ? smartCmd.toString(16).toUpperCase() : "undefined"}`,
         errorCode: 0xe0, // Command not supported
       });
     }
 
     // Calculate and verify checksum (sum of bytes 2-6)
-    const calculatedChecksum = (cameraId + smartCmd + param1 + param2 + param3) % 256;
+    const calculatedChecksum =
+      (cameraId + smartCmd + param1 + param2 + param3) % 256;
 
     if (calculatedChecksum !== receivedChecksum) {
       return res.status(400).json({
@@ -877,7 +884,9 @@ app.post("/smart/:camId/parse-aimap", async (req: Request, res: Response) => {
     const { data } = req.body; // Expected: array of bytes or hex string
 
     if (!data || !Array.isArray(data)) {
-      return res.status(400).json({ success: false, error: "Invalid data format" });
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid data format" });
     }
 
     const objects = [];
@@ -901,7 +910,8 @@ app.post("/smart/:camId/parse-aimap", async (req: Request, res: Response) => {
       const posZ = data[i++];
       const velocity = data[i++];
       const direction = data[i++];
-      const timestamp = (data[i++] << 24) | (data[i++] << 16) | (data[i++] << 8) | data[i++];
+      const timestamp =
+        (data[i++] << 24) | (data[i++] << 16) | (data[i++] << 8) | data[i++];
 
       objects.push({
         id: objectId,
@@ -930,7 +940,9 @@ app.post("/smart/:camId/parse-aievent", async (req: Request, res: Response) => {
     const { data } = req.body;
 
     if (!data || !Array.isArray(data)) {
-      return res.status(400).json({ success: false, error: "Invalid data format" });
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid data format" });
     }
 
     const eventTypes: Record<number, string> = {
@@ -949,7 +961,8 @@ app.post("/smart/:camId/parse-aievent", async (req: Request, res: Response) => {
     const posY = data[i++];
     const posZ = data[i++];
     const extraData = data[i++];
-    const timestamp = (data[i++] << 24) | (data[i++] << 16) | (data[i++] << 8) | data[i++];
+    const timestamp =
+      (data[i++] << 24) | (data[i++] << 16) | (data[i++] << 8) | data[i++];
 
     res.json({
       success: true,
