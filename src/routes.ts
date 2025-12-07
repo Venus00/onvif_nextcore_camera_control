@@ -658,7 +658,7 @@ app.post(
   ],
 
 };
-    let response = await ptz.setPresetConfig(coordinate , 1, presetId.id);
+    let response = await ptz.setPresetConfig(coordinate , channel, presetId.id);
 
     return { response, ok: ptz.isSuccess(response) };
   })
