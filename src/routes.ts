@@ -600,6 +600,7 @@ app.post(
   "/camera/:camId/ptz/preset/goto",
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
+    console.log("Going to preset", presetId, "on channel", channel);
     const response = await ptz.gotoPreset(presetId, channel);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -609,6 +610,7 @@ app.post(
   "/camera/:camId/ptz/preset/set",
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
+    console.log("Setting preset", presetId, "on channel", channel);
     const response = await ptz.setPreset(presetId, channel);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -618,6 +620,7 @@ app.post(
   "/camera/:camId/ptz/preset/clear",
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
+    console.log("Clearing preset", presetId, "on channel", channel);
     const response = await ptz.clearPreset(presetId, channel);
     return { response, ok: ptz.isSuccess(response) };
   })
