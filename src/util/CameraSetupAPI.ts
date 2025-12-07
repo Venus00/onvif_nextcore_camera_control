@@ -734,7 +734,7 @@ export class CameraSetupAPI {
         parts.push(`${prefix}.${key}=${encodeURIComponent(String(value))}`);
       }
     }
-    console.log("setVideoROI params:", parts.join("&"));
+    // console.log("setVideoROI params:", parts.join("&"));
     return this.setConfig(parts.join("&"));
   }
 
