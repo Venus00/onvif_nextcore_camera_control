@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors"; // <-- add this
-
+// import DigestFetch from "digest-fetch";
+// const DigestFetch = require("digest-fetch");
+import DigestFetch from "digest-fetch";
 import CameraSetupAPI, {
   NetworkAPI,
   PTZAPI,
@@ -11,6 +13,30 @@ import CameraSetupAPI, {
   CameraClient,
 } from "./util";
 
+
+// Continuous PTZFocusHD monitoring (runs independently)
+async function monitorPTZFocusHD(camId: string) {
+  try {
+    const { client, ip } = getCameraClient(camId);
+    const statusRes = await client.fetch(
+      `http://${ip}/cgi-bin/ptz.cgi?action=getStatus`
+    );
+    const statusText = await statusRes.text();
+    const match = statusText.match(/status\.PTZFocusHD=([\d\.\-]+)/);
+
+    if (match) {
+      const focusValue = parseFloat(match[1]);
+      console.log(`PTZFocusHD: ${focusValue}`);
+    }
+  } catch (err: any) {
+    console.error("Error fetching PTZFocusHD:", err.message);
+  }
+}
+
+// Start monitoring PTZFocusHD every 1 second
+setInterval(() => {
+  monitorPTZFocusHD("cam2");
+}, 1000);
 
 const app = express();
 app.use(express.json());
@@ -23,7 +49,11 @@ interface CameraInfo {
   password: string;
 }
 
-
+  function getCameraClient(camId: string) {
+    const cfg: CameraInfo = cameras[camId] as CameraInfo;
+    if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
+    return { client: new DigestFetch(cfg.username, cfg.password), ip: cfg.ip };
+  }
 app.use(express.json());
 
 // ============ CAMERA CONFIGURATION ============
@@ -59,7 +89,6 @@ async function getAPIs(camId: string): Promise<CameraAPIs> {
   const cam = cameras[camId];
   if (!cam) throw new Error(`Camera ${camId} not found`);
 
-  const DigestFetch = (await import("digest-fetch")).default;
   const digestClient = new DigestFetch(cam.username, cam.password);
 
   const client: CameraClient = {
@@ -320,6 +349,57 @@ app.post(
   })
 );
   
+
+
+app.post("/focus/:camId/move", async (req, res) => {
+  try {
+    console.log("focus move", req.body);
+    const camId = req.params.camId;
+    const { direction, speed = 5, channel = 0 } = req.body;
+    const { client, ip } = getCameraClient(camId);
+    let code;
+    if (direction === "focus_in") code = "FocusNear";
+    else if (direction === "focus_out") code = "FocusFar";
+    else throw new Error("Invalid direction (use 'in' or 'out')");
+
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3==${speed}`;
+    const response = await client.fetch(url);
+    const text = await response.text();
+    // stop after 1s (you can adjust)
+
+    res.json({ success: true, camera: camId, response: text });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+app.post("/focus/:camId/stop", async (req, res) => {
+  try {
+    console.log("focus stop", req.body);
+    const camId = req.params.camId;
+    const { direction, channel = 0, speed = 3 } = req.body;
+    const { client, ip } = getCameraClient(camId);
+
+    let code;
+    if (direction === "focus_in") code = "FocusNear";
+    else if (direction === "focus_out") code = "FocusFar";
+    else throw new Error("Invalid direction (use 'focus_in' or 'focus_out')");
+
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=stop&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3=0`;
+    const response = await client.fetch(url);
+    const text = await response.text();
+
+    res.json({
+      success: true,
+      camera: camId,
+      stopped: direction,
+      response: text,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 
 // ================================================================
