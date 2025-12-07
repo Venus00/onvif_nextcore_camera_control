@@ -680,19 +680,7 @@ app.post("/focus/:camId/out", async (req, res) => {
   }
 });
 
-app.post("/focus/:camId/stop", async (req, res) => {
-  try {
-    const { camId } = req.params;
 
-    const device = await getDevice(camId);
-    const profile = device.getCurrentProfile();
-    const token = profile.token;
-    const response = await focusStop(camId, token);
-    res.json({ message: "Focus stopped", response });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 app.post("/pelcoD", async (req: Request, res: Response) => {
   const body = req.body as PtzCommand;
