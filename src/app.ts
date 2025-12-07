@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response } from 'express';
 import bodyParser from "body-parser";
 import { CameraInfo, cameras, type VideoEncoderConfig } from "./util/camera";
 import {
@@ -47,27 +47,6 @@ app.get("/thermal/:camId/thermometry", async (req, res) => {
   }
 });
 
-// Poll all temperature-related values every 5 seconds and log to console
-let pollingInterval: NodeJS.Timeout | null = null;
-function startTemperaturePolling(camId: string) {
-  if (pollingInterval) return; // Only one poller
-  pollingInterval = setInterval(async () => {
-    try {
-      const { client, ip } = getCameraClient(camId);
-      // Use the correct endpoint as requested
-      const url = `http://${ip}/cgi-bin/configManager.cgi?action=getConfig&name=HeatImagingThermometry`;
-      const response = await client.fetch(url);
-      const text = await response.text();
-      // Find all temperature-related values
-      console.log(text);
-    } catch (err) {
-      console.log("Error polling temperature values:", err.message);
-    }
-  }, 5000);
-}
-
-// Start polling for a specific camera (e.g., cam1) on server start
-// startTemperaturePolling("cam1");
 
 app.post("/ptz/:camId/zoom", async (req, res) => {
   try {
@@ -178,6 +157,45 @@ app.post("/ptz/:camId/zoom", async (req, res) => {
       stopped,
       target,
       tolerance,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Monitor PTZFocusHD value continuously
+app.get("/focus/:camId/monitor", async (req, res) => {
+  try {
+    const camId = req.params.camId;
+    const { client, ip } = getCameraClient(camId);
+
+    // Set headers for Server-Sent Events (SSE)
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const intervalId = setInterval(async () => {
+      try {
+        const statusRes = await client.fetch(
+          `http://${ip}/cgi-bin/ptz.cgi?action=getStatus`
+        );
+        const statusText = await statusRes.text();
+        const match = statusText.match(/status\.PTZFocusHD=([\d\.\-]+)/);
+
+        if (match) {
+          const focusValue = parseFloat(match[1]);
+          console.log(`PTZFocusHD: ${focusValue}`);
+          res.write(`data: ${JSON.stringify({ focusValue, timestamp: Date.now() })}\n\n`);
+        }
+      } catch (err: any) {
+        console.error("Error fetching PTZFocusHD:", err.message);
+      }
+    }, 1000);
+
+    // Clean up on client disconnect
+    req.on('close', () => {
+      clearInterval(intervalId);
+      res.end();
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -346,7 +364,6 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
 
 app.post("/focus/:camId/move", async (req, res) => {
   try {
-    console.log("focus move", req.body);
     const camId = req.params.camId;
     const { direction, speed = 5, channel = 0 } = req.body;
     const { client, ip } = getCameraClient(camId);
@@ -355,7 +372,7 @@ app.post("/focus/:camId/move", async (req, res) => {
     else if (direction === "focus_out") code = "FocusFar";
     else throw new Error("Invalid direction (use 'in' or 'out')");
 
-    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3==${speed}`;
+    const url = `http://${ip}/cgi-bin/ptz.cgi?action=start&channel=${channel}&code=${code}&arg1=0&arg2=0&arg3=0`;
     const response = await client.fetch(url);
     const text = await response.text();
     // stop after 1s (you can adjust)
@@ -368,7 +385,6 @@ app.post("/focus/:camId/move", async (req, res) => {
 
 app.post("/focus/:camId/stop", async (req, res) => {
   try {
-    console.log("focus stop", req.body);
     const camId = req.params.camId;
     const { direction, channel = 0, speed = 3 } = req.body;
     const { client, ip } = getCameraClient(camId);
@@ -536,27 +552,6 @@ app.post("/ptz/:camId/move", async (req, res) => {
   }
 });
 
-app.post("/test/:camId/test", async (req, res) => {
-  try {
-    // console.log("test", req.body);
-    let camId = req.params.camId;
-
-    const connection = getCameraClient(camId);
-
-    const api = new CameraSetupAPI(connection);
-
-    // const result = await api.getVideoColor();
-    // console.log(result);
-   const result = await  api.setVideoColor({ Brightness: 60 },1, 2);
-  console.log (result);
-    const result2 = await api.getVideoColor();
-    console.log(result2);
-    res.json({ success: true });
-    // SET
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
 app.post("/ptz/:camId/stop", async (req, res) => {
   try {
     let camId = req.params.camId;
@@ -612,6 +607,30 @@ function getCameraClient(camId: string) {
   if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
   return { client: new DigestFetch(cfg.username, cfg.password), ip: cfg.ip };
 }
+
+// Continuous PTZFocusHD monitoring (runs independently)
+async function monitorPTZFocusHD(camId: string) {
+  try {
+    const { client, ip } = getCameraClient(camId);
+    const statusRes = await client.fetch(
+      `http://${ip}/cgi-bin/ptz.cgi?action=getStatus`
+    );
+    const statusText = await statusRes.text();
+    const match = statusText.match(/status\.PTZFocusHD=([\d\.\-]+)/);
+
+    if (match) {
+      const focusValue = parseFloat(match[1]);
+      console.log(`PTZFocusHD: ${focusValue}`);
+    }
+  } catch (err: any) {
+    console.error("Error fetching PTZFocusHD:", err.message);
+  }
+}
+
+// Start monitoring PTZFocusHD every 1 second
+setInterval(() => {
+  monitorPTZFocusHD("cam2");
+}, 1000);
 
 async function getDevice(camId: string) {
   const cfg: CameraInfo = cameras[camId] as CameraInfo;
@@ -688,6 +707,290 @@ app.post("/pelcoD", async (req: Request, res: Response) => {
       error: err?.message ?? "Unknown error",
     });
   }
+});
+
+// SMART Protocol API - QPI-SMART Intelligence Protocol
+app.post("/smart/:camId/command", async (req: Request, res: Response) => {
+  try {
+    const camId = req.params.camId;
+    const { data } = req.body;
+
+    // Validate data is string
+    if (!data || typeof data !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid Pelco-D frame data. Expected hex string.",
+        errorCode: 0xe1, // Invalid parameters
+      });
+    }
+
+    // Convert hex string to byte array
+    // Remove any spaces, 0x prefixes, and convert to bytes
+    const cleanHex = data.replace(/[\s]/g, '').replace(/0x/gi, '');
+    console.log(cleanHex)
+    if (cleanHex.length !== 14) { // 7 bytes = 14 hex chars
+      return res.status(400).json({
+        success: false,
+        error: `Invalid Pelco-D frame data. Expected 7 bytes (14 hex characters), got ${cleanHex.length / 2} bytes.`,
+        errorCode: 0xe1,
+        receivedData: cleanHex,
+      });
+    }
+
+    const bytes: number[] = [];
+    for (let i = 0; i < cleanHex.length; i += 2) {
+      bytes.push(parseInt(cleanHex.substr(i, 2), 16));
+    }
+
+    // Parse Pelco-D SMART frame
+    // Byte 1: 0xFA (Header SMART)
+    // Byte 2: Camera ID
+    // Byte 3: SMART_CMD
+    // Byte 4: Param 1
+    // Byte 5: Param 2
+    // Byte 6: Param 3
+    // Byte 7: Checksum
+    const header = bytes[0];
+    const cameraId = bytes[1];
+    const smartCmd = bytes[2];
+    const param1 = bytes[3];
+    const param2 = bytes[4];
+    const param3 = bytes[5];
+    const receivedChecksum = bytes[6];
+
+    // Validate required parameters are defined
+    if (cameraId === undefined || smartCmd === undefined || param1 === undefined || param2 === undefined || param3 === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid frame data: missing required parameters",
+        errorCode: 0xe1,
+      });
+    }
+
+    // Validate header
+    if (header !== 0xfa) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid SMART header. Expected 0xFA, got 0x${header.toString(16).toUpperCase()}`,
+        errorCode: 0xe1,
+      });
+    }
+
+    // Validate SMART command
+    const validCommands = [0x10, 0x20, 0x30, 0x40];
+    if (smartCmd === undefined || !validCommands.includes(smartCmd)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid SMART command: 0x${smartCmd !== undefined ? smartCmd.toString(16).toUpperCase() : 'undefined'}`,
+        errorCode: 0xe0, // Command not supported
+      });
+    }
+
+    // Calculate and verify checksum (sum of bytes 2-6)
+    const calculatedChecksum = (cameraId + smartCmd + param1 + param2 + param3) % 256;
+
+    if (calculatedChecksum !== receivedChecksum) {
+      return res.status(400).json({
+        success: false,
+        error: `Checksum mismatch. Expected 0x${calculatedChecksum.toString(16).toUpperCase()}, got 0x${receivedChecksum.toString(16).toUpperCase()}`,
+        errorCode: 0xe1,
+      });
+    }
+
+    // Build SMART packet format
+    const packet = {
+      header: header,
+      cameraId: cameraId,
+      smartCmd: smartCmd,
+      param1: param1,
+      param2: param2,
+      param3: param3,
+    };
+
+    const smartPacket = {
+      ...packet,
+      checksum: receivedChecksum,
+    };
+
+    // Log the command for debugging
+    console.log("[SMART Protocol] Command:", {
+      camId,
+      command: `0x${smartCmd.toString(16).toUpperCase()}`,
+      params: [param1, param2, param3],
+      packet: smartPacket,
+    });
+
+    // Command-specific handling
+    let commandName = "Unknown";
+    let description = "";
+
+    switch (smartCmd) {
+      case 0x10: // Rapid Focus Adaptation
+        commandName = "Rapid Focus Adaptation";
+        const focusModes = ["Auto", "Low-Light", "Fast-Moving"];
+        description = `Mode: ${focusModes[param1] || "Unknown"}`;
+        break;
+
+      case 0x20: // Multi-Object Classification Snapshot
+        commandName = "Multi-Object Classification Snapshot";
+        description = "Scan intelligent - awaiting response on port 52383";
+        break;
+
+      case 0x30: // Smart Tracking Lock
+        commandName = "Smart Tracking Lock";
+        const trackingModes = ["Normal", "Aggressive", "Stealth"];
+        description = `Object ID: ${param1}, Mode: ${trackingModes[param2] || "Unknown"}`;
+        break;
+
+      case 0x40: // Auto-Record + Edge Learning Trigger
+        commandName = "Auto-Record + Edge Learning";
+        const reasons = ["Manual", "Object", "Alert"];
+        description = `${param1 ? "Start" : "Stop"} - Reason: ${reasons[param2] || "Unknown"}, Duration: ${param3}s`;
+        break;
+    }
+
+    // Simulate sending to camera (replace with actual serial/network communication)
+    // In production, you would send this via UDP/TCP to the camera's control port
+
+    res.json({
+      success: true,
+      camera: camId,
+      command: commandName,
+      description,
+      packet: smartPacket,
+      packetHex: [
+        `0x${packet.header.toString(16).toUpperCase()}`,
+        `0x${packet.cameraId.toString(16).toUpperCase()}`,
+        `0x${packet.smartCmd.toString(16).toUpperCase()}`,
+        `0x${packet.param1.toString(16).toUpperCase()}`,
+        `0x${packet.param2.toString(16).toUpperCase()}`,
+        `0x${packet.param3.toString(16).toUpperCase()}`,
+        `0x${receivedChecksum.toString(16).toUpperCase()}`,
+      ],
+      ports: {
+        aiMap: 52383, // AI-MAP Stream (Object positions)
+        aiEvent: 52384, // AI-Event Stream
+        recording: 52385, // Auto-Record stream
+      },
+    });
+  } catch (err: any) {
+    console.error("[SMART Protocol] Error:", err);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      errorCode: 0xe4, // Generic error
+    });
+  }
+});
+
+// AI-MAP Stream parser helper endpoint
+app.post("/smart/:camId/parse-aimap", async (req: Request, res: Response) => {
+  try {
+    const { data } = req.body; // Expected: array of bytes or hex string
+
+    if (!data || !Array.isArray(data)) {
+      return res.status(400).json({ success: false, error: "Invalid data format" });
+    }
+
+    const objects = [];
+    let i = 1; // Skip header 0xFB
+    const nbObjects = data[i++];
+
+    const objectTypes: Record<number, string> = {
+      0x01: "Human",
+      0x02: "Car",
+      0x03: "Truck",
+      0x04: "Motorcycle",
+      0x05: "Animal",
+      0x06: "Static Object",
+    };
+
+    for (let obj = 0; obj < nbObjects; obj++) {
+      const objectId = data[i++];
+      const objectType = data[i++];
+      const posX = data[i++];
+      const posY = data[i++];
+      const posZ = data[i++];
+      const velocity = data[i++];
+      const direction = data[i++];
+      const timestamp = (data[i++] << 24) | (data[i++] << 16) | (data[i++] << 8) | data[i++];
+
+      objects.push({
+        id: objectId,
+        type: objectTypes[objectType] || "Unknown",
+        typeCode: `0x${objectType.toString(16).toUpperCase()}`,
+        position: { x: posX, y: posY, z: posZ },
+        velocity,
+        direction,
+        timestamp,
+      });
+    }
+
+    res.json({
+      success: true,
+      totalObjects: nbObjects,
+      objects,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// AI-Event Stream parser helper endpoint
+app.post("/smart/:camId/parse-aievent", async (req: Request, res: Response) => {
+  try {
+    const { data } = req.body;
+
+    if (!data || !Array.isArray(data)) {
+      return res.status(400).json({ success: false, error: "Invalid data format" });
+    }
+
+    const eventTypes: Record<number, string> = {
+      0x10: "Intrusion",
+      0x11: "Line Crossing",
+      0x12: "Loitering",
+      0x13: "Abandoned Object",
+      0x14: "Reverse Motion",
+      0x15: "Crowd Density Alert",
+    };
+
+    let i = 1; // Skip header 0xFC
+    const eventType = data[i++];
+    const objectId = data[i++];
+    const posX = data[i++];
+    const posY = data[i++];
+    const posZ = data[i++];
+    const extraData = data[i++];
+    const timestamp = (data[i++] << 24) | (data[i++] << 16) | (data[i++] << 8) | data[i++];
+
+    res.json({
+      success: true,
+      event: {
+        type: eventTypes[eventType] || "Unknown",
+        typeCode: `0x${eventType.toString(16).toUpperCase()}`,
+        objectId,
+        position: { x: posX, y: posY, z: posZ },
+        extraData,
+        timestamp,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Error codes reference endpoint
+app.get("/smart/error-codes", (req: Request, res: Response) => {
+  res.json({
+    errorCodes: {
+      "0xE0": "Command not supported",
+      "0xE1": "Invalid parameters",
+      "0xE2": "Object not found",
+      "0xE3": "Camera busy (Tracking Mode)",
+      "0xE4": "Focus System Error",
+      "0xE5": "Learning Engine Disabled",
+    },
+  });
 });
 
 app.listen(PORT, async () => {
