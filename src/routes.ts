@@ -568,6 +568,16 @@ app.post(
   })
 );
 
+
+app.post(
+  "/camera/:camId/ptz/focus/stop",
+  route(async ({ ptz }, body) => {
+    const { channel = 1 } = body;
+    const response = await ptz.stopFocus(channel);
+    return { response, ok: ptz.isSuccess(response) };
+  })
+);
+
 app.post(
   "/camera/:camId/ptz/focus/near",
   route(async ({ ptz }, body) => {
