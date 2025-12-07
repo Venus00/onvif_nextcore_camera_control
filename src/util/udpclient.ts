@@ -263,6 +263,22 @@ export function createUDPClient(config: UDPClientConfig = {}): {
 
     const client = dgram.createSocket({ type: 'udp4', reuseAddr: true });
     const wsServer = createWebSocketServer(wsPort);
+    let heartbeatInterval: NodeJS.Timeout | null = null;
+    let lastMessageTime = Date.now();
+
+    // Function to send HELLO message
+    const sendHello = () => {
+        if (remoteHost && remotePort) {
+            const message = initialMessage || Buffer.from("PING");
+            client.send(message, remotePort, remoteHost, (err) => {
+                if (err) {
+                    console.error(`[UDP Client] ❌ Failed to send HELLO:`, err.message);
+                } else {
+                    console.log(`[UDP Client] ✅ HELLO sent to ${remoteHost}:${remotePort}`);
+                }
+            });
+        }
+    };
 
     client.on('error', (err) => {
         console.error(`[UDP Client] Error:\n${err.stack}`);
@@ -271,6 +287,9 @@ export function createUDPClient(config: UDPClientConfig = {}): {
 
     client.on('message', (msg, rinfo) => {
         console.log(`\n[UDP] Received ${msg.length} bytes from ${rinfo.address}:${rinfo.port}`);
+
+        // Update last message time
+        lastMessageTime = Date.now();
 
         const parsed = parseFrame(msg);
 
@@ -311,20 +330,28 @@ export function createUDPClient(config: UDPClientConfig = {}): {
         console.log(`\n🔌 UDP Client bound to 0.0.0.0:${localPort}`);
         console.log(`   Ready to receive data from Python server at ${remoteHost}:${remotePort}`);
 
-        // Send initial message to remote server after binding
-        if (remoteHost && remotePort) {
-            const message = initialMessage || Buffer.from("PING")
-            console.log(`   Sending initial message to ${remoteHost}:${remotePort}...`);
+        // Send initial HELLO message
+        sendHello();
 
-            client.send(message, remotePort, remoteHost, (err) => {
-                if (err) {
-                    console.error(`[UDP Client] ❌ Failed to send initial message:`, err.message);
-                } else {
-                    console.log(`[UDP Client] ✅ Initial message sent to ${remoteHost}:${remotePort}`);
-                    console.log(`   Waiting for response from Python server...\n`);
-                }
-            });
+        // Set up heartbeat to resend HELLO every 5 seconds if no messages received
+        heartbeatInterval = setInterval(() => {
+            const timeSinceLastMessage = Date.now() - lastMessageTime;
+            if (timeSinceLastMessage > 5000) {
+                console.log(`[UDP Client] No data for ${(timeSinceLastMessage / 1000).toFixed(1)}s, resending HELLO...`);
+                sendHello();
+            }
+        }, 5000);
+
+        console.log(`   Heartbeat monitor started (checks every 5 seconds)`);
+        console.log(`   Waiting for response from Python server...\n`);
+    });
+
+    // Cleanup on process exit
+    process.on('SIGINT', () => {
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
         }
+        client.close();
     });
 
     return { udpClient: client, wsServer };
