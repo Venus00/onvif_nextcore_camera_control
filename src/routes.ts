@@ -286,6 +286,18 @@ app.post(
   })
 );
 
+app.get(
+  "/camera/:camId/video/videoROI",
+  route(async ({ setup }) => ({ config: await setup.getVideoROI() }))
+);
+app.post(
+  "/camera/:camId/video/videoROI",
+  route(async ({ setup }, body) => {
+    const { channel = 0, config=0, ...params } = body;
+    const response = await setup.setVideoROI(params, channel , config);
+    return { response, ok: setup.isSuccess(response) };
+  })
+);
 
 // Title
 app.get(
