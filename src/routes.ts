@@ -13,7 +13,6 @@ import CameraSetupAPI, {
   CameraClient,
 } from "./util";
 
-
 // Continuous PTZFocusHD monitoring (runs independently)
 async function monitorPTZFocusHD(camId: string) {
   try {
@@ -49,11 +48,11 @@ interface CameraInfo {
   password: string;
 }
 
-  function getCameraClient(camId: string) {
-    const cfg: CameraInfo = cameras[camId] as CameraInfo;
-    if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
-    return { client: new DigestFetch(cfg.username, cfg.password), ip: cfg.ip };
-  }
+function getCameraClient(camId: string) {
+  const cfg: CameraInfo = cameras[camId] as CameraInfo;
+  if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
+  return { client: new DigestFetch(cfg.username, cfg.password), ip: cfg.ip };
+}
 app.use(express.json());
 
 // ============ CAMERA CONFIGURATION ============
@@ -232,10 +231,10 @@ app.get(
 app.post(
   "/camera/:camId/video/zoom",
   route(async ({ setup }, body) => {
-    const { channel = 0, config =0 ,...params } = body;
+    const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoZoom(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })  
+  })
 );
 
 // Focus
@@ -247,8 +246,8 @@ app.post(
   "/camera/:camId/video/focus",
 
   route(async ({ setup }, body) => {
-    const { channel = 0,config=0, ...params } = body;
-    const response = await setup.setVideoFocus(params, channel , config);
+    const { channel = 0, config = 0, ...params } = body;
+    const response = await setup.setVideoFocus(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
   })
 );
@@ -258,11 +257,11 @@ app.get(
   "/camera/:camId/video/defog",
   route(async ({ setup }) => ({ config: await setup.getVideoDefog() }))
 );
-app.post( 
+app.post(
   "/camera/:camId/video/defog",
   route(async ({ setup }, body) => {
-    const { channel = 0, config=0,...params } = body;
-    const response = await setup.setVideoDefog(params, channel , config);
+    const { channel = 0, config = 0, ...params } = body;
+    const response = await setup.setVideoDefog(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
   })
 );
@@ -272,26 +271,26 @@ app.get(
   "/camera/:camId/video/flip",
   route(async ({ setup }) => ({ config: await setup.getVideoFlip() }))
 );
-app.post( 
+app.post(
   "/camera/:camId/video/flip",
 
   route(async ({ setup }, body) => {
-    const { channel = 0, config =0 ,...params } = body;
+    const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoFlip(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })  
+  })
 );
 
 // denoise
-app.get(  
+app.get(
   "/camera/:camId/video/denoise",
   route(async ({ setup }) => ({ config: await setup.getVideoDenoise() }))
 );
 app.post(
   "/camera/:camId/video/denoise",
   route(async ({ setup }, body) => {
-    const { channel = 0, config=0, ...params } = body;
-    const response = await setup.setVideoDenoise(params, channel , config);
+    const { channel = 0, config = 0, ...params } = body;
+    const response = await setup.setVideoDenoise(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
   })
 );
@@ -309,7 +308,7 @@ app.get(
 app.post(
   "/camera/:camId/encode",
   route(async ({ setup }, body) => {
-    const { channel = 0, config =0  ,...params } = body;
+    const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setEncode(params, channel);
     return { response, ok: setup.isSuccess(response) };
   })
@@ -322,8 +321,8 @@ app.get(
 app.post(
   "/camera/:camId/video/videoROI",
   route(async ({ setup }, body) => {
-    const { channel = 0, config=0, ...params } = body;
-    const response = await setup.setVideoROI(params, channel , config);
+    const { channel = 0, config = 0, ...params } = body;
+    const response = await setup.setVideoROI(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
   })
 );
@@ -348,8 +347,6 @@ app.post(
     return { response, ok: setup.isSuccess(response) };
   })
 );
-  
-
 
 app.post("/focus/:camId/move", async (req, res) => {
   try {
@@ -372,7 +369,6 @@ app.post("/focus/:camId/move", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 app.post("/focus/:camId/stop", async (req, res) => {
   try {
@@ -400,7 +396,6 @@ app.post("/focus/:camId/stop", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 // ================================================================
 // SECTION 4 - NETWORK
@@ -952,5 +947,3 @@ app.listen(PORT, () => {
 });
 
 export default app;
-
-
