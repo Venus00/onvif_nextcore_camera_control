@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors"; // <-- add this
 // import DigestFetch from "digest-fetch";
-const DigestFetch = require("digest-fetch");
+// const DigestFetch = require("digest-fetch");
+import DigestFetch from "digest-fetch";
 import CameraSetupAPI, {
   NetworkAPI,
   PTZAPI,
@@ -88,7 +89,6 @@ async function getAPIs(camId: string): Promise<CameraAPIs> {
   const cam = cameras[camId];
   if (!cam) throw new Error(`Camera ${camId} not found`);
 
-  const DigestFetch = (await import("digest-fetch")).default;
   const digestClient = new DigestFetch(cam.username, cam.password);
 
   const client: CameraClient = {
