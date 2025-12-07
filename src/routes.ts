@@ -601,7 +601,7 @@ app.post(
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
     console.log("Going to preset", presetId, "on channel", channel);
-    const response = await ptz.gotoPreset(presetId, channel);
+    const response = await ptz.gotoPreset(presetId.id, channel);
     return { response, ok: ptz.isSuccess(response) };
   })
 );
@@ -611,7 +611,7 @@ app.post(
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
     console.log("Setting preset", presetId, "on channel", channel);
-    const response = await ptz.setPreset(presetId, channel);
+    const response = await ptz.setPreset(presetId.id, channel);
     return { response, ok: ptz.isSuccess(response) };
   })
 );
@@ -621,7 +621,7 @@ app.post(
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
     console.log("Clearing preset", presetId, "on channel", channel);
-    const response = await ptz.clearPreset(presetId, channel);
+    const response = await ptz.clearPreset(presetId.id, channel);
     return { response, ok: ptz.isSuccess(response) };
   })
 );
