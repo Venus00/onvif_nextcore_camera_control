@@ -311,6 +311,17 @@ app.get(
   route(async ({ setup }) => ({ config: await setup.getVideoWidget() }))
 );
 
+app.post(
+  "/camera/:camId/osd",
+  route(async ({ setup }, body) => {
+    const { channel = 0, ...params } = body;
+    const response = await setup.setVideoWidget(params, channel);
+    return { response, ok: setup.isSuccess(response) };
+  }
+);
+);  
+
+
 // ================================================================
 // SECTION 4 - NETWORK
 // ================================================================
