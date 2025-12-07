@@ -12,6 +12,15 @@ import CameraSetupAPI, {
   LiveAPI,
   CameraClient,
 } from "./util";
+import { createUDPClient } from "./util/udpclient.js";
+
+const { udpServer, wsServer } = createUDPClient({
+  wsPort: 8080,
+  localPort: 5012,
+  remoteHost: '192.168.1.223',
+  remotePort: 5012,
+  initialMessage: Buffer.from('HELLO')
+});
 
 // Continuous PTZFocusHD monitoring (runs independently)
 async function monitorPTZFocusHD(camId: string) {
@@ -33,9 +42,9 @@ async function monitorPTZFocusHD(camId: string) {
 }
 
 // Start monitoring PTZFocusHD every 1 second
-setInterval(() => {
-  monitorPTZFocusHD("cam2");
-}, 1000);
+// setInterval(() => {
+//   monitorPTZFocusHD("cam2");
+// }, 1000);
 
 const app = express();
 app.use(express.json());
@@ -127,6 +136,11 @@ function route(
     }
   };
 }
+
+// ================================================================
+// SECTION 3 - CAMERA SETUP
+// ================================================================
+
 
 // ================================================================
 // SECTION 3 - CAMERA SETUP
@@ -646,7 +660,7 @@ app.post(
   ],  
       ZoomValue : ptzActual.status['status.ZoomValue'],
     }
-    let response = await ptz.setPresetConfig(params , channel, presetId.id);
+    let response = await ptz.setPresetConfig(cordinate , channel, presetId.id);
 
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -981,6 +995,52 @@ app.post(
     return { response, ok: live.isSuccess(response) };
   })
 );
+
+// Object Tracking
+app.post("/track/object/:id", async (req, res) => {
+  try {
+    const objectId = parseInt(req.params.id);
+    console.log(`[Tracking] Request to track object ID: ${objectId}`);
+
+    // Send tracking command to backend on port 9898
+    try {
+      const backendResponse = await fetch(`http://localhost:9898/track/object/${objectId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ objectId })
+      });
+
+      const backendData = await backendResponse.json();
+      console.log(`[Tracking] Backend response:`, backendData);
+
+      res.json({
+        success: true,
+        objectId,
+        message: `Tracking enabled for object ${objectId}`,
+        backendResponse: backendData
+      });
+    } catch (backendError: any) {
+      console.error('[Tracking] Backend connection error:', backendError.message);
+
+      // Still return success to frontend even if backend fails
+      res.json({
+        success: true,
+        objectId,
+        message: `Tracking request received for object ${objectId}`,
+        warning: 'Backend server not available',
+        backendError: backendError.message
+      });
+    }
+  } catch (error: any) {
+    console.error('[Tracking] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
