@@ -317,9 +317,9 @@ app.post(
     const { channel = 0, ...params } = body;
     const response = await setup.setVideoWidget(params, channel);
     return { response, ok: setup.isSuccess(response) };
-  }
+  })
 );
-);  
+  
 
 
 // ================================================================
