@@ -184,8 +184,14 @@ export function createUDPClient(config: UDPClientConfig = {}): {
     });
 
     client.on('message', (msg, rinfo) => {
+        // Accept from localhost variations (127.0.0.1, ::1, localhost)
+        const isLocalhost = rinfo.address === '127.0.0.1' ||
+            rinfo.address === 'localhost' ||
+            rinfo.address === '::1' ||
+            rinfo.address === '::ffff:127.0.0.1';
+
         // Optional: Filter messages from specific remote host
-        if (remoteHost && rinfo.address !== remoteHost) {
+        if (remoteHost && remoteHost !== '0.0.0.0' && !isLocalhost && rinfo.address !== remoteHost) {
             console.log(`[UDP] Ignoring message from ${rinfo.address}:${rinfo.port} (expecting ${remoteHost})`);
             return;
         }
@@ -227,18 +233,20 @@ export function createUDPClient(config: UDPClientConfig = {}): {
 
     // Bind to local port to receive data from remote server
     client.bind(localPort, '0.0.0.0', () => {
-        console.log(`\n🔌 Binding to local port ${localPort} to receive UDP data...`);
+        console.log(`\n🔌 UDP Client bound to 0.0.0.0:${localPort}`);
+        console.log(`   Ready to receive data from Python server at ${remoteHost}:${remotePort}`);
+
         // Send initial message to remote server after binding
         if (remoteHost && remotePort) {
-            console.log("sending")
-            const message = Buffer.from("test")
+            const message = initialMessage || Buffer.from("PING")
+            console.log(`   Sending initial message to ${remoteHost}:${remotePort}...`);
 
             client.send(message, remotePort, remoteHost, (err) => {
                 if (err) {
-                    console.error(`[UDP Client] Failed to send initial message:`, err.message);
+                    console.error(`[UDP Client] ❌ Failed to send initial message:`, err.message);
                 } else {
-                    console.log(`[UDP Client] ✅ Sent initial message to ${remoteHost}:${remotePort}`);
-                    console.log(`   Message: ${typeof initialMessage === 'string' ? initialMessage : message.toString('hex')}`);
+                    console.log(`[UDP Client] ✅ Initial message sent to ${remoteHost}:${remotePort}`);
+                    console.log(`   Waiting for response from Python server...\n`);
                 }
             });
         }
