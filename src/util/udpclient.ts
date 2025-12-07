@@ -285,7 +285,8 @@ export function createUDPClient(config: UDPClientConfig = {}): {
                 console.log(`\nTracked Objects:`);
                 parsed.objects.forEach((obj, index) => {
                     console.log(`  [${index + 1}] ${obj.classificationName} (ID: ${obj.trackId})`);
-                    console.log(`      Position: X=${obj.x.toFixed(2)}, Y=${obj.y.toFixed(2)}, Z=${obj.z.toFixed(2)}`);
+                    console.log(`      Bounding Box: (${obj.x}, ${obj.y}) - (${obj.x1}, ${obj.y1})`);
+                    console.log(`      Z: ${obj.z.toFixed(2)}`);
                 });
             }
 
