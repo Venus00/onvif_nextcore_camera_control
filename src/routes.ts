@@ -499,7 +499,7 @@ app.get(
 app.post(
   "/camera/:camId/ptz/move/up",
   route(async ({ ptz }, body) => {
-    const { channel = 0, speed = 4 } = body;
+    const { channel = 1, speed = 4 } = body;
     const response = await ptz.moveUp(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -508,7 +508,7 @@ app.post(
 app.post(
   "/camera/:camId/ptz/move/down",
   route(async ({ ptz }, body) => {
-    const { channel = 0, speed = 4 } = body;
+    const { channel = 1, speed = 4 } = body;
     const response = await ptz.moveDown(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -517,7 +517,7 @@ app.post(
 app.post(
   "/camera/:camId/ptz/move/left",
   route(async ({ ptz }, body) => {
-    const { channel = 0, speed = 4 } = body;
+    const { channel = 1, speed = 4 } = body;
     const response = await ptz.moveLeft(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -526,7 +526,7 @@ app.post(
 app.post(
   "/camera/:camId/ptz/move/right",
   route(async ({ ptz }, body) => {
-    const { channel = 0, speed = 4 } = body;
+    const { channel = 1, speed = 4 } = body;
     const response = await ptz.moveRight(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -535,7 +535,7 @@ app.post(
 app.post(
   "/camera/:camId/ptz/move/stop",
   route(async ({ ptz }, body) => {
-    const { channel = 0 } = body;
+    const { channel = 1 } = body;
     const response = await ptz.stopMove(channel);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -544,7 +544,7 @@ app.post(
 app.post(
   "/camera/:camId/ptz/zoom/in",
   route(async ({ ptz }, body) => {
-    const { channel = 0 } = body;
+    const { channel = 1 } = body;
     const response = await ptz.zoomIn(channel);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -553,7 +553,7 @@ app.post(
 app.post(
   "/camera/:camId/ptz/zoom/out",
   route(async ({ ptz }, body) => {
-    const { channel = 0 } = body;
+    const { channel = 1 } = body;
     const response = await ptz.zoomOut(channel);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -562,7 +562,7 @@ app.post(
 app.post(
   "/camera/:camId/ptz/zoom/stop",
   route(async ({ ptz }, body) => {
-    const { channel = 0 } = body;
+    const { channel = 1 } = body;
     const response = await ptz.stopZoom(channel);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -571,7 +571,7 @@ app.post(
 app.post(
   "/camera/:camId/ptz/focus/near",
   route(async ({ ptz }, body) => {
-    const { channel = 0 } = body;
+    const { channel = 1 } = body;
     const response = await ptz.focusNear(channel);
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -580,7 +580,7 @@ app.post(
 app.post(
   "/camera/:camId/ptz/focus/far",
   route(async ({ ptz }, body) => {
-    const { channel = 0 } = body;
+    const { channel = 1 } = body;
     const response = await ptz.focusFar(channel);
     return { response, ok: ptz.isSuccess(response) };
   })
