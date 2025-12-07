@@ -362,11 +362,11 @@ app.post("/camera/:camId/video-encoder", async (req, res) => {
   }
 });
 
-app.post("/focus/:camId/move", async (req, res) => {
+app.post("/focus/cam2/move", async (req, res) => {
   try {
-    const camId = req.params.camId;
+    // const camId = req.params.camId;
     const { direction, speed = 5, channel = 0 } = req.body;
-    const { client, ip } = getCameraClient(camId);
+    const { client, ip } = getCameraClient('cam2');
     let code;
     if (direction === "focus_in") code = "FocusNear";
     else if (direction === "focus_out") code = "FocusFar";
