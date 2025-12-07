@@ -180,11 +180,13 @@ export class PTZAPI {
     action: 'start' | 'stop',
     channel: PTZChannel,
     code: PTZCode,
+    speed ?: number,
     arg1: number = 0,
     arg2: number = 0,
     arg3: number = 0,
     arg4?: number
   ): Promise<string> {
+    if (speed ) arg1 = speed;
     let url = this.buildUrl(
       `/cgi-bin/ptz.cgi?action=${action}&channel=0&code=${code}&arg1=${arg1}&arg2=${arg2}&arg3=${arg3}`
     );
@@ -210,7 +212,7 @@ export class PTZAPI {
   }
 
   async stopMove(channel: PTZChannel = 0, code: PTZCode = 'Up'): Promise<string> {
-    return this.ptzControl('stop', channel, code);
+    return this.ptzControl('stop', channel, code );
   }
 
   async zoomIn(channel: PTZChannel = 0): Promise<string> {
