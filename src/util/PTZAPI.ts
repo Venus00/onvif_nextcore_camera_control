@@ -205,13 +205,20 @@ export class PTZAPI {
         break;
       case "ZoomTele":
         code = "ZoomTele";
-        args = [0, 0, speed];
+        args = [0, 0, 0];
         break;
       case "ZoomWide":
         code = "ZoomWide";
-        args = [0, 0, speed];
+        args = [0, 0, 0];
         break;
-
+      case "FocusNear":
+        code = "FocusNear";
+        args = [0, 0, 0];
+        break;
+      case "FocusFar":
+        code = "FocusFar";
+        args = [0, 0, 0];
+        break;
       default:
         throw new Error("Invalid direction");
     }
