@@ -170,7 +170,7 @@ export function createUDPClient(config: UDPClientConfig = {}): {
     const {
         wsPort = 8080,
         localPort = 5012,
-        remoteHost = '0.0.0.0',
+        remoteHost = 'localhost',
         remotePort = 5012,
         initialMessage
     } = config;
