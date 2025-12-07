@@ -547,6 +547,15 @@ app.post(
 );
 
 app.post(
+  "/camera/:camId/ptz/wiper/on",
+  route(async ({ ptz }, body) => {
+    const { channel = 0 } = body;
+    const response = await ptz.wiperOn(channel);
+    return { response, ok: ptz.isSuccess(response) };
+  })
+);
+
+app.post(
   "/camera/:camId/ptz/move/stop",
   route(async ({ ptz }, body) => {
     const { channel = 0 } = body;
@@ -980,6 +989,47 @@ app.post("/track/object/:id", async (req, res) => {
         success: true,
         objectId,
         message: `Tracking request received for object ${objectId}`,
+        warning: 'Backend server not available',
+        backendError: backendError.message
+      });
+    }
+  } catch (error: any) {
+    console.error('[Tracking] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post("/track/stop", async (req, res) => {
+  try {
+    console.log(`[Tracking] Request to stop tracking`);
+
+    // Send stop tracking command to backend on port 9898
+    try {
+      const backendResponse = await fetch(`http://localhost:9898/track/stop`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const backendData = await backendResponse.json();
+      console.log(`[Tracking] Backend stop response:`, backendData);
+
+      res.json({
+        success: true,
+        message: `Tracking stopped`,
+        backendResponse: backendData
+      });
+    } catch (backendError: any) {
+      console.error('[Tracking] Backend connection error:', backendError.message);
+
+      // Still return success to frontend even if backend fails
+      res.json({
+        success: true,
+        message: `Stop tracking request received`,
         warning: 'Backend server not available',
         backendError: backendError.message
       });
