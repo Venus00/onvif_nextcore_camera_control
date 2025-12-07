@@ -648,17 +648,17 @@ app.post(
     console.log("PTZ Actual Position:", ptzActual);
 
     const coordinate = {
-    Name: presetId.Name,
-    Enable: true,
-    FocusMapValue: ptzActual['status.Foci'],
-    PanAngleHD: ptzActual['status.PanAngleHD'],
-    TiltAngleHD: ptzActual['status.TiltAngleHD'],
-    Position: [
-      ptzActual['status.Postion[0]'],  // Note: API has typo "Postion" not "Position"
-      ptzActual['status.Postion[1]'],
-      ptzActual['status.Postion[2]']
-    ],
-    ZoomValue: ptzActual['status.ZoomValue']
+    Name: presetId.Name
+    // Enable: true,
+    // FocusMapValue: ptzActual['status.Foci'],
+    // PanAngleHD: ptzActual['status.PanAngleHD'],
+    // TiltAngleHD: ptzActual['status.TiltAngleHD'],
+    // Position: [
+    //   ptzActual['status.Postion[0]'],  // Note: API has typo "Postion" not "Position"
+    //   ptzActual['status.Postion[1]'],
+    //   ptzActual['status.Postion[2]']
+    // ],
+    // ZoomValue: ptzActual['status.ZoomValue']
   };
 
   let response = await ptz.setPresetConfig(coordinate, channel, presetId.id);
