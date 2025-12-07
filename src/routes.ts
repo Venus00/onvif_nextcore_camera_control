@@ -650,15 +650,15 @@ app.post(
     const cordinate = {
       Name: presetId.Name ,
       Enable : true ,
-      FocusMapValue : ptzActual.status['status.Foci'],
-      PanAngleHD : ptzActual.status['status.PanAngleHD'],
-      TiltAngleHD : ptzActual.status['status.TiltAngleHD'],
+      FocusMapValue : ptzActual.status.Foci,
+      PanAngleHD : ptzActual.status.PanAngleHD,
+      TiltAngleHD : ptzActual.status.TiltAngleHD,
       Position: [
-    ptzActual.status['status.Position[0]'], // Fixed typo: Position not Postion
-    ptzActual.status['status.Position[1]'],
-    ptzActual.status['status.Position[2]']
+    ptzActual.status.Position[0], // Fixed typo: Position not Postion
+    ptzActual.status.Position[1],
+    ptzActual.status.Position[2]
   ],  
-      ZoomValue : ptzActual.status['status.ZoomValue'],
+      ZoomValue : ptzActual.status.ZoomValue,
     }
     let response = await ptz.setPresetConfig(cordinate , channel, presetId.id);
 
