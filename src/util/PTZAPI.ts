@@ -280,7 +280,7 @@ async continuousMove(hSpeed: number, vSpeed: number, zSpeed: number, timeout: nu
     return this.getConfig('PtzPreset');
   }
 
- async setPresetConfig(params: PresetParams, channel: number = 0, presetId: number = 0): Promise<string[]> {
+ async setPresetConfig(params: PresetParams, channel: number = 0, presetId: number = 0): Promise<string> {
   const responses: string[] = [];
   
   for (const [key, value] of Object.entries(params)) {
@@ -289,18 +289,18 @@ async continuousMove(hSpeed: number, vSpeed: number, zSpeed: number, timeout: nu
       for (let i = 0; i < value.length; i++) {
         const param = `table.PtzPreset[${channel}][${presetId}].Position[${i}]=${value[i]}`;
         const response = await this.setConfig(param);
-        responses.push(response);
+        // responses.push(response);
       }
     } else {
       // Handle boolean Enable field
       const val = key === 'Enable' ? (value ? 'true' : 'false') : encodeURIComponent(String(value));
       const param = `table.PtzPreset[${channel}][${presetId}].${key}=${val}`;
       const response = await this.setConfig(param);
-      responses.push(response);
+      // responses.push(response);
     }
   }
   
-  return ['ok'];
+  return 'ok';
 }
 
   // ========== 5.3.2 Tour ==========
