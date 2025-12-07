@@ -300,7 +300,7 @@ async continuousMove(hSpeed: number, vSpeed: number, zSpeed: number, timeout: nu
     }
   }
   
-  return responses;
+  return ['ok'];
 }
 
   // ========== 5.3.2 Tour ==========
