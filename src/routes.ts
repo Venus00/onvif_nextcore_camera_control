@@ -654,7 +654,7 @@ app.post(
   Position: [
     ptzActual['status.Postion[0]'],  // Note: API has typo "Postion" not "Position"
     ptzActual['status.Postion[1]'],
-    ptzActual['status.Postion[2]']
+    ptzActual['status.PTZZoomHD']
   ],
 
 };
