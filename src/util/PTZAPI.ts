@@ -287,14 +287,14 @@ async continuousMove(hSpeed: number, vSpeed: number, zSpeed: number, timeout: nu
     if (key === 'Position' && Array.isArray(value)) {
       // Set each position element separately
       for (let i = 0; i < value.length; i++) {
-        const param = `table.PtzPreset[${channel}][${presetId}].Position[${i}]=${value[i]}`;
+        const param = `PtzPreset[${channel}][${presetId}].Position[${i}]=${value[i]}`;
         const response = await this.setConfig(param);
         // responses.push(response);
       }
     } else {
       // Handle boolean Enable field
       const val = key === 'Enable' ? (value ? 'true' : 'false') : encodeURIComponent(String(value));
-      const param = `table.PtzPreset[${channel}][${presetId}].${key}=${val}`;
+      const param = `PtzPreset[${channel}][${presetId}].${key}=${val}`;
       const response = await this.setConfig(param);
       // responses.push(response);
     }
