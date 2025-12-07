@@ -17,7 +17,7 @@ import { createUDPClient } from "./util/udpclient.js";
 const { udpServer, wsServer } = createUDPClient({
   wsPort: 8080,
   localPort: 5012,
-  remoteHost: '192.168.1.223',
+  remoteHost: 'localhost',
   remotePort: 5012,
   initialMessage: Buffer.from('HELLO')
 });

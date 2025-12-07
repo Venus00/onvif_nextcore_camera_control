@@ -1004,7 +1004,7 @@ app.listen(PORT, async () => {
   const { udpClient, wsServer } = createUDPClient({
     wsPort: 8080,
     localPort: 5012,        // Local port to receive data on
-    remoteHost: '192.168.1.223',  // Remote server IP
+    remoteHost: 'localhost',  // Remote server IP
     remotePort: 5012        // Remote server port (for logging)
   });
 
