@@ -108,7 +108,7 @@ export class StorageAPI {
 
   async setRecordSchedule(timeSection: string, channel: Channel = 0, day: number = 0, period: number = 0): Promise<string> {
     // timeSection format: "mask HH:MM:SS-HH:MM:SS" e.g. "2 00:00:00-23:59:59"
-    return this.setConfig(`Record[${channel}].TimeSection[${day}][${period}]=${encodeURIComponent(timeSection)}`);
+    return this.setConfig(`Record[${channel}].TimeSection[${day}][${period}]=${timeSection}`);
   }
 
   async getRecordMode(): Promise<ParsedConfig> {
