@@ -998,6 +998,89 @@ app.post(
   })
 );
 
+// Object Detection
+app.post("/detection/start", async (req, res) => {
+  try {
+    console.log(`[Detection] Request to start detection`);
+
+    // Send detection start command to backend on port 9898
+    try {
+      const backendResponse = await fetch(`http://localhost:9898/detection/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const backendData = await backendResponse.json();
+      console.log(`[Detection] Backend response:`, backendData);
+
+      res.json({
+        success: true,
+        message: `Detection started`,
+        backendResponse: backendData
+      });
+    } catch (backendError: any) {
+      console.error('[Detection] Backend connection error:', backendError.message);
+
+      // Still return success to frontend even if backend fails
+      res.json({
+        success: true,
+        message: `Detection start request received`,
+        warning: 'Backend server not available',
+        backendError: backendError.message
+      });
+    }
+  } catch (error: any) {
+    console.error('[Detection] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post("/detection/stop", async (req, res) => {
+  try {
+    console.log(`[Detection] Request to stop detection`);
+
+    // Send detection stop command to backend on port 9898
+    try {
+      const backendResponse = await fetch(`http://localhost:9898/detection/stop`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const backendData = await backendResponse.json();
+      console.log(`[Detection] Backend stop response:`, backendData);
+
+      res.json({
+        success: true,
+        message: `Detection stopped`,
+        backendResponse: backendData
+      });
+    } catch (backendError: any) {
+      console.error('[Detection] Backend connection error:', backendError.message);
+
+      // Still return success to frontend even if backend fails
+      res.json({
+        success: true,
+        message: `Detection stop request received`,
+        warning: 'Backend server not available',
+        backendError: backendError.message
+      });
+    }
+  } catch (error: any) {
+    console.error('[Detection] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Object Tracking
 app.post("/track/object/:id", async (req, res) => {
   try {
