@@ -1186,76 +1186,103 @@ app.get("/detection/photos", async (req, res) => {
       });
     }
 
-    // Read all files from directory
-    const files = fs.readdirSync(photosDir);
-    console.log(files)
-    // Filter image files and parse their names (classification-date-score)
-    const photos = files
-      .filter(file => /\.(jpg|jpeg|png|bmp)$/i.test(file))
-      .map(filename => {
-        // Parse filename pattern: classification-date-score.ext
-        // Example: person-20231208143022-0.95.jpg
-        const word = filename.split('-')
-        console.log(word)
-        const [classificationName, dateStr, scoreStr, ext] = word;
-        const score = parseFloat(scoreStr || '0');
+    // Read all date folders (format: YYYY-MM-DD)
+    const dateFolders = fs.readdirSync(photosDir)
+      .filter(item => {
+        const fullPath = path.join(photosDir, item);
+        return fs.statSync(fullPath).isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(item);
+      });
 
-        // Check if dateStr exists and has sufficient length
-        if (!dateStr) {
-          return null;
-        }
+    console.log(`[Detection Photos] Found ${dateFolders.length} date folders:`, dateFolders);
 
-        // Parse date string (YYYYMMDDHHmmss)
-        const year = parseInt(dateStr.substring(0, 4));
-        const month = parseInt(dateStr.substring(4, 6));
-        const day = parseInt(dateStr.substring(6, 8));
-        const hour = parseInt(dateStr.substring(8, 10));
-        const minute = parseInt(dateStr.substring(10, 12));
-        const second = parseInt(dateStr.substring(12, 14));
+    // Collect all photos from all date folders
+    const photos: any[] = [];
 
-        const timestamp = new Date(year, month - 1, day, hour, minute, second);
+    for (const dateFolder of dateFolders) {
+      const folderPath = path.join(photosDir, dateFolder);
+      const files = fs.readdirSync(folderPath);
 
-        return {
-          filename,
-          classification: classificationName,
-          timestamp: timestamp.toISOString(),
-          score,
-          path: `/detection/photos/${filename}`,
-          size: fs.statSync(path.join(photosDir, filename)).size
-        };
-      })
-      .filter(photo => photo !== null);
+      // Process image files in this date folder
+      files
+        .filter(file => /\.(jpg|jpeg|png|bmp)$/i.test(file))
+        .forEach(filename => {
+          try {
+            // Parse filename pattern: classification-date-score.ext
+            // Example: person-20231208143022-0.95.jpg
+            const parts = filename.split('-');
+
+            if (parts.length < 3) {
+              console.warn(`[Detection Photos] Skipping invalid filename: ${filename}`);
+              return;
+            }
+
+            const classificationName = parts[0];
+            const dateStr = parts[1];
+            const scoreWithExt = parts[2];
+            const score = parseFloat(scoreWithExt.split('.')[0]) || 0;
+
+            // Parse date string (YYYYMMDDHHmmss)
+            if (!dateStr || dateStr.length < 14) {
+              console.warn(`[Detection Photos] Invalid date in filename: ${filename}`);
+              return;
+            }
+
+            const year = parseInt(dateStr.substring(0, 4));
+            const month = parseInt(dateStr.substring(4, 6));
+            const day = parseInt(dateStr.substring(6, 8));
+            const hour = parseInt(dateStr.substring(8, 10));
+            const minute = parseInt(dateStr.substring(10, 12));
+            const second = parseInt(dateStr.substring(12, 14));
+
+            const timestamp = new Date(year, month - 1, day, hour, minute, second);
+
+            photos.push({
+              filename,
+              dateFolder,
+              classification: classificationName,
+              timestamp: timestamp.toISOString(),
+              score,
+              path: `/detection/photos/${dateFolder}/${filename}`,
+              size: fs.statSync(path.join(folderPath, filename)).size
+            });
+          } catch (err) {
+            console.error(`[Detection Photos] Error processing file ${filename}:`, err);
+          }
+        });
+    }
+
+    console.log(`[Detection Photos] Total photos found: ${photos.length}`);
 
     // Apply filters
     let filteredPhotos = photos;
 
     if (classification) {
       filteredPhotos = filteredPhotos.filter(p =>
-        p!.classification.toLowerCase() === (classification as string).toLowerCase()
+        p.classification.toLowerCase() === (classification as string).toLowerCase()
       );
     }
 
     if (startDate) {
       const start = new Date(startDate as string);
-      filteredPhotos = filteredPhotos.filter(p => new Date(p!.timestamp) >= start);
+      filteredPhotos = filteredPhotos.filter(p => new Date(p.timestamp) >= start);
     }
 
     if (endDate) {
       const end = new Date(endDate as string);
-      filteredPhotos = filteredPhotos.filter(p => new Date(p!.timestamp) <= end);
+      filteredPhotos = filteredPhotos.filter(p => new Date(p.timestamp) <= end);
     }
 
     if (minScore) {
-      filteredPhotos = filteredPhotos.filter(p => p!.score >= parseFloat(minScore as string));
+      filteredPhotos = filteredPhotos.filter(p => p.score >= parseFloat(minScore as string));
     }
 
     if (maxScore) {
-      filteredPhotos = filteredPhotos.filter(p => p!.score <= parseFloat(maxScore as string));
+      filteredPhotos = filteredPhotos.filter(p => p.score <= parseFloat(maxScore as string));
     }
 
     // Sort by timestamp (newest first)
     filteredPhotos.sort((a, b) =>
-      new Date(b!.timestamp).getTime() - new Date(a!.timestamp).getTime()
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
 
     // Apply limit
@@ -1281,12 +1308,12 @@ app.get("/detection/photos", async (req, res) => {
   }
 });
 
-// Serve individual detection photo
-app.get("/detection/photos/:filename", async (req, res) => {
+// Serve individual detection photo (with date folder)
+app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
   try {
-    const { filename } = req.params;
+    const { dateFolder, filename } = req.params;
     const photosDir = "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
-    const filePath = path.join(photosDir, filename);
+    const filePath = path.join(photosDir, dateFolder, filename);
 
     // Security check: prevent directory traversal
     const resolvedPath = path.resolve(filePath);
@@ -1296,6 +1323,14 @@ app.get("/detection/photos/:filename", async (req, res) => {
       return res.status(403).json({
         success: false,
         error: 'Access denied'
+      });
+    }
+
+    // Validate date folder format (YYYY-MM-DD)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFolder)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid date folder format'
       });
     }
 
