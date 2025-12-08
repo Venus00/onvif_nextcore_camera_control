@@ -18,7 +18,7 @@ import { createUDPClient } from "./util/udpclient.js";
 
 const { udpServer, wsServer } = createUDPClient({
   wsPort: 8080,
-  localPort: 5013,        // Local port to bind (receive responses)
+  localPort: 52383,        // Local port to bind (receive responses)
   remoteHost: '127.0.0.1', // Python server address
   remotePort: 52383,        // Python server port
   initialMessage: Buffer.from('HELLO')
@@ -636,15 +636,15 @@ app.post(
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
     console.log("Setting preset", presetId, "on channel", channel);
-    let params = { Name: presetId.Name }  ;
+    let params = { Name: presetId.Name };
 
-    if(presetId.Name){  await ptz.setPresetConfig( presetId.Name, channel, presetId.id); }
+    if (presetId.Name) { await ptz.setPresetConfig(presetId.Name, channel, presetId.id); }
 
 
 
-//   Name: presetId.Name,
+    //   Name: presetId.Name,
 
-    let response = await ptz.setPreset( presetId.id, channel, presetId.id);
+    let response = await ptz.setPreset(presetId.id, channel, presetId.id);
 
     return { response, ok: ptz.isSuccess(response) };
   })
@@ -682,7 +682,7 @@ app.post(
   route(async ({ ptz }, body) => {
     const { tourId, channel = 0 } = body;
     console.log("Updating tour", body);
-    const response = await ptz.setTourConfig(body.presets, channel , body.id);;
+    const response = await ptz.setTourConfig(body.presets, channel, body.id);;
     return { response, ok: ptz.isSuccess(response) };
   })
 );
