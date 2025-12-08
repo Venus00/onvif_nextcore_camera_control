@@ -1188,7 +1188,7 @@ app.get("/detection/photos", async (req, res) => {
 
     // Read all files from directory
     const files = fs.readdirSync(photosDir);
-
+    console.log(files)
     // Filter image files and parse their names (classification-date-score)
     const photos = files
       .filter(file => /\.(jpg|jpeg|png|bmp)$/i.test(file))
