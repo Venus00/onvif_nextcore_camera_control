@@ -384,7 +384,6 @@ export class PTZAPI {
   ): Promise<string> {
     const parts: string[] = [];
     for (const [key, value] of Object.entries(params)) {
-      if (key === "Presets" && Array.isArray(value)) {
         value.forEach((preset, i) => {
           parts.push(
             `PtzTour[${channel}][${tourId}].Presets[${i}][0]=${preset[0]}`
@@ -396,12 +395,9 @@ export class PTZAPI {
             `PtzTour[${channel}][${tourId}].Presets[${i}][2]=${preset[2]}`
           );
         });
-      } else {
-        parts.push(
-          `PtzTour[${channel}][${tourId}].${key}=${(value)}`
-        );
       }
-    }
+    
+     http://192.168.1.109/cgi-bin/configManager.cgi?action=setConfig&PtzTour[0][0].0=2,5,5&PtzTour[0][0].1=2,5,5&PtzTour[0][0].2=2,5,5
     return this.setConfig(parts.join("&"));
   }
 
