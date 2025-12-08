@@ -398,7 +398,7 @@ export class PTZAPI {
         });
       } else {
         parts.push(
-          `PtzTour[${channel}][${tourId}].${key}=${encodeURIComponent(String(value))}`
+          `PtzTour[${channel}][${tourId}].${key}=${(value)}`
         );
       }
     }
