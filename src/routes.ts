@@ -1195,12 +1195,15 @@ app.get("/detection/photos", async (req, res) => {
       .map(filename => {
         // Parse filename pattern: classification-date-score.ext
         // Example: person-20231208143022-0.95.jpg
-        const match = filename.match(/^(.+?)-(\d{14})-([0-9.]+)\.(jpg|jpeg|png|bmp)$/i);
+        const word = filename.split('-')
 
-        if (!match) return null;
+        const [classificationName, dateStr, scoreStr, ext] = word;
+        const score = parseFloat(scoreStr || '0');
 
-        const [, classificationName, dateStr, scoreStr, ext] = match;
-        const score = parseFloat(scoreStr);
+        // Check if dateStr exists and has sufficient length
+        if (!dateStr || dateStr.length < 14) {
+          return null;
+        }
 
         // Parse date string (YYYYMMDDHHmmss)
         const year = parseInt(dateStr.substring(0, 4));
