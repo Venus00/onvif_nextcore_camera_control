@@ -109,7 +109,7 @@ export class StorageAPI {
 async setRecordSchedule(body: any): Promise<string> {
   // Convert body object to query string parameters
   const params = Object.entries(body)
-    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+    .map(([key, value]) => `${(key)}=${(String(value))}`)
     .join('&');
   
   // Add action=setConfig at the beginning
