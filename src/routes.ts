@@ -1051,7 +1051,7 @@ app.get("/detection/photos", async (req, res) => {
     const { classification, startDate, endDate, minScore, maxScore, limit = 100 } = req.query;
 
     // Default photos directory (can be configured via environment variable)
-    const photosDir = process.env.DETECTION_PHOTOS_DIR || path.join(process.cwd(), 'detection_photos');
+    const photosDir = "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
 
     // Check if directory exists
     if (!fs.existsSync(photosDir)) {
