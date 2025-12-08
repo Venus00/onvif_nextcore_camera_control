@@ -1230,9 +1230,9 @@ app.get("/detection/photos", async (req, res) => {
             const year = parseInt(dateStr.substring(0, 4));
             const month = parseInt(dateStr.substring(4, 6));
             const day = parseInt(dateStr.substring(6, 8));
-            const hour = parseInt(dateStr.substring(8, 10));
-            const minute = parseInt(dateStr.substring(10, 12));
-            const second = parseInt(dateStr.substring(12, 14));
+            const hour = parseInt(dateStr.substring(9, 11));
+            const minute = parseInt(dateStr.substring(11, 13));
+            const second = parseInt(dateStr.substring(13, 15));
 
             const timestamp = new Date(year, month - 1, day, hour, minute, second);
 
