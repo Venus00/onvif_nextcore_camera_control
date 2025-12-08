@@ -1196,12 +1196,12 @@ app.get("/detection/photos", async (req, res) => {
         // Parse filename pattern: classification-date-score.ext
         // Example: person-20231208143022-0.95.jpg
         const word = filename.split('-')
-
+        console.log(word)
         const [classificationName, dateStr, scoreStr, ext] = word;
         const score = parseFloat(scoreStr || '0');
 
         // Check if dateStr exists and has sufficient length
-        if (!dateStr || dateStr.length < 14) {
+        if (!dateStr) {
           return null;
         }
 
