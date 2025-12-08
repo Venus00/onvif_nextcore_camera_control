@@ -813,7 +813,7 @@ app.get(
 app.post(
   "/camera/:camId/storage/record",
   route(async ({ storage }, body) => {
-    console.log("Setting record schedule:", body);
+    // console.log("Setting record schedule:", body);
     const response = await storage.setRecordSchedule(body);
     return { response, ok: storage.isSuccess(response) };
   })

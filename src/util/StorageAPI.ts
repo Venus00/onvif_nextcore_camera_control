@@ -106,10 +106,17 @@ export class StorageAPI {
     return this.getConfig('Record');
   }
 
-  async setRecordSchedule(body : any): Promise<string> {
-    // timeSection format: "mask HH:MM:SS-HH:MM:SS" e.g. "2 00:00:00-23:59:59"
-    return this.setConfig(`${body}`);
-  }
+async setRecordSchedule(body: any): Promise<string> {
+  // Convert body object to query string parameters
+  const params = Object.entries(body)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+    .join('&');
+  
+  // Add action=setConfig at the beginning
+  const queryString = `action=setConfig&${params}`;
+  console.log("Setting Record Schedule with query string:", queryString);
+  return this.setConfig(queryString);
+}
 
   async getRecordMode(): Promise<ParsedConfig> {
     return this.getConfig('RecordMode');
