@@ -390,9 +390,6 @@ export class PTZAPI {
           );
         });
       }
-    //  http://192.168.1.109/cgi-bin/configManager.cgi?action=setConfig&
-
-      // http://192.168.1.109/cgi-bin/configManager.cgi?action=setConfig&
 
     return this.setConfig(parts.join("&"));
   }
