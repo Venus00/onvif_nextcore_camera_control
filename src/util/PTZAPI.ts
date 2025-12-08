@@ -386,18 +386,13 @@ export class PTZAPI {
     for (const [key, value] of Object.entries(params)) {
         value.forEach((preset, i) => {
           parts.push(
-            `PtzTour[${channel}][${tourId}].Presets[${i}][0]=${preset[0]}`
-          );
-          parts.push(
-            `PtzTour[${channel}][${tourId}].Presets[${i}][1]=${preset[1]}`
-          );
-          parts.push(
-            `PtzTour[${channel}][${tourId}].Presets[${i}][2]=${preset[2]}`
+            `PtzTour[${channel}][${tourId}].Presets[${key}][${preset}]=${i}`
           );
         });
       }
-    
-     http://192.168.1.109/cgi-bin/configManager.cgi?action=setConfig&PtzTour[0][0].0=2,5,5&PtzTour[0][0].1=2,5,5&PtzTour[0][0].2=2,5,5
+     http://192.168.1.109/cgi-bin/configManager.cgi?action=setConfig&
+
+     
     return this.setConfig(parts.join("&"));
   }
 
