@@ -636,7 +636,7 @@ app.post(
     console.log("Setting preset", presetId, "on channel", channel);
     let params = { Name: presetId.Name }  ;
 
-    if(presetId.Name){  await ptz.setPt( presetId.id, channel, presetId.id); }
+    if(presetId.Name){  await ptz.setPresetConfig( presetId.Name, channel, presetId.id); }
 
 
 
