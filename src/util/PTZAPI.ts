@@ -188,6 +188,7 @@ export class PTZAPI {
   const url = this.buildUrl(
     `/cgi-bin/ptz.cgi?action=${action}&channel=${channel}&code=${code}&arg1=${arg1}&arg2=${arg2}&arg3=${arg3}${arg4 !== undefined ? `&arg4=${arg4}` : ''}`
   );
+  console.log('PTZ Control URL:', url);
   return (await this.request(url)).trim();
 }
 
