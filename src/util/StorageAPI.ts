@@ -113,7 +113,7 @@ async setRecordSchedule(body: any): Promise<string> {
     .join('&');
   
   // Add action=setConfig at the beginning
-  const queryString = `action=setConfig&${params}`;
+  const queryString = `${params}`;
   console.log("Setting Record Schedule with query string:", queryString);
   return this.setConfig(queryString);
 }
