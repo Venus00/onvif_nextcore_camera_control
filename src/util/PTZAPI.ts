@@ -306,7 +306,7 @@ export class PTZAPI {
   }
 
   async stopTour(tourId: number, channel: PTZChannel = 0): Promise<string> {
-    return this.ptzControl("stop", channel, "StopTour", tourId, 0, 0);
+    return this.ptzControl("start", channel, "StopTour", tourId, 0, 0);
   }
 
   async clearTour(tourId: number, channel: PTZChannel = 0): Promise<string> {
