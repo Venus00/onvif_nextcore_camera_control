@@ -671,7 +671,7 @@ app.post(
   "/camera/:camId/ptz/tour/stop",
   route(async ({ ptz }, body) => {
     const { tourId, channel = 0 } = body;
-    const response = await ptz.stopMove(channel);;
+    const response = await ptz.stopMove(1);;
     return { response, ok: ptz.isSuccess(response) };
   })
 );
