@@ -75,8 +75,8 @@ interface CameraInfo {
 }
 
 const cameras: Record<string, CameraInfo> = {
-  cam1: { ip: "192.168.1.108", username: "admin", password: "2899100*-+" },
-  cam2: { ip: "192.168.1.109", username: "admin", password: "2899100*-+" },
+  cam1: { ip: "10.10.0.3", username: "admin", password: "2899100*-+" },
+  cam2: { ip: "10.10.0.4", username: "admin", password: "2899100*-+" },
 };
 
 // ============ CACHED API INSTANCES ============
