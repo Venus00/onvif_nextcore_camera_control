@@ -682,7 +682,7 @@ app.post(
   route(async ({ ptz }, body) => {
     const { tourId, channel = 0 } = body;
     console.log("Updating tour", body);
-    const response = await ptz.stopMove(1);;
+    const response = await ptz.setTourConfig(body.presets, channel , body.id);;
     return { response, ok: ptz.isSuccess(response) };
   })
 );
