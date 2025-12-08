@@ -809,6 +809,14 @@ app.get(
   "/camera/:camId/storage/record",
   route(async ({ storage }) => ({ config: await storage.getRecordSchedule() }))
 );
+
+app.post(
+  "/camera/:camId/storage/record",
+  route(async ({ storage }, body) => {
+    const response = await storage.setRecordSchedule(body);
+    return { response, ok: storage.isSuccess(response) };
+  })
+);
 app.get(
   "/camera/:camId/storage/snap",
   route(async ({ storage }) => ({ config: await storage.getSnapSchedule() }))
