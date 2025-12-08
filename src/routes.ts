@@ -18,7 +18,7 @@ import { createUDPClient } from "./util/udpclient.js";
 
 const { udpServer, wsServer } = createUDPClient({
   wsPort: 8080,
-  localPort: 52383,        // Local port to bind (receive responses)
+  localPort: 5015,        // Local port to bind (receive responses)
   remoteHost: '127.0.0.1', // Python server address
   remotePort: 52383,        // Python server port
   initialMessage: Buffer.from('HELLO')
@@ -1282,7 +1282,7 @@ app.get("/detection/photos", async (req, res) => {
 app.get("/detection/photos/:filename", async (req, res) => {
   try {
     const { filename } = req.params;
-    const photosDir = process.env.DETECTION_PHOTOS_DIR || path.join(process.cwd(), 'detection_photos');
+    const photosDir = "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
     const filePath = path.join(photosDir, filename);
 
     // Security check: prevent directory traversal
