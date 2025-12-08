@@ -3,6 +3,8 @@ import cors from "cors"; // <-- add this
 // import DigestFetch from "digest-fetch";
 // const DigestFetch = require("digest-fetch");
 import DigestFetch from "digest-fetch";
+import fs from "fs";
+import path from "path";
 import CameraSetupAPI, {
   NetworkAPI,
   PTZAPI,
@@ -1074,6 +1076,154 @@ app.post("/track/stop", async (req, res) => {
   }
 });
 
+// Object Detection Photos API
+app.get("/detection/photos", async (req, res) => {
+  try {
+    const { classification, startDate, endDate, minScore, maxScore, limit = 100 } = req.query;
+
+    // Default photos directory (can be configured via environment variable)
+    const photosDir = "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
+
+    // Check if directory exists
+    if (!fs.existsSync(photosDir)) {
+      return res.json({
+        success: true,
+        photos: [],
+        message: 'Detection photos directory not found',
+        directory: photosDir
+      });
+    }
+
+    // Read all files from directory
+    const files = fs.readdirSync(photosDir);
+
+    // Filter image files and parse their names (classification-date-score)
+    const photos = files
+      .filter(file => /\.(jpg|jpeg|png|bmp)$/i.test(file))
+      .map(filename => {
+        // Parse filename pattern: classification-date-score.ext
+        // Example: person-20231208143022-0.95.jpg
+        const match = filename.match(/^(.+?)-(\d{14})-([0-9.]+)\.(jpg|jpeg|png|bmp)$/i);
+
+        if (!match) return null;
+
+        const [, classificationName, dateStr, scoreStr, ext] = match;
+        const score = parseFloat(scoreStr);
+
+        // Parse date string (YYYYMMDDHHmmss)
+        const year = parseInt(dateStr.substring(0, 4));
+        const month = parseInt(dateStr.substring(4, 6));
+        const day = parseInt(dateStr.substring(6, 8));
+        const hour = parseInt(dateStr.substring(8, 10));
+        const minute = parseInt(dateStr.substring(10, 12));
+        const second = parseInt(dateStr.substring(12, 14));
+
+        const timestamp = new Date(year, month - 1, day, hour, minute, second);
+
+        return {
+          filename,
+          classification: classificationName,
+          timestamp: timestamp.toISOString(),
+          score,
+          path: `/detection/photos/${filename}`,
+          size: fs.statSync(path.join(photosDir, filename)).size
+        };
+      })
+      .filter(photo => photo !== null);
+
+    // Apply filters
+    let filteredPhotos = photos;
+
+    if (classification) {
+      filteredPhotos = filteredPhotos.filter(p =>
+        p!.classification.toLowerCase() === (classification as string).toLowerCase()
+      );
+    }
+
+    if (startDate) {
+      const start = new Date(startDate as string);
+      filteredPhotos = filteredPhotos.filter(p => new Date(p!.timestamp) >= start);
+    }
+
+    if (endDate) {
+      const end = new Date(endDate as string);
+      filteredPhotos = filteredPhotos.filter(p => new Date(p!.timestamp) <= end);
+    }
+
+    if (minScore) {
+      filteredPhotos = filteredPhotos.filter(p => p!.score >= parseFloat(minScore as string));
+    }
+
+    if (maxScore) {
+      filteredPhotos = filteredPhotos.filter(p => p!.score <= parseFloat(maxScore as string));
+    }
+
+    // Sort by timestamp (newest first)
+    filteredPhotos.sort((a, b) =>
+      new Date(b!.timestamp).getTime() - new Date(a!.timestamp).getTime()
+    );
+
+    // Apply limit
+    const limitNum = parseInt(limit as string);
+    if (limitNum > 0) {
+      filteredPhotos = filteredPhotos.slice(0, limitNum);
+    }
+
+    res.json({
+      success: true,
+      count: filteredPhotos.length,
+      total: photos.length,
+      photos: filteredPhotos,
+      filters: { classification, startDate, endDate, minScore, maxScore, limit }
+    });
+
+  } catch (error: any) {
+    console.error('[Detection Photos] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Serve individual detection photo
+app.get("/detection/photos/:filename", async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const photosDir = process.env.DETECTION_PHOTOS_DIR || path.join(process.cwd(), 'detection_photos');
+    const filePath = path.join(photosDir, filename);
+
+    // Security check: prevent directory traversal
+    const resolvedPath = path.resolve(filePath);
+    const resolvedDir = path.resolve(photosDir);
+
+    if (!resolvedPath.startsWith(resolvedDir)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Photo not found'
+      });
+    }
+
+    // Send file
+    res.sendFile(resolvedPath);
+
+  } catch (error: any) {
+    console.error('[Detection Photo] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Camera API server running on port ${PORT}`);
@@ -1085,6 +1235,7 @@ app.listen(PORT, () => {
   console.log(`  GET  http://localhost:${PORT}/camera/cam1/storage`);
   console.log(`  GET  http://localhost:${PORT}/camera/cam1/live/rtsp`);
   console.log(`  POST http://localhost:${PORT}/camera/cam1/ptz/move/up`);
+  console.log(`  GET  http://localhost:${PORT}/detection/photos`);
 });
 
 export default app;
