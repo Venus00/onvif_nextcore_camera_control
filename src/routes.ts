@@ -1097,7 +1097,6 @@ app.post("/track/object/:id", async (req, res) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ objectId, cameraId })
       });
 
       const backendData = await backendResponse.json();
@@ -1142,7 +1141,6 @@ app.post("/track/stop", async (req, res) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ cameraId })
       });
 
       const backendData = await backendResponse.json();
