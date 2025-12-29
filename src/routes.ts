@@ -5,6 +5,7 @@ import cors from "cors"; // <-- add this
 import DigestFetch from "digest-fetch";
 import fs from "fs";
 import path from "path";
+import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import CameraSetupAPI, {
   NetworkAPI,
   PTZAPI,
@@ -1171,6 +1172,135 @@ app.post("/track/stop", async (req, res) => {
   }
 });
 
+// ============ RECORDING ENDPOINTS ============
+const activeRecordings = new Map<string, ChildProcessWithoutNullStreams>();
+
+// Start recording from RTSP stream
+app.post("/recording/start", async (req, res) => {
+  try {
+    const { cameraId, fileName } = req.body;
+
+    if (!cameraId || !fileName) {
+      return res.status(400).json({ success: false, error: 'cameraId and fileName are required' });
+    }
+
+    const cam = cameras[cameraId];
+    if (!cam) {
+      return res.status(404).json({ success: false, error: `Camera ${cameraId} not found` });
+    }
+
+    // Check if already recording for this camera
+    if (activeRecordings.has(cameraId)) {
+      return res.status(400).json({ success: false, error: `Recording already in progress for ${cameraId}` });
+    }
+
+    const rtspUrl = `rtsp://${cam.username}:${cam.password}@${cam.ip}:554/cam/realmonitor?channel=1&subtype=0`;
+    const outputPath = path.join(__dirname, '../../recordings', fileName);
+
+    // Use ffmpeg to record RTSP stream
+    const ffmpeg = spawn('ffmpeg', [
+      '-rtsp_transport', 'tcp',
+      '-i', rtspUrl,
+      '-c', 'copy',
+      '-f', 'mp4',
+      '-movflags', 'frag_keyframe+empty_moov',
+      outputPath
+    ]);
+
+    activeRecordings.set(cameraId, ffmpeg);
+
+    ffmpeg.on('close', (code) => {
+      console.log(`Recording stopped for ${cameraId} with code ${code}`);
+      activeRecordings.delete(cameraId);
+    });
+
+    ffmpeg.stderr.on('data', (data) => {
+      console.log(`FFmpeg ${cameraId}: ${data}`);
+    });
+
+    res.json({
+      success: true,
+      message: `Recording started for ${cameraId}`,
+      fileName,
+      outputPath
+    });
+
+  } catch (error: any) {
+    console.error('[Recording] Start error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Stop recording
+app.post("/recording/stop", async (req, res) => {
+  try {
+    const { cameraId } = req.body;
+
+    if (!cameraId) {
+      return res.status(400).json({ success: false, error: 'cameraId is required' });
+    }
+
+    const ffmpeg = activeRecordings.get(cameraId);
+    if (!ffmpeg) {
+      return res.status(404).json({ success: false, error: `No active recording for ${cameraId}` });
+    }
+
+    // Send SIGTERM to gracefully stop ffmpeg
+    ffmpeg.kill('SIGTERM');
+    activeRecordings.delete(cameraId);
+
+    res.json({
+      success: true,
+      message: `Recording stopped for ${cameraId}`
+    });
+
+  } catch (error: any) {
+    console.error('[Recording] Stop error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Download and delete recording
+app.get("/recording/download/:fileName", async (req, res) => {
+  try {
+    const { fileName } = req.params;
+    const filePath = path.join(__dirname, '../../recordings', fileName);
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, error: 'Recording not found' });
+    }
+
+    // Set headers for download
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', 'video/mp4');
+
+    // Stream the file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    // Delete file after streaming completes
+    fileStream.on('end', () => {
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error(`Error deleting recording ${fileName}:`, err);
+        } else {
+          console.log(`Recording ${fileName} deleted after download`);
+        }
+      });
+    });
+
+    fileStream.on('error', (error) => {
+      console.error(`Error streaming recording ${fileName}:`, error);
+      res.status(500).json({ success: false, error: 'Error downloading recording' });
+    });
+
+  } catch (error: any) {
+    console.error('[Recording] Download error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Object Detection Photos API
 app.get("/detection/photos", async (req, res) => {
   try {
@@ -1356,6 +1486,10 @@ app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
     });
   }
 });
+
+// ============ RECORDINGS ENDPOINT ============
+// Serve recorded video files
+app.use('/recordings', express.static(path.join(__dirname, '../../recordings')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
