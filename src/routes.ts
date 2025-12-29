@@ -1045,7 +1045,7 @@ app.post("/detection/stop", async (req, res) => {
   try {
     const { cameraId = 'cam1' } = req.body; // cam1 = optique, cam2 = thermique
     console.log(`[Detection] Request to stop detection on ${cameraId}`);
-
+    console.log(`http://localhost:9898/ia_process/trackobject/${cameraId}/stop`)
     // Send detection stop command to backend on port 9898
     try {
       const backendResponse = await fetch(`http://localhost:9898/ia_process/trackobject/${cameraId}/stop`, {
