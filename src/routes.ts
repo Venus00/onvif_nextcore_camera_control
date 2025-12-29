@@ -1006,7 +1006,7 @@ app.post("/detection/start", async (req, res) => {
 
     // Send detection start command to backend on port 9898
     try {
-      const backendResponse = await fetch(`http://localhost:9898/trackObject/${cameraId}/start`, {
+      const backendResponse = await fetch(`http://localhost:9898/IA_process/trackObject/${cameraId}/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1049,7 +1049,7 @@ app.post("/detection/stop", async (req, res) => {
 
     // Send detection stop command to backend on port 9898
     try {
-      const backendResponse = await fetch(`http://localhost:9898/trackObject/${cameraId}/stop`, {
+      const backendResponse = await fetch(`http://localhost:9898/IA_process/trackObject/${cameraId}/stop`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
