@@ -5,6 +5,7 @@ import cors from "cors"; // <-- add this
 import DigestFetch from "digest-fetch";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import CameraSetupAPI, {
   NetworkAPI,
@@ -16,6 +17,10 @@ import CameraSetupAPI, {
   CameraClient,
 } from "./util";
 import { createUDPClient } from "./util/udpclient.js";
+
+// Define __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const { udpServer, wsServer } = createUDPClient({
   wsPort: 8080,
