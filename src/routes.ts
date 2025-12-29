@@ -1001,15 +1001,17 @@ app.post(
 // Object Detection
 app.post("/detection/start", async (req, res) => {
   try {
-    console.log(`[Detection] Request to start detection`);
+    const { cameraId = 'cam1' } = req.body; // cam1 = optique, cam2 = thermique
+    console.log(`[Detection] Request to start detection on ${cameraId}`);
 
     // Send detection start command to backend on port 9898
     try {
-      const backendResponse = await fetch(`http://localhost:9898/detection/start`, {
+      const backendResponse = await fetch(`http://localhost:9898/trackObject/${cameraId}/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ cameraId })
       });
 
       const backendData = await backendResponse.json();
@@ -1042,15 +1044,17 @@ app.post("/detection/start", async (req, res) => {
 
 app.post("/detection/stop", async (req, res) => {
   try {
-    console.log(`[Detection] Request to stop detection`);
+    const { cameraId = 'cam1' } = req.body; // cam1 = optique, cam2 = thermique
+    console.log(`[Detection] Request to stop detection on ${cameraId}`);
 
     // Send detection stop command to backend on port 9898
     try {
-      const backendResponse = await fetch(`http://localhost:9898/detection/stop`, {
+      const backendResponse = await fetch(`http://localhost:9898/trackObject/${cameraId}/stop`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ cameraId })
       });
 
       const backendData = await backendResponse.json();
@@ -1085,16 +1089,17 @@ app.post("/detection/stop", async (req, res) => {
 app.post("/track/object/:id", async (req, res) => {
   try {
     const objectId = parseInt(req.params.id);
-    console.log(`[Tracking] Request to track object ID: ${objectId}`);
+    const { cameraId = 'cam1' } = req.body; // cam1 = optique, cam2 = thermique
+    console.log(`[Tracking] Request to track object ID: ${objectId} on ${cameraId}`);
 
     // Send tracking command to backend on port 9898
     try {
-      const backendResponse = await fetch(`http://localhost:9898/track/object/${objectId}`, {
+      const backendResponse = await fetch(`http://localhost:9898/IA_process/trackObject_IDS/${cameraId}/Start/${objectId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ objectId })
+        body: JSON.stringify({ objectId, cameraId })
       });
 
       const backendData = await backendResponse.json();
@@ -1129,15 +1134,17 @@ app.post("/track/object/:id", async (req, res) => {
 
 app.post("/track/stop", async (req, res) => {
   try {
-    console.log(`[Tracking] Request to stop tracking`);
+    const { cameraId = 'cam1' } = req.body; // cam1 = optique, cam2 = thermique
+    console.log(`[Tracking] Request to stop tracking on ${cameraId}`);
 
     // Send stop tracking command to backend on port 9898
     try {
-      const backendResponse = await fetch(`http://localhost:9898/track/stop`, {
+      const backendResponse = await fetch(`http://localhost:9898/IA_process/trackObject_IDS/${cameraId}/stop`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ cameraId })
       });
 
       const backendData = await backendResponse.json();
