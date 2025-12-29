@@ -1011,7 +1011,6 @@ app.post("/detection/start", async (req, res) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ cameraId })
       });
 
       const backendData = await backendResponse.json();
@@ -1054,7 +1053,6 @@ app.post("/detection/stop", async (req, res) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ cameraId })
       });
 
       const backendData = await backendResponse.json();
