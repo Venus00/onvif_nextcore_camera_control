@@ -1199,7 +1199,10 @@ app.post("/recording/start", async (req, res) => {
       return res.status(400).json({ success: false, error: `Recording already in progress for ${cameraId}` });
     }
 
-    const rtspUrl = `rtsp://${cam.username}:${cam.password}@${cam.ip}:554/cam/realmonitor?channel=1&subtype=0`;
+    // URL encode username and password for RTSP
+    const encodedUsername = encodeURIComponent(cam.username);
+    const encodedPassword = encodeURIComponent(cam.password);
+    const rtspUrl = `rtsp://${encodedUsername}:${encodedPassword}@${cam.ip}:554/cam/realmonitor?channel=1&subtype=0`;
     const outputPath = path.join(__dirname, '../../recordings', fileName);
 
     // Use ffmpeg to record RTSP stream
