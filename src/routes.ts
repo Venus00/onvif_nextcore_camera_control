@@ -22,6 +22,72 @@ import { createUDPClient } from "./util/udpclient.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ============ STATE MANAGEMENT ============
+interface DetectionState {
+  cam1: {
+    detectionEnabled: boolean;
+    trackingEnabled: boolean;
+    trackingObjectId: number | null;
+  };
+  cam2: {
+    detectionEnabled: boolean;
+    trackingEnabled: boolean;
+    trackingObjectId: number | null;
+  };
+  autofocus: {
+    cam1: boolean;
+    cam2: boolean;
+  };
+}
+
+const stateFilePath = path.join(__dirname, '../../detection-state.json');
+
+// Initialize default state
+const defaultState: DetectionState = {
+  cam1: {
+    detectionEnabled: false,
+    trackingEnabled: false,
+    trackingObjectId: null
+  },
+  cam2: {
+    detectionEnabled: false,
+    trackingEnabled: false,
+    trackingObjectId: null
+  },
+  autofocus: {
+    cam1: false,
+    cam2: false
+  }
+};
+
+// Load state from file
+function loadState(): DetectionState {
+  try {
+    if (fs.existsSync(stateFilePath)) {
+      const data = fs.readFileSync(stateFilePath, 'utf-8');
+      const loadedState = JSON.parse(data);
+      console.log('[State] Loaded state from file:', loadedState);
+      return { ...defaultState, ...loadedState };
+    }
+  } catch (error) {
+    console.error('[State] Error loading state:', error);
+  }
+  return defaultState;
+}
+
+// Save state to file
+function saveState(state: DetectionState): void {
+  try {
+    fs.writeFileSync(stateFilePath, JSON.stringify(state, null, 2), 'utf-8');
+    console.log('[State] Saved state to file:', state);
+  } catch (error) {
+    console.error('[State] Error saving state:', error);
+  }
+}
+
+// Global state
+let detectionState: DetectionState = loadState();
+
 const { udpServer, wsServer } = createUDPClient({
   wsPort: 8080,
   localPort: 5015,        // Local port to bind (receive responses)
@@ -649,23 +715,34 @@ app.post(
       // Also enable on camera hardware
       const response = await ptz.autoFocus(true, channel);
 
+      // Update state
+      detectionState.autofocus[camId as 'cam1' | 'cam2'] = true;
+      saveState(detectionState);
+
       return {
         response,
         ok: ptz.isSuccess(response),
         message: 'Autofocus enabled',
-        backendResponse: backendData
+        backendResponse: backendData,
+        state: detectionState.autofocus
       };
     } catch (backendError: any) {
       console.error('[Autofocus] Backend connection error:', backendError.message);
 
       // Still enable on camera hardware even if backend fails
       const response = await ptz.autoFocus(true, channel);
+
+      // Update state even if backend fails
+      detectionState.autofocus[camId as 'cam1' | 'cam2'] = true;
+      saveState(detectionState);
+
       return {
         response,
         ok: ptz.isSuccess(response),
         message: 'Autofocus enabled',
         warning: 'Backend server not available',
-        backendError: backendError.message
+        backendError: backendError.message,
+        state: detectionState.autofocus
       };
     }
   })
@@ -693,23 +770,34 @@ app.post(
       // Also disable on camera hardware
       const response = await ptz.autoFocus(false, channel);
 
+      // Update state
+      detectionState.autofocus[camId as 'cam1' | 'cam2'] = false;
+      saveState(detectionState);
+
       return {
         response,
         ok: ptz.isSuccess(response),
         message: 'Autofocus disabled',
-        backendResponse: backendData
+        backendResponse: backendData,
+        state: detectionState.autofocus
       };
     } catch (backendError: any) {
       console.error('[Autofocus] Backend connection error:', backendError.message);
 
       // Still disable on camera hardware even if backend fails
       const response = await ptz.autoFocus(false, channel);
+
+      // Update state even if backend fails
+      detectionState.autofocus[camId as 'cam1' | 'cam2'] = false;
+      saveState(detectionState);
+
       return {
         response,
         ok: ptz.isSuccess(response),
         message: 'Autofocus disabled',
         warning: 'Backend server not available',
-        backendError: backendError.message
+        backendError: backendError.message,
+        state: detectionState.autofocus
       };
     }
   })
@@ -1110,20 +1198,30 @@ app.post("/detection/start", async (req, res) => {
       const backendData = await backendResponse.json();
       console.log(`[Detection] Backend response:`, backendData);
 
+      // Update state
+      detectionState[cameraId as 'cam1' | 'cam2'].detectionEnabled = true;
+      saveState(detectionState);
+
       res.json({
         success: true,
         message: `Detection started`,
-        backendResponse: backendData
+        backendResponse: backendData,
+        state: detectionState[cameraId as 'cam1' | 'cam2']
       });
     } catch (backendError: any) {
       console.error('[Detection] Backend connection error:', backendError.message);
+
+      // Update state even if backend fails
+      detectionState[cameraId as 'cam1' | 'cam2'].detectionEnabled = true;
+      saveState(detectionState);
 
       // Still return success to frontend even if backend fails
       res.json({
         success: true,
         message: `Detection start request received`,
         warning: 'Backend server not available',
-        backendError: backendError.message
+        backendError: backendError.message,
+        state: detectionState[cameraId as 'cam1' | 'cam2']
       });
     }
   } catch (error: any) {
@@ -1152,20 +1250,30 @@ app.post("/detection/stop", async (req, res) => {
       const backendData = await backendResponse.json();
       console.log(`[Detection] Backend stop response:`, backendData);
 
+      // Update state
+      detectionState[cameraId as 'cam1' | 'cam2'].detectionEnabled = false;
+      saveState(detectionState);
+
       res.json({
         success: true,
         message: `Detection stopped`,
-        backendResponse: backendData
+        backendResponse: backendData,
+        state: detectionState[cameraId as 'cam1' | 'cam2']
       });
     } catch (backendError: any) {
       console.error('[Detection] Backend connection error:', backendError.message);
+
+      // Update state even if backend fails
+      detectionState[cameraId as 'cam1' | 'cam2'].detectionEnabled = false;
+      saveState(detectionState);
 
       // Still return success to frontend even if backend fails
       res.json({
         success: true,
         message: `Detection stop request received`,
         warning: 'Backend server not available',
-        backendError: backendError.message
+        backendError: backendError.message,
+        state: detectionState[cameraId as 'cam1' | 'cam2']
       });
     }
   } catch (error: any) {
@@ -1196,14 +1304,25 @@ app.post("/track/object/:id", async (req, res) => {
       const backendData = await backendResponse.json();
       console.log(`[Tracking] Backend response:`, backendData);
 
+      // Update state
+      detectionState[cameraId as 'cam1' | 'cam2'].trackingEnabled = true;
+      detectionState[cameraId as 'cam1' | 'cam2'].trackingObjectId = objectId;
+      saveState(detectionState);
+
       res.json({
         success: true,
         objectId,
         message: `Tracking enabled for object ${objectId}`,
-        backendResponse: backendData
+        backendResponse: backendData,
+        state: detectionState[cameraId as 'cam1' | 'cam2']
       });
     } catch (backendError: any) {
       console.error('[Tracking] Backend connection error:', backendError.message);
+
+      // Update state even if backend fails
+      detectionState[cameraId as 'cam1' | 'cam2'].trackingEnabled = true;
+      detectionState[cameraId as 'cam1' | 'cam2'].trackingObjectId = objectId;
+      saveState(detectionState);
 
       // Still return success to frontend even if backend fails
       res.json({
@@ -1211,7 +1330,8 @@ app.post("/track/object/:id", async (req, res) => {
         objectId,
         message: `Tracking request received for object ${objectId}`,
         warning: 'Backend server not available',
-        backendError: backendError.message
+        backendError: backendError.message,
+        state: detectionState[cameraId as 'cam1' | 'cam2']
       });
     }
   } catch (error: any) {
@@ -1240,24 +1360,62 @@ app.post("/track/stop", async (req, res) => {
       const backendData = await backendResponse.json();
       console.log(`[Tracking] Backend stop response:`, backendData);
 
+      // Update state
+      detectionState[cameraId as 'cam1' | 'cam2'].trackingEnabled = false;
+      detectionState[cameraId as 'cam1' | 'cam2'].trackingObjectId = null;
+      saveState(detectionState);
+
       res.json({
         success: true,
         message: `Tracking stopped`,
-        backendResponse: backendData
+        backendResponse: backendData,
+        state: detectionState[cameraId as 'cam1' | 'cam2']
       });
     } catch (backendError: any) {
       console.error('[Tracking] Backend connection error:', backendError.message);
+
+      // Update state even if backend fails
+      detectionState[cameraId as 'cam1' | 'cam2'].trackingEnabled = false;
+      detectionState[cameraId as 'cam1' | 'cam2'].trackingObjectId = null;
+      saveState(detectionState);
 
       // Still return success to frontend even if backend fails
       res.json({
         success: true,
         message: `Stop tracking request received`,
         warning: 'Backend server not available',
-        backendError: backendError.message
+        backendError: backendError.message,
+        state: detectionState[cameraId as 'cam1' | 'cam2']
       });
     }
   } catch (error: any) {
     console.error('[Tracking] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get detection/tracking state
+app.get("/detection/state", async (req, res) => {
+  try {
+    const { cameraId } = req.query;
+
+    if (cameraId && (cameraId === 'cam1' || cameraId === 'cam2')) {
+      res.json({
+        success: true,
+        cameraId,
+        state: detectionState[cameraId]
+      });
+    } else {
+      res.json({
+        success: true,
+        state: detectionState
+      });
+    }
+  } catch (error: any) {
+    console.error('[State] Error:', error);
     res.status(500).json({
       success: false,
       error: error.message
