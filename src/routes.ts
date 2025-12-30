@@ -627,6 +627,94 @@ app.post(
   })
 );
 
+// Enable autofocus
+app.post(
+  "/camera/:camId/ptz/focus/auto/enable",
+  route(async ({ ptz }, body, params) => {
+    const { channel = 1 } = body;
+    const { camId } = params;
+
+    try {
+      // Send autofocus start command to backend on port 9898
+      const backendResponse = await fetch(`http://localhost:9898/ia_process/focus/${camId}/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+
+      const backendData = await backendResponse.json();
+      console.log(`[Autofocus] Backend start response for ${camId}:`, backendData);
+
+      // Also enable on camera hardware
+      const response = await ptz.autoFocus(true, channel);
+
+      return {
+        response,
+        ok: ptz.isSuccess(response),
+        message: 'Autofocus enabled',
+        backendResponse: backendData
+      };
+    } catch (backendError: any) {
+      console.error('[Autofocus] Backend connection error:', backendError.message);
+
+      // Still enable on camera hardware even if backend fails
+      const response = await ptz.autoFocus(true, channel);
+      return {
+        response,
+        ok: ptz.isSuccess(response),
+        message: 'Autofocus enabled',
+        warning: 'Backend server not available',
+        backendError: backendError.message
+      };
+    }
+  })
+);
+
+// Disable autofocus
+app.post(
+  "/camera/:camId/ptz/focus/auto/disable",
+  route(async ({ ptz }, body, params) => {
+    const { channel = 1 } = body;
+    const { camId } = params;
+
+    try {
+      // Send autofocus stop command to backend on port 9898
+      const backendResponse = await fetch(`http://localhost:9898/ia_process/focus/${camId}/stop`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+
+      const backendData = await backendResponse.json();
+      console.log(`[Autofocus] Backend stop response for ${camId}:`, backendData);
+
+      // Also disable on camera hardware
+      const response = await ptz.autoFocus(false, channel);
+
+      return {
+        response,
+        ok: ptz.isSuccess(response),
+        message: 'Autofocus disabled',
+        backendResponse: backendData
+      };
+    } catch (backendError: any) {
+      console.error('[Autofocus] Backend connection error:', backendError.message);
+
+      // Still disable on camera hardware even if backend fails
+      const response = await ptz.autoFocus(false, channel);
+      return {
+        response,
+        ok: ptz.isSuccess(response),
+        message: 'Autofocus disabled',
+        warning: 'Backend server not available',
+        backendError: backendError.message
+      };
+    }
+  })
+);
+
 app.post(
   "/camera/:camId/ptz/preset/goto",
   route(async ({ ptz }, body) => {
