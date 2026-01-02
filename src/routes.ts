@@ -1119,6 +1119,49 @@ app.post(
   })
 );
 
+// System reboot endpoint (reboots the entire server/system)
+app.post("/system/reboot", async (req, res) => {
+  try {
+    console.log('[System] Reboot request received');
+
+    // Verify authorization or add security check here if needed
+    const { confirm } = req.body;
+
+    if (confirm !== true) {
+      return res.status(400).json({
+        success: false,
+        error: 'Confirmation required to reboot system'
+      });
+    }
+
+    // Send response before rebooting
+    res.json({
+      success: true,
+      message: 'System reboot initiated. Server will be offline for 1-2 minutes.'
+    });
+
+    // Execute reboot command after a short delay to allow response to be sent
+    setTimeout(() => {
+      console.log('[System] Executing system reboot...');
+      const { exec } = require('child_process');
+      exec('sudo reboot', (error, stdout, stderr) => {
+        if (error) {
+          console.error('[System] Reboot error:', error);
+          return;
+        }
+        console.log('[System] Reboot command executed:', stdout);
+      });
+    }, 1000);
+
+  } catch (error: any) {
+    console.error('[System] Reboot error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // ================================================================
 // SECTION 2 - LIVE
 // ================================================================
