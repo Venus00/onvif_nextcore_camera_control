@@ -87,7 +87,7 @@ function loadState(): DetectionState {
 // }
 
 // Global state
-// let detectionState: DetectionState = loadState();
+let detectionState: DetectionState = loadState();
 
 const { udpServer, wsServer } = createUDPClient({
   wsPort: 8080,
@@ -1445,20 +1445,42 @@ app.get("/detection/state", async (req, res) => {
   try {
     const { cameraId } = req.query;
 
+    // Always read from file to get the latest state
+    let state;
+    if (!fs.existsSync(stateFilePath)) {
+      console.log('[Detection State] State file not found, returning default state');
+      state = {
+        cam1: {
+          tracking: "stopped",
+          follow: "stopped",
+          focus: "stopped"
+        },
+        cam2: {
+          tracking: "stopped",
+          follow: "stopped",
+          focus: "stopped"
+        }
+      };
+    } else {
+      const fileContent = fs.readFileSync(stateFilePath, 'utf-8');
+      state = JSON.parse(fileContent);
+      console.log('[Detection State] Loaded state from file:', state);
+    }
+
     if (cameraId && (cameraId === 'cam1' || cameraId === 'cam2')) {
       res.json({
         success: true,
         cameraId,
-        state: detectionState[cameraId]
+        state: state[cameraId]
       });
     } else {
       res.json({
         success: true,
-        state: detectionState
+        state
       });
     }
   } catch (error: any) {
-    console.error('[State] Error:', error);
+    console.error('[Detection State] Error:', error);
     res.status(500).json({
       success: false,
       error: error.message
