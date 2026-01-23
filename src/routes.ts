@@ -87,7 +87,7 @@ function loadState(): DetectionState {
 // }
 
 // Global state
-// let detectionState: DetectionState = loadState();
+let detectionState: DetectionState = loadState();
 
 const { udpServer, wsServer } = createUDPClient({
   wsPort: 8080,
@@ -1445,20 +1445,42 @@ app.get("/detection/state", async (req, res) => {
   try {
     const { cameraId } = req.query;
 
+    // Always read from file to get the latest state
+    let state;
+    if (!fs.existsSync(stateFilePath)) {
+      console.log('[Detection State] State file not found, returning default state');
+      state = {
+        cam1: {
+          tracking: "stopped",
+          follow: "stopped",
+          focus: "stopped"
+        },
+        cam2: {
+          tracking: "stopped",
+          follow: "stopped",
+          focus: "stopped"
+        }
+      };
+    } else {
+      const fileContent = fs.readFileSync(stateFilePath, 'utf-8');
+      state = JSON.parse(fileContent);
+      console.log('[Detection State] Loaded state from file:', state);
+    }
+
     if (cameraId && (cameraId === 'cam1' || cameraId === 'cam2')) {
       res.json({
         success: true,
         cameraId,
-        state: detectionState[cameraId]
+        state: state[cameraId]
       });
     } else {
       res.json({
         success: true,
-        state: detectionState
+        state
       });
     }
   } catch (error: any) {
-    console.error('[State] Error:', error);
+    console.error('[Detection State] Error:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -1693,8 +1715,8 @@ app.get("/detection/photos", async (req, res) => {
         .filter(file => /\.(jpg|jpeg|png|bmp)$/i.test(file))
         .forEach(filename => {
           try {
-            // Parse filename pattern: classification-date-score.ext
-            // Example: person-20231208143022-0.95.jpg
+            // Parse filename pattern: classification-YYYYMMDD_HHmmss-score-crop_type.ext
+            // Example: vehicle-20000106_174946-0.78-crop_ther.jpg or vehicle-20000106_174946-0.78-crop_full.jpg
             const parts = filename.split('-');
 
             if (parts.length < 3) {
@@ -1703,22 +1725,25 @@ app.get("/detection/photos", async (req, res) => {
             }
 
             const classificationName = parts[0];
-            const dateStr = parts[1];
-            const scoreWithExt = parts[2];
-            const score = parseFloat(scoreWithExt.split('.')[0]) || 0;
+            const dateStr = parts[1]; // Format: YYYYMMDD_HHmmss
+            const scoreStr = parts[2]; // Format: 0.78
+            const score = parseFloat(scoreStr) * 100 || 0; // Convert to percentage (0.78 -> 78)
 
-            // Parse date string (YYYYMMDDHHmmss)
-            if (!dateStr || dateStr.length < 14) {
+            // Parse date string (YYYYMMDD_HHmmss)
+            if (!dateStr || dateStr.length < 15) {
               console.warn(`[Detection Photos] Invalid date in filename: ${filename}`);
               return;
             }
 
-            const year = parseInt(dateStr.substring(0, 4));
-            const month = parseInt(dateStr.substring(4, 6));
-            const day = parseInt(dateStr.substring(6, 8));
-            const hour = parseInt(dateStr.substring(9, 11));
-            const minute = parseInt(dateStr.substring(11, 13));
-            const second = parseInt(dateStr.substring(13, 15));
+            // Split by underscore to separate date and time
+            const [datePart, timePart] = dateStr.split('_');
+
+            const year = parseInt(datePart.substring(0, 4));
+            const month = parseInt(datePart.substring(4, 6));
+            const day = parseInt(datePart.substring(6, 8));
+            const hour = parseInt(timePart.substring(0, 2));
+            const minute = parseInt(timePart.substring(2, 4));
+            const second = parseInt(timePart.substring(4, 6));
 
             const timestamp = new Date(year, month - 1, day, hour, minute, second);
 
@@ -1833,6 +1858,67 @@ app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
 
   } catch (error: any) {
     console.error('[Detection Photo] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Delete all detection photos
+app.delete("/detection/photos", async (req, res) => {
+  try {
+    const photosDir = "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
+
+    // Check if directory exists
+    if (!fs.existsSync(photosDir)) {
+      return res.json({
+        success: true,
+        message: 'Detection photos directory not found',
+        deleted: 0
+      });
+    }
+
+    // Read all date folders (format: YYYY-MM-DD)
+    const dateFolders = fs.readdirSync(photosDir)
+      .filter(item => {
+        const fullPath = path.join(photosDir, item);
+        return fs.statSync(fullPath).isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(item);
+      });
+
+    let deletedCount = 0;
+    let errorCount = 0;
+
+    // Delete all photos from each date folder
+    for (const dateFolder of dateFolders) {
+      const folderPath = path.join(photosDir, dateFolder);
+      const files = fs.readdirSync(folderPath)
+        .filter(file => /\.(jpg|jpeg|png|bmp)$/i.test(file));
+
+      for (const filename of files) {
+        try {
+          const filePath = path.join(folderPath, filename);
+          fs.unlinkSync(filePath);
+          deletedCount++;
+        } catch (err) {
+          console.error(`[Detection Photos] Error deleting ${filename}:`, err);
+          errorCount++;
+        }
+      }
+    }
+
+    console.log(`[Detection Photos] Deleted ${deletedCount} photos from ${dateFolders.length} folders`);
+
+    res.json({
+      success: true,
+      message: `Successfully deleted ${deletedCount} detection photos`,
+      deleted: deletedCount,
+      errors: errorCount,
+      folders: dateFolders.length
+    });
+
+  } catch (error: any) {
+    console.error('[Detection Photos] Clear all error:', error);
     res.status(500).json({
       success: false,
       error: error.message
