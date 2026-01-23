@@ -1715,8 +1715,8 @@ app.get("/detection/photos", async (req, res) => {
         .filter(file => /\.(jpg|jpeg|png|bmp)$/i.test(file))
         .forEach(filename => {
           try {
-            // Parse filename pattern: classification-date-score.ext
-            // Example: person-20231208143022-0.95.jpg
+            // Parse filename pattern: classification-YYYYMMDD_HHmmss-score-crop_type.ext
+            // Example: vehicle-20000106_174946-0.78-crop_ther.jpg or vehicle-20000106_174946-0.78-crop_full.jpg
             const parts = filename.split('-');
 
             if (parts.length < 3) {
@@ -1725,22 +1725,25 @@ app.get("/detection/photos", async (req, res) => {
             }
 
             const classificationName = parts[0];
-            const dateStr = parts[1];
-            const scoreWithExt = parts[2];
-            const score = parseFloat(scoreWithExt.split('.')[0]) || 0;
+            const dateStr = parts[1]; // Format: YYYYMMDD_HHmmss
+            const scoreStr = parts[2]; // Format: 0.78
+            const score = parseFloat(scoreStr) || 0;
 
-            // Parse date string (YYYYMMDDHHmmss)
-            if (!dateStr || dateStr.length < 14) {
+            // Parse date string (YYYYMMDD_HHmmss)
+            if (!dateStr || dateStr.length < 15) {
               console.warn(`[Detection Photos] Invalid date in filename: ${filename}`);
               return;
             }
 
-            const year = parseInt(dateStr.substring(0, 4));
-            const month = parseInt(dateStr.substring(4, 6));
-            const day = parseInt(dateStr.substring(6, 8));
-            const hour = parseInt(dateStr.substring(9, 11));
-            const minute = parseInt(dateStr.substring(11, 13));
-            const second = parseInt(dateStr.substring(13, 15));
+            // Split by underscore to separate date and time
+            const [datePart, timePart] = dateStr.split('_');
+            
+            const year = parseInt(datePart.substring(0, 4));
+            const month = parseInt(datePart.substring(4, 6));
+            const day = parseInt(datePart.substring(6, 8));
+            const hour = parseInt(timePart.substring(0, 2));
+            const minute = parseInt(timePart.substring(2, 4));
+            const second = parseInt(timePart.substring(4, 6));
 
             const timestamp = new Date(year, month - 1, day, hour, minute, second);
 
