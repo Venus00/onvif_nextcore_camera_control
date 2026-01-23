@@ -5,8 +5,8 @@ import type { WebSocketServer } from './websocket.js';
 // Object classification types (COCO dataset)
 const OBJECT_CLASSES: Record<number, string> = {
     0x00: "person",
-    0x01: "bicycle",
-    0x02: "car",
+    0x01: "animal",
+    0x02: "vehicule",
     0x03: "motorcycle",
     0x04: "airplane",
     0x05: "bus",
