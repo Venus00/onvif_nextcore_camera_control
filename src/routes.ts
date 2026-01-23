@@ -1727,7 +1727,7 @@ app.get("/detection/photos", async (req, res) => {
             const classificationName = parts[0];
             const dateStr = parts[1]; // Format: YYYYMMDD_HHmmss
             const scoreStr = parts[2]; // Format: 0.78
-            const score = parseFloat(scoreStr) || 0;
+            const score = parseFloat(scoreStr) * 100 || 0; // Convert to percentage (0.78 -> 78)
 
             // Parse date string (YYYYMMDD_HHmmss)
             if (!dateStr || dateStr.length < 15) {
@@ -1737,7 +1737,7 @@ app.get("/detection/photos", async (req, res) => {
 
             // Split by underscore to separate date and time
             const [datePart, timePart] = dateStr.split('_');
-            
+
             const year = parseInt(datePart.substring(0, 4));
             const month = parseInt(datePart.substring(4, 6));
             const day = parseInt(datePart.substring(6, 8));
@@ -1858,6 +1858,67 @@ app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
 
   } catch (error: any) {
     console.error('[Detection Photo] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Delete all detection photos
+app.delete("/detection/photos", async (req, res) => {
+  try {
+    const photosDir = "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
+
+    // Check if directory exists
+    if (!fs.existsSync(photosDir)) {
+      return res.json({
+        success: true,
+        message: 'Detection photos directory not found',
+        deleted: 0
+      });
+    }
+
+    // Read all date folders (format: YYYY-MM-DD)
+    const dateFolders = fs.readdirSync(photosDir)
+      .filter(item => {
+        const fullPath = path.join(photosDir, item);
+        return fs.statSync(fullPath).isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(item);
+      });
+
+    let deletedCount = 0;
+    let errorCount = 0;
+
+    // Delete all photos from each date folder
+    for (const dateFolder of dateFolders) {
+      const folderPath = path.join(photosDir, dateFolder);
+      const files = fs.readdirSync(folderPath)
+        .filter(file => /\.(jpg|jpeg|png|bmp)$/i.test(file));
+
+      for (const filename of files) {
+        try {
+          const filePath = path.join(folderPath, filename);
+          fs.unlinkSync(filePath);
+          deletedCount++;
+        } catch (err) {
+          console.error(`[Detection Photos] Error deleting ${filename}:`, err);
+          errorCount++;
+        }
+      }
+    }
+
+    console.log(`[Detection Photos] Deleted ${deletedCount} photos from ${dateFolders.length} folders`);
+
+    res.json({
+      success: true,
+      message: `Successfully deleted ${deletedCount} detection photos`,
+      deleted: deletedCount,
+      errors: errorCount,
+      folders: dateFolders.length
+    });
+
+  } catch (error: any) {
+    console.error('[Detection Photos] Clear all error:', error);
     res.status(500).json({
       success: false,
       error: error.message
