@@ -6,8 +6,8 @@ import DigestFetch from "digest-fetch";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { exec } from 'child_process'
-import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import { exec } from "child_process";
+import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import CameraSetupAPI, {
   NetworkAPI,
   PTZAPI,
@@ -41,37 +41,37 @@ interface DetectionState {
   };
 }
 
-const stateFilePath = '/home/ubuntu/IA_process/app_state.json';
+const stateFilePath = "/home/ubuntu/IA_process/app_state.json";
 
 // Initialize default state
 const defaultState: DetectionState = {
   cam1: {
     detectionEnabled: false,
     trackingEnabled: false,
-    trackingObjectId: null
+    trackingObjectId: null,
   },
   cam2: {
     detectionEnabled: false,
     trackingEnabled: false,
-    trackingObjectId: null
+    trackingObjectId: null,
   },
   autofocus: {
     cam1: false,
-    cam2: false
-  }
+    cam2: false,
+  },
 };
 
 // Load state from file
 function loadState(): DetectionState {
   try {
     if (fs.existsSync(stateFilePath)) {
-      const data = fs.readFileSync(stateFilePath, 'utf-8');
+      const data = fs.readFileSync(stateFilePath, "utf-8");
       const loadedState = JSON.parse(data);
-      console.log('[State] Loaded state from file:', loadedState);
+      console.log("[State] Loaded state from file:", loadedState);
       return { ...defaultState, ...loadedState };
     }
   } catch (error) {
-    console.error('[State] Error loading state:', error);
+    console.error("[State] Error loading state:", error);
   }
   return defaultState;
 }
@@ -91,10 +91,10 @@ let detectionState: DetectionState = loadState();
 
 const { udpServer, wsServer } = createUDPClient({
   wsPort: 8080,
-  localPort: 5015,        // Local port to bind (receive responses)
-  remoteHost: '127.0.0.1', // Python server address
-  remotePort: 52383,        // Python server port
-  initialMessage: Buffer.from('HELLO')
+  localPort: 5015, // Local port to bind (receive responses)
+  remoteHost: "127.0.0.1", // Python server address
+  remotePort: 52383, // Python server port
+  initialMessage: Buffer.from("HELLO"),
 });
 
 // Continuous PTZFocusHD monitoring (runs independently)
@@ -102,7 +102,7 @@ async function monitorPTZFocusHD(camId: string) {
   try {
     const { client, ip } = getCameraClient(camId);
     const statusRes = await client.fetch(
-      `http://${ip}/cgi-bin/ptz.cgi?action=getStatus`
+      `http://${ip}/cgi-bin/ptz.cgi?action=getStatus`,
     );
     const statusText = await statusRes.text();
     const match = statusText.match(/status\.PTZFocusHD=([\d\.\-]+)/);
@@ -199,7 +199,7 @@ async function getAPIs(camId: string): Promise<CameraAPIs> {
 // ============ HELPER ============
 
 function route(
-  handler: (apis: CameraAPIs, body: any, params: any) => Promise<any>
+  handler: (apis: CameraAPIs, body: any, params: any) => Promise<any>,
 ) {
   return async (req: express.Request, res: express.Response) => {
     try {
@@ -216,20 +216,19 @@ function route(
 // SECTION 3 - CAMERA SETUP
 // ================================================================
 
-
 // ================================================================
 // SECTION 3 - CAMERA SETUP
 // ================================================================
 
 app.get(
   "/camera/:camId/setup",
-  route(async ({ setup }) => ({ configs: await setup.getAllConfigs() }))
+  route(async ({ setup }) => ({ configs: await setup.getAllConfigs() })),
 );
 
 // Video Color
 app.get(
   "/camera/:camId/video/color",
-  route(async ({ setup }) => ({ config: await setup.getVideoColor() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoColor() })),
 );
 
 app.post(
@@ -238,12 +237,12 @@ app.post(
     const { channel = 0, ...params } = body;
     const response = await setup.setVideoColor(params, channel);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 // video Sharpness
 app.get(
   "/camera/:camId/video/sharpness",
-  route(async ({ setup }) => ({ config: await setup.getVideoSharpness() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoSharpness() })),
 );
 app.post(
   "/camera/:camId/video/sharpness",
@@ -251,12 +250,12 @@ app.post(
     const { channel = 0, ...params } = body;
     const response = await setup.setVideoSharpness(params, channel);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 //vide mode
 app.get(
   "/camera/:camId/video/mode", // Changed from /video/inMode
-  route(async ({ setup }) => ({ config: await setup.getVideoMode() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoMode() })),
 );
 
 // Add POST route
@@ -266,15 +265,15 @@ app.post(
     const { channel = 0, mode, config0, config1, timeSection } = body;
     const response = await setup.setVideoMode(
       { mode, config0, config1, timeSection },
-      channel
+      channel,
     );
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 // Day/Night
 app.get(
   "/camera/:camId/video/daynight",
-  route(async ({ setup }) => ({ config: await setup.getVideoDayNight() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoDayNight() })),
 );
 app.post(
   "/camera/:camId/video/daynight",
@@ -282,13 +281,13 @@ app.post(
     const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoDayNight(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 
 // Exposure
 app.get(
   "/camera/:camId/video/exposure",
-  route(async ({ setup }) => ({ config: await setup.getVideoExposure() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoExposure() })),
 );
 app.post(
   "/camera/:camId/video/exposure",
@@ -296,13 +295,26 @@ app.post(
     const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoExposure(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 
+// stablizer
+app.get(
+  "/camera/:camId/video/exposure",
+  route(async ({ setup }) => ({ config: await setup.getVideoExposure() })),
+);
+app.post(
+  "/camera/:camId/video/exposure",
+  route(async ({ setup }, body) => {
+    const { channel = 0, config = 0, ...params } = body;
+    const response = await setup.setVideoExposure(params, channel, config);
+    return { response, ok: setup.isSuccess(response) };
+  }),
+);
 // White Balance
 app.get(
   "/camera/:camId/video/whitebalance",
-  route(async ({ setup }) => ({ config: await setup.getVideoWhiteBalance() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoWhiteBalance() })),
 );
 app.post(
   "/camera/:camId/video/whitebalance",
@@ -310,12 +322,12 @@ app.post(
     const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoWhiteBalance(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 // Zoom
 app.get(
   "/camera/:camId/video/zoom",
-  route(async ({ setup }) => ({ config: await setup.getVideoZoom() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoZoom() })),
 );
 app.post(
   "/camera/:camId/video/zoom",
@@ -323,13 +335,13 @@ app.post(
     const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoZoom(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 
 // Focus
 app.get(
   "/camera/:camId/video/focus",
-  route(async ({ setup }) => ({ config: await setup.getVideoFocus() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoFocus() })),
 );
 app.post(
   "/camera/:camId/video/focus",
@@ -338,13 +350,13 @@ app.post(
     const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoFocus(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 
 // Defog
 app.get(
   "/camera/:camId/video/defog",
-  route(async ({ setup }) => ({ config: await setup.getVideoDefog() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoDefog() })),
 );
 app.post(
   "/camera/:camId/video/defog",
@@ -352,13 +364,13 @@ app.post(
     const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoDefog(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 
 // Flip
 app.get(
   "/camera/:camId/video/flip",
-  route(async ({ setup }) => ({ config: await setup.getVideoFlip() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoFlip() })),
 );
 app.post(
   "/camera/:camId/video/flip",
@@ -367,13 +379,13 @@ app.post(
     const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoFlip(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 
 // denoise
 app.get(
   "/camera/:camId/video/denoise",
-  route(async ({ setup }) => ({ config: await setup.getVideoDenoise() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoDenoise() })),
 );
 app.post(
   "/camera/:camId/video/denoise",
@@ -381,18 +393,33 @@ app.post(
     const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoDenoise(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
+
+// Video Stabilizer
+app.get(
+  "/camera/:camId/video/stabilizer",
+  route(async ({ setup }) => ({ config: await setup.getVideoStabilizer() })),
+);
+app.post(
+  "/camera/:camId/video/stabilizer",
+  route(async ({ setup }, body) => {
+    const { channel = 0, enable } = body;
+    const response = await setup.setVideoStabilizer(enable, channel);
+    return { response, ok: setup.isSuccess(response) };
+  }),
+);
+
 // Backlight
 app.get(
   "/camera/:camId/video/backlight",
-  route(async ({ setup }) => ({ config: await setup.getVideoBacklight() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoBacklight() })),
 );
 
 // Encode
 app.get(
   "/camera/:camId/encode",
-  route(async ({ setup }) => ({ config: await setup.getEncode() }))
+  route(async ({ setup }) => ({ config: await setup.getEncode() })),
 );
 app.post(
   "/camera/:camId/encode",
@@ -400,12 +427,12 @@ app.post(
     const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setEncode(params, channel);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 
 app.get(
   "/camera/:camId/video/videoROI",
-  route(async ({ setup }) => ({ config: await setup.getVideoROI() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoROI() })),
 );
 app.post(
   "/camera/:camId/video/videoROI",
@@ -413,19 +440,19 @@ app.post(
     const { channel = 0, config = 0, ...params } = body;
     const response = await setup.setVideoROI(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 
 // Title
 app.get(
   "/camera/:camId/title",
-  route(async ({ setup }) => ({ config: await setup.getChannelTitle() }))
+  route(async ({ setup }) => ({ config: await setup.getChannelTitle() })),
 );
 
 // OSD
 app.get(
   "/camera/:camId/osd",
-  route(async ({ setup }) => ({ config: await setup.getVideoWidget() }))
+  route(async ({ setup }) => ({ config: await setup.getVideoWidget() })),
 );
 
 app.post(
@@ -434,13 +461,13 @@ app.post(
     const { channel = 0, ...params } = body;
     const response = await setup.setVideoWidget(params, channel);
     return { response, ok: setup.isSuccess(response) };
-  })
+  }),
 );
 
 app.post("/focus/:camId/move", async (req, res) => {
   try {
     console.log("focus move", req.body);
-    const camId = 'cam2';
+    const camId = "cam2";
     const { direction, speed = 5, channel = 0 } = req.body;
     const { client, ip } = getCameraClient(camId);
     let code;
@@ -462,7 +489,7 @@ app.post("/focus/:camId/move", async (req, res) => {
 app.post("/focus/:camId/stop", async (req, res) => {
   try {
     console.log("focus stop", req.body);
-    const camId = 'cam2';
+    const camId = "cam2";
     const { direction, channel = 0, speed = 3 } = req.body;
     const { client, ip } = getCameraClient(camId);
 
@@ -492,43 +519,43 @@ app.post("/focus/:camId/stop", async (req, res) => {
 
 app.get(
   "/camera/:camId/network",
-  route(async ({ network }) => ({ configs: await network.getAllConfigs() }))
+  route(async ({ network }) => ({ configs: await network.getAllConfigs() })),
 );
 app.get(
   "/camera/:camId/network/tcpip",
-  route(async ({ network }) => ({ config: await network.getNetwork() }))
+  route(async ({ network }) => ({ config: await network.getNetwork() })),
 );
 app.get(
   "/camera/:camId/network/dvrip",
-  route(async ({ network }) => ({ config: await network.getDVRIP() }))
+  route(async ({ network }) => ({ config: await network.getDVRIP() })),
 );
 app.get(
   "/camera/:camId/network/web",
-  route(async ({ network }) => ({ config: await network.getWeb() }))
+  route(async ({ network }) => ({ config: await network.getWeb() })),
 );
 app.get(
   "/camera/:camId/network/rtsp",
-  route(async ({ network }) => ({ config: await network.getRTSP() }))
+  route(async ({ network }) => ({ config: await network.getRTSP() })),
 );
 app.get(
   "/camera/:camId/network/https",
-  route(async ({ network }) => ({ config: await network.getHttps() }))
+  route(async ({ network }) => ({ config: await network.getHttps() })),
 );
 app.get(
   "/camera/:camId/network/upnp",
-  route(async ({ network }) => ({ config: await network.getUPnP() }))
+  route(async ({ network }) => ({ config: await network.getUPnP() })),
 );
 app.get(
   "/camera/:camId/network/multicast",
-  route(async ({ network }) => ({ config: await network.getMulticast() }))
+  route(async ({ network }) => ({ config: await network.getMulticast() })),
 );
 app.get(
   "/camera/:camId/network/qos",
-  route(async ({ network }) => ({ config: await network.getQoS() }))
+  route(async ({ network }) => ({ config: await network.getQoS() })),
 );
 app.get(
   "/camera/:camId/network/onvif",
-  route(async ({ network }) => ({ config: await network.getONVIF() }))
+  route(async ({ network }) => ({ config: await network.getONVIF() })),
 );
 
 app.post(
@@ -536,7 +563,7 @@ app.post(
   route(async ({ network }, body) => {
     const response = await network.setRTSP(body);
     return { response, ok: network.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -544,7 +571,7 @@ app.post(
   route(async ({ network }, body) => {
     const response = await network.setONVIF(body.enable);
     return { response, ok: network.isSuccess(response) };
-  })
+  }),
 );
 
 // ================================================================
@@ -553,35 +580,35 @@ app.post(
 
 app.get(
   "/camera/:camId/ptz",
-  route(async ({ ptz }) => ({ configs: await ptz.getAllConfigs() }))
+  route(async ({ ptz }) => ({ configs: await ptz.getAllConfigs() })),
 );
 app.get(
   "/camera/:camId/ptz/status",
-  route(async ({ ptz }) => ({ status: await ptz.getPTZStatus() }))
+  route(async ({ ptz }) => ({ status: await ptz.getPTZStatus() })),
 );
 app.get(
   "/camera/:camId/ptz/presets",
-  route(async ({ ptz }) => ({ presets: await ptz.getPresets() }))
+  route(async ({ ptz }) => ({ presets: await ptz.getPresets() })),
 );
 app.get(
   "/camera/:camId/ptz/tours",
-  route(async ({ ptz }) => ({ tours: await ptz.getTours() }))
+  route(async ({ ptz }) => ({ tours: await ptz.getTours() })),
 );
 app.get(
   "/camera/:camId/ptz/scantours",
-  route(async ({ ptz }) => ({ scanTours: await ptz.getScanTours() }))
+  route(async ({ ptz }) => ({ scanTours: await ptz.getScanTours() })),
 );
 app.get(
   "/camera/:camId/ptz/autoscan",
-  route(async ({ ptz }) => ({ autoScan: await ptz.getAutoScan() }))
+  route(async ({ ptz }) => ({ autoScan: await ptz.getAutoScan() })),
 );
 app.get(
   "/camera/:camId/ptz/idlemotion",
-  route(async ({ ptz }) => ({ idleMotion: await ptz.getIdleMotion() }))
+  route(async ({ ptz }) => ({ idleMotion: await ptz.getIdleMotion() })),
 );
 app.get(
   "/camera/:camId/ptz/powerup",
-  route(async ({ ptz }) => ({ powerUp: await ptz.getPowerUp() }))
+  route(async ({ ptz }) => ({ powerUp: await ptz.getPowerUp() })),
 );
 
 // PTZ Control
@@ -591,7 +618,7 @@ app.post(
     const { channel = 1, speed = 4 } = body;
     const response = await ptz.moveUp(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -600,7 +627,7 @@ app.post(
     const { channel = 1, speed = 4 } = body;
     const response = await ptz.moveDown(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -609,7 +636,7 @@ app.post(
     const { channel = 1, speed = 4 } = body;
     const response = await ptz.moveLeft(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -618,7 +645,7 @@ app.post(
     const { channel = 1, speed = 4 } = body;
     const response = await ptz.moveRight(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -627,7 +654,7 @@ app.post(
     const { channel = 0 } = body;
     const response = await ptz.wiperOn(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -636,7 +663,7 @@ app.post(
     const { channel = 1 } = body;
     const response = await ptz.stopMove(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -645,7 +672,7 @@ app.post(
     const { channel = 1 } = body;
     const response = await ptz.zoomIn(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -654,7 +681,7 @@ app.post(
     const { channel = 1 } = body;
     const response = await ptz.zoomOut(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -663,9 +690,8 @@ app.post(
     const { channel = 1 } = body;
     const response = await ptz.stopZoom(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
-
 
 app.post(
   "/camera/:camId/ptz/focus/stop",
@@ -673,7 +699,7 @@ app.post(
     const { channel = 1 } = body;
     const response = await ptz.stopFocus(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -682,7 +708,7 @@ app.post(
     const { channel = 1 } = body;
     const response = await ptz.focusNear(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -691,7 +717,7 @@ app.post(
     const { channel = 1 } = body;
     const response = await ptz.focusFar(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 // Enable autofocus
@@ -703,50 +729,59 @@ app.post(
 
     try {
       // Send autofocus start command to backend on port 9898
-      const backendResponse = await fetch(`http://localhost:9898/ia_process/focus/${camId}/start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      const backendResponse = await fetch(
+        `http://localhost:9898/ia_process/focus/${camId}/start`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       const backendData = await backendResponse.json();
-      console.log(`[Autofocus] Backend start response for ${camId}:`, backendData);
+      console.log(
+        `[Autofocus] Backend start response for ${camId}:`,
+        backendData,
+      );
 
       // Also enable on camera hardware
       const response = await ptz.autoFocus(true, channel);
 
       // Update state
-      detectionState.autofocus[camId as 'cam1' | 'cam2'] = true;
+      detectionState.autofocus[camId as "cam1" | "cam2"] = true;
       // saveState(detectionState);
 
       return {
         response,
         ok: ptz.isSuccess(response),
-        message: 'Autofocus enabled',
+        message: "Autofocus enabled",
         backendResponse: backendData,
-        state: detectionState.autofocus
+        state: detectionState.autofocus,
       };
     } catch (backendError: any) {
-      console.error('[Autofocus] Backend connection error:', backendError.message);
+      console.error(
+        "[Autofocus] Backend connection error:",
+        backendError.message,
+      );
 
       // Still enable on camera hardware even if backend fails
       const response = await ptz.autoFocus(true, channel);
 
       // Update state even if backend fails
-      detectionState.autofocus[camId as 'cam1' | 'cam2'] = true;
+      detectionState.autofocus[camId as "cam1" | "cam2"] = true;
       // saveState(detectionState);
 
       return {
         response,
         ok: ptz.isSuccess(response),
-        message: 'Autofocus enabled',
-        warning: 'Backend server not available',
+        message: "Autofocus enabled",
+        warning: "Backend server not available",
         backendError: backendError.message,
-        state: detectionState.autofocus
+        state: detectionState.autofocus,
       };
     }
-  })
+  }),
 );
 
 // Disable autofocus
@@ -758,32 +793,41 @@ app.post(
 
     try {
       // Send autofocus stop command to backend on port 9898
-      const backendResponse = await fetch(`http://localhost:9898/ia_process/focus/${camId}/stop`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      const backendResponse = await fetch(
+        `http://localhost:9898/ia_process/focus/${camId}/stop`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       const backendData = await backendResponse.json();
-      console.log(`[Autofocus] Backend stop response for ${camId}:`, backendData);
+      console.log(
+        `[Autofocus] Backend stop response for ${camId}:`,
+        backendData,
+      );
 
       // Also disable on camera hardware
       const response = await ptz.autoFocus(false, channel);
 
       // Update state
-      detectionState.autofocus[camId as 'cam1' | 'cam2'] = false;
+      detectionState.autofocus[camId as "cam1" | "cam2"] = false;
       // saveState(detectionState);
 
       return {
         response,
         ok: ptz.isSuccess(response),
-        message: 'Autofocus disabled',
+        message: "Autofocus disabled",
         backendResponse: backendData,
-        state: detectionState.autofocus
+        state: detectionState.autofocus,
       };
     } catch (backendError: any) {
-      console.error('[Autofocus] Backend connection error:', backendError.message);
+      console.error(
+        "[Autofocus] Backend connection error:",
+        backendError.message,
+      );
 
       // Still disable on camera hardware even if backend fails
       const response = await ptz.autoFocus(false, channel);
@@ -795,13 +839,13 @@ app.post(
       return {
         response,
         ok: ptz.isSuccess(response),
-        message: 'Autofocus disabled',
-        warning: 'Backend server not available',
+        message: "Autofocus disabled",
+        warning: "Backend server not available",
         backendError: backendError.message,
-        state: detectionState.autofocus
+        state: detectionState.autofocus,
       };
     }
-  })
+  }),
 );
 
 app.post(
@@ -811,7 +855,7 @@ app.post(
     console.log("Going to preset", presetId, "on channel", channel);
     const response = await ptz.gotoPreset(presetId.id, channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -821,16 +865,16 @@ app.post(
     console.log("Setting preset", presetId, "on channel", channel);
     let params = { Name: presetId.Name };
 
-    if (presetId.Name) { await ptz.setPresetConfig(presetId.Name, channel, presetId.id); }
-
-
+    if (presetId.Name) {
+      await ptz.setPresetConfig(presetId.Name, channel, presetId.id);
+    }
 
     //   Name: presetId.Name,
 
     let response = await ptz.setPreset(presetId.id, channel, presetId.id);
 
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -840,7 +884,7 @@ app.post(
     console.log("Clearing preset", presetId, "on channel", channel);
     const response = await ptz.clearPreset(presetId.id, channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -849,25 +893,25 @@ app.post(
     const { tourId, channel = 0 } = body;
     const response = await ptz.startTour(tourId, channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
   "/camera/:camId/ptz/tour/stop",
   route(async ({ ptz }, body) => {
     const { tourId, channel = 0 } = body;
-    const response = await ptz.stopMove(1);;
+    const response = await ptz.stopMove(1);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 app.post(
   "/camera/:camId/ptz/tour/update",
   route(async ({ ptz }, body) => {
     const { tourId, channel = 0 } = body;
     console.log("Updating tour", body);
-    const response = await ptz.setTourConfig(body.presets, channel, body.id);;
+    const response = await ptz.setTourConfig(body.presets, channel, body.id);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -876,7 +920,7 @@ app.post(
     const { pan, tilt, zoom, channel = 0 } = body;
     const response = await ptz.positionAbsolute(pan, tilt, zoom, channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -885,7 +929,7 @@ app.post(
     const { channel = 0 } = body;
     const response = await ptz.lightOn(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -894,7 +938,7 @@ app.post(
     const { channel = 0 } = body;
     const response = await ptz.lightOff(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -903,7 +947,7 @@ app.post(
     const { channel = 0 } = body;
     const response = await ptz.wiperOn(channel);
     return { response, ok: ptz.isSuccess(response) };
-  })
+  }),
 );
 
 // ================================================================
@@ -912,47 +956,49 @@ app.post(
 
 app.get(
   "/camera/:camId/events",
-  route(async ({ events }) => ({ configs: await events.getAllConfigs() }))
+  route(async ({ events }) => ({ configs: await events.getAllConfigs() })),
 );
 app.get(
   "/camera/:camId/events/motion",
-  route(async ({ events }) => ({ config: await events.getMotionDetect() }))
+  route(async ({ events }) => ({ config: await events.getMotionDetect() })),
 );
 app.get(
   "/camera/:camId/events/tamper",
-  route(async ({ events }) => ({ config: await events.getTamperDetect() }))
+  route(async ({ events }) => ({ config: await events.getTamperDetect() })),
 );
 app.get(
   "/camera/:camId/events/scenechange",
-  route(async ({ events }) => ({ config: await events.getSceneChange() }))
+  route(async ({ events }) => ({ config: await events.getSceneChange() })),
 );
 app.get(
   "/camera/:camId/events/audio",
-  route(async ({ events }) => ({ config: await events.getAudioDetect() }))
+  route(async ({ events }) => ({ config: await events.getAudioDetect() })),
 );
 app.get(
   "/camera/:camId/events/network/disconnect",
-  route(async ({ events }) => ({ config: await events.getNetworkDisconnect() }))
+  route(async ({ events }) => ({
+    config: await events.getNetworkDisconnect(),
+  })),
 );
 app.get(
   "/camera/:camId/events/network/ipconflict",
-  route(async ({ events }) => ({ config: await events.getIPConflict() }))
+  route(async ({ events }) => ({ config: await events.getIPConflict() })),
 );
 app.get(
   "/camera/:camId/events/storage/nosd",
-  route(async ({ events }) => ({ config: await events.getNoSDCardAlarm() }))
+  route(async ({ events }) => ({ config: await events.getNoSDCardAlarm() })),
 );
 app.get(
   "/camera/:camId/events/storage/error",
-  route(async ({ events }) => ({ config: await events.getSDCardError() }))
+  route(async ({ events }) => ({ config: await events.getSDCardError() })),
 );
 app.get(
   "/camera/:camId/events/storage/lowspace",
-  route(async ({ events }) => ({ config: await events.getSDCardLowSpace() }))
+  route(async ({ events }) => ({ config: await events.getSDCardLowSpace() })),
 );
 app.get(
   "/camera/:camId/events/fire",
-  route(async ({ events }) => ({ config: await events.getFireWarning() }))
+  route(async ({ events }) => ({ config: await events.getFireWarning() })),
 );
 
 app.post(
@@ -961,7 +1007,7 @@ app.post(
     const { channel = 0, windowIndex = 0, ...params } = body;
     const response = await events.setMotionDetect(params, channel, windowIndex);
     return { response, ok: events.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -970,7 +1016,7 @@ app.post(
     const { channel = 0, ...params } = body;
     const response = await events.setTamperDetect(params, channel);
     return { response, ok: events.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -979,7 +1025,7 @@ app.post(
     const { channel = 0, ...params } = body;
     const response = await events.setAudioDetect(params, channel);
     return { response, ok: events.isSuccess(response) };
-  })
+  }),
 );
 
 // Alarm event stream URL
@@ -988,7 +1034,7 @@ app.get(
   route(async ({ events }, _, params) => {
     const url = events.getAlarmEventUrl(["All"], 20, true);
     return { streamUrl: url };
-  })
+  }),
 );
 
 // ================================================================
@@ -997,11 +1043,11 @@ app.get(
 
 app.get(
   "/camera/:camId/storage",
-  route(async ({ storage }) => ({ configs: await storage.getAllConfigs() }))
+  route(async ({ storage }) => ({ configs: await storage.getAllConfigs() })),
 );
 app.get(
   "/camera/:camId/storage/record",
-  route(async ({ storage }) => ({ config: await storage.getRecordSchedule() }))
+  route(async ({ storage }) => ({ config: await storage.getRecordSchedule() })),
 );
 
 app.post(
@@ -1010,31 +1056,33 @@ app.post(
     // console.log("Setting record schedule:", body);
     const response = await storage.setRecordSchedule(body);
     return { response, ok: storage.isSuccess(response) };
-  })
+  }),
 );
 app.get(
   "/camera/:camId/storage/snap",
-  route(async ({ storage }) => ({ config: await storage.getSnapSchedule() }))
+  route(async ({ storage }) => ({ config: await storage.getSnapSchedule() })),
 );
 app.get(
   "/camera/:camId/storage/point",
-  route(async ({ storage }) => ({ config: await storage.getStoragePoint() }))
+  route(async ({ storage }) => ({ config: await storage.getStoragePoint() })),
 );
 app.get(
   "/camera/:camId/storage/ftp",
-  route(async ({ storage }) => ({ config: await storage.getFTP() }))
+  route(async ({ storage }) => ({ config: await storage.getFTP() })),
 );
 app.get(
   "/camera/:camId/storage/nas",
-  route(async ({ storage }) => ({ config: await storage.getNAS() }))
+  route(async ({ storage }) => ({ config: await storage.getNAS() })),
 );
 app.get(
   "/camera/:camId/storage/media",
-  route(async ({ storage }) => ({ config: await storage.getMediaGlobal() }))
+  route(async ({ storage }) => ({ config: await storage.getMediaGlobal() })),
 );
 app.get(
   "/camera/:camId/storage/device",
-  route(async ({ storage }) => ({ info: await storage.getStorageDeviceInfo() }))
+  route(async ({ storage }) => ({
+    info: await storage.getStorageDeviceInfo(),
+  })),
 );
 
 app.post(
@@ -1042,7 +1090,7 @@ app.post(
   route(async ({ storage }, body) => {
     const response = await storage.setFTP(body);
     return { response, ok: storage.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -1050,7 +1098,7 @@ app.post(
   route(async ({ storage }, body) => {
     const response = await storage.setNAS(body);
     return { response, ok: storage.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -1059,7 +1107,7 @@ app.post(
     const { device = "/dev/mmcblk0p1" } = body;
     const response = await storage.formatStorage(device);
     return { response, ok: storage.isSuccess(response) };
-  })
+  }),
 );
 
 // ================================================================
@@ -1068,23 +1116,23 @@ app.post(
 
 app.get(
   "/camera/:camId/system",
-  route(async ({ system }) => ({ configs: await system.getAllConfigs() }))
+  route(async ({ system }) => ({ configs: await system.getAllConfigs() })),
 );
 app.get(
   "/camera/:camId/system/info",
-  route(async ({ system }) => ({ info: await system.getDeviceInfo() }))
+  route(async ({ system }) => ({ info: await system.getDeviceInfo() })),
 );
 app.get(
   "/camera/:camId/system/time",
-  route(async ({ system }) => ({ time: await system.getCurrentTime() }))
+  route(async ({ system }) => ({ time: await system.getCurrentTime() })),
 );
 app.get(
   "/camera/:camId/system/ntp",
-  route(async ({ system }) => ({ config: await system.getNTP() }))
+  route(async ({ system }) => ({ config: await system.getNTP() })),
 );
 app.get(
   "/camera/:camId/system/channels",
-  route(async ({ system }) => ({ count: await system.getChannelCount() }))
+  route(async ({ system }) => ({ count: await system.getChannelCount() })),
 );
 
 app.post(
@@ -1093,7 +1141,7 @@ app.post(
     const { time } = body; // Format: yyyy-MM-dd HH:mm:ss
     const response = await system.setCurrentTime(time);
     return { response, ok: system.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -1101,7 +1149,7 @@ app.post(
   route(async ({ system }, body) => {
     const response = await system.setNTP(body);
     return { response, ok: system.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -1109,7 +1157,7 @@ app.post(
   route(async ({ system }) => {
     const response = await system.reboot();
     return { response, ok: system.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -1117,13 +1165,13 @@ app.post(
   route(async ({ system }) => {
     const response = await system.factoryReset();
     return { response, ok: system.isSuccess(response) };
-  })
+  }),
 );
 
 // System reboot endpoint (reboots the entire server/system)
 app.post("/system/reboot", async (req, res) => {
   try {
-    console.log('[System] Reboot request received');
+    console.log("[System] Reboot request received");
 
     // Verify authorization or add security check here if needed
     const { confirm } = req.body;
@@ -1131,33 +1179,33 @@ app.post("/system/reboot", async (req, res) => {
     if (confirm !== true) {
       return res.status(400).json({
         success: false,
-        error: 'Confirmation required to reboot system'
+        error: "Confirmation required to reboot system",
       });
     }
 
     // Send response before rebooting
     res.json({
       success: true,
-      message: 'System reboot initiated. Server will be offline for 1-2 minutes.'
+      message:
+        "System reboot initiated. Server will be offline for 1-2 minutes.",
     });
 
     // Execute reboot command after a short delay to allow response to be sent
     setTimeout(() => {
-      console.log('[System] Executing system reboot...');
-      exec('sudo reboot', (error, stdout, stderr) => {
+      console.log("[System] Executing system reboot...");
+      exec("sudo reboot", (error, stdout, stderr) => {
         if (error) {
-          console.error('[System] Reboot error:', error);
+          console.error("[System] Reboot error:", error);
           return;
         }
-        console.log('[System] Reboot command executed:', stdout);
+        console.log("[System] Reboot command executed:", stdout);
       });
     }, 1000);
-
   } catch (error: any) {
-    console.error('[System] Reboot error:', error);
+    console.error("[System] Reboot error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -1176,7 +1224,7 @@ app.get(
       sub2: live.getRTSPUrl(1, 2, cam.username, cam.password),
       thermal: live.getRTSPUrl(2, 0, cam.username, cam.password),
     };
-  })
+  }),
 );
 
 app.get(
@@ -1186,14 +1234,14 @@ app.get(
       visible: live.getSnapshotUrl(1),
       thermal: live.getSnapshotUrl(2),
     };
-  })
+  }),
 );
 
 app.get(
   "/camera/:camId/live/thermal",
   route(async ({ live }) => {
     return { config: await live.getThermalConfig() };
-  })
+  }),
 );
 
 app.post(
@@ -1202,7 +1250,7 @@ app.post(
     const { x, y, channel = 2 } = body;
     const temp = await live.getPointTemperature(x, y, channel);
     return { temperature: temp };
-  })
+  }),
 );
 
 app.post(
@@ -1211,7 +1259,7 @@ app.post(
     const { enable } = body;
     const response = await live.setThermalEnabled(enable);
     return { response, ok: live.isSuccess(response) };
-  })
+  }),
 );
 
 app.post(
@@ -1220,23 +1268,26 @@ app.post(
     const { unit } = body; // 'Centigrade' | 'Fahrenheit'
     const response = await live.setTemperatureUnit(unit);
     return { response, ok: live.isSuccess(response) };
-  })
+  }),
 );
 
 // Object Detection
 app.post("/detection/start", async (req, res) => {
   try {
-    const { cameraId = 'cam1' } = req.body; // cam1 = optique, cam2 = thermique
+    const { cameraId = "cam1" } = req.body; // cam1 = optique, cam2 = thermique
     console.log(`[Detection] Request to start detection on ${cameraId}`);
 
     // Send detection start command to backend on port 9898
     try {
-      const backendResponse = await fetch(`http://localhost:9898/ia_process/trackobject/${cameraId}/start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      const backendResponse = await fetch(
+        `http://localhost:9898/ia_process/trackobject/${cameraId}/start`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       const backendData = await backendResponse.json();
       console.log(`[Detection] Backend response:`, backendData);
@@ -1249,10 +1300,13 @@ app.post("/detection/start", async (req, res) => {
         success: true,
         message: `Detection started`,
         backendResponse: backendData,
-        state: detectionState[cameraId as 'cam1' | 'cam2']
+        state: detectionState[cameraId as "cam1" | "cam2"],
       });
     } catch (backendError: any) {
-      console.error('[Detection] Backend connection error:', backendError.message);
+      console.error(
+        "[Detection] Backend connection error:",
+        backendError.message,
+      );
 
       // Update state even if backend fails
       // detectionState[cameraId as 'cam1' | 'cam2'].detectionEnabled = true;
@@ -1262,33 +1316,38 @@ app.post("/detection/start", async (req, res) => {
       res.json({
         success: true,
         message: `Detection start request received`,
-        warning: 'Backend server not available',
+        warning: "Backend server not available",
         backendError: backendError.message,
-        state: detectionState[cameraId as 'cam1' | 'cam2']
+        state: detectionState[cameraId as "cam1" | "cam2"],
       });
     }
   } catch (error: any) {
-    console.error('[Detection] Error:', error);
+    console.error("[Detection] Error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 app.post("/detection/stop", async (req, res) => {
   try {
-    const { cameraId = 'cam1' } = req.body; // cam1 = optique, cam2 = thermique
+    const { cameraId = "cam1" } = req.body; // cam1 = optique, cam2 = thermique
     console.log(`[Detection] Request to stop detection on ${cameraId}`);
-    console.log(`http://localhost:9898/ia_process/trackobject/${cameraId}/stop`)
+    console.log(
+      `http://localhost:9898/ia_process/trackobject/${cameraId}/stop`,
+    );
     // Send detection stop command to backend on port 9898
     try {
-      const backendResponse = await fetch(`http://localhost:9898/ia_process/trackobject/${cameraId}/stop`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      const backendResponse = await fetch(
+        `http://localhost:9898/ia_process/trackobject/${cameraId}/stop`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       const backendData = await backendResponse.json();
       console.log(`[Detection] Backend stop response:`, backendData);
@@ -1301,10 +1360,13 @@ app.post("/detection/stop", async (req, res) => {
         success: true,
         message: `Detection stopped`,
         backendResponse: backendData,
-        state: detectionState[cameraId as 'cam1' | 'cam2']
+        state: detectionState[cameraId as "cam1" | "cam2"],
       });
     } catch (backendError: any) {
-      console.error('[Detection] Backend connection error:', backendError.message);
+      console.error(
+        "[Detection] Backend connection error:",
+        backendError.message,
+      );
 
       // Update state even if backend fails
       // detectionState[cameraId as 'cam1' | 'cam2'].detectionEnabled = false;
@@ -1314,16 +1376,16 @@ app.post("/detection/stop", async (req, res) => {
       res.json({
         success: true,
         message: `Detection stop request received`,
-        warning: 'Backend server not available',
+        warning: "Backend server not available",
         backendError: backendError.message,
-        state: detectionState[cameraId as 'cam1' | 'cam2']
+        state: detectionState[cameraId as "cam1" | "cam2"],
       });
     }
   } catch (error: any) {
-    console.error('[Detection] Error:', error);
+    console.error("[Detection] Error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -1332,17 +1394,22 @@ app.post("/detection/stop", async (req, res) => {
 app.post("/track/object/:id", async (req, res) => {
   try {
     const objectId = parseInt(req.params.id);
-    const { cameraId = 'cam1' } = req.body; // cam1 = optique, cam2 = thermique
-    console.log(`[Tracking] Request to track object ID: ${objectId} on ${cameraId}`);
+    const { cameraId = "cam1" } = req.body; // cam1 = optique, cam2 = thermique
+    console.log(
+      `[Tracking] Request to track object ID: ${objectId} on ${cameraId}`,
+    );
 
     // Send tracking command to backend on port 9898
     try {
-      const backendResponse = await fetch(`http://localhost:9898/ia_process/trackobject_ids/${cameraId}/start/${objectId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      const backendResponse = await fetch(
+        `http://localhost:9898/ia_process/trackobject_ids/${cameraId}/start/${objectId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       const backendData = await backendResponse.json();
       console.log(`[Tracking] Backend response:`, backendData);
@@ -1357,10 +1424,13 @@ app.post("/track/object/:id", async (req, res) => {
         objectId,
         message: `Tracking enabled for object ${objectId}`,
         backendResponse: backendData,
-        state: detectionState[cameraId as 'cam1' | 'cam2']
+        state: detectionState[cameraId as "cam1" | "cam2"],
       });
     } catch (backendError: any) {
-      console.error('[Tracking] Backend connection error:', backendError.message);
+      console.error(
+        "[Tracking] Backend connection error:",
+        backendError.message,
+      );
 
       // Update state even if backend fails
       // detectionState[cameraId as 'cam1' | 'cam2'].trackingEnabled = true;
@@ -1372,33 +1442,36 @@ app.post("/track/object/:id", async (req, res) => {
         success: true,
         objectId,
         message: `Tracking request received for object ${objectId}`,
-        warning: 'Backend server not available',
+        warning: "Backend server not available",
         backendError: backendError.message,
-        state: detectionState[cameraId as 'cam1' | 'cam2']
+        state: detectionState[cameraId as "cam1" | "cam2"],
       });
     }
   } catch (error: any) {
-    console.error('[Tracking] Error:', error);
+    console.error("[Tracking] Error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 app.post("/track/stop", async (req, res) => {
   try {
-    const { cameraId = 'cam1' } = req.body; // cam1 = optique, cam2 = thermique
+    const { cameraId = "cam1" } = req.body; // cam1 = optique, cam2 = thermique
     console.log(`[Tracking] Request to stop tracking on ${cameraId}`);
 
     // Send stop tracking command to backend on port 9898
     try {
-      const backendResponse = await fetch(`http://localhost:9898/ia_process/trackobject_ids/${cameraId}/stop`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      const backendResponse = await fetch(
+        `http://localhost:9898/ia_process/trackobject_ids/${cameraId}/stop`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       const backendData = await backendResponse.json();
       console.log(`[Tracking] Backend stop response:`, backendData);
@@ -1412,10 +1485,13 @@ app.post("/track/stop", async (req, res) => {
         success: true,
         message: `Tracking stopped`,
         backendResponse: backendData,
-        state: detectionState[cameraId as 'cam1' | 'cam2']
+        state: detectionState[cameraId as "cam1" | "cam2"],
       });
     } catch (backendError: any) {
-      console.error('[Tracking] Backend connection error:', backendError.message);
+      console.error(
+        "[Tracking] Backend connection error:",
+        backendError.message,
+      );
 
       // Update state even if backend fails
       // detectionState[cameraId as 'cam1' | 'cam2'].trackingEnabled = false;
@@ -1426,16 +1502,16 @@ app.post("/track/stop", async (req, res) => {
       res.json({
         success: true,
         message: `Stop tracking request received`,
-        warning: 'Backend server not available',
+        warning: "Backend server not available",
         backendError: backendError.message,
-        state: detectionState[cameraId as 'cam1' | 'cam2']
+        state: detectionState[cameraId as "cam1" | "cam2"],
       });
     }
   } catch (error: any) {
-    console.error('[Tracking] Error:', error);
+    console.error("[Tracking] Error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -1448,42 +1524,44 @@ app.get("/detection/state", async (req, res) => {
     // Always read from file to get the latest state
     let state;
     if (!fs.existsSync(stateFilePath)) {
-      console.log('[Detection State] State file not found, returning default state');
+      console.log(
+        "[Detection State] State file not found, returning default state",
+      );
       state = {
         cam1: {
           tracking: "stopped",
           follow: "stopped",
-          focus: "stopped"
+          focus: "stopped",
         },
         cam2: {
           tracking: "stopped",
           follow: "stopped",
-          focus: "stopped"
-        }
+          focus: "stopped",
+        },
       };
     } else {
-      const fileContent = fs.readFileSync(stateFilePath, 'utf-8');
+      const fileContent = fs.readFileSync(stateFilePath, "utf-8");
       state = JSON.parse(fileContent);
-      console.log('[Detection State] Loaded state from file:', state);
+      console.log("[Detection State] Loaded state from file:", state);
     }
 
-    if (cameraId && (cameraId === 'cam1' || cameraId === 'cam2')) {
+    if (cameraId && (cameraId === "cam1" || cameraId === "cam2")) {
       res.json({
         success: true,
         cameraId,
-        state: state[cameraId]
+        state: state[cameraId],
       });
     } else {
       res.json({
         success: true,
-        state
+        state,
       });
     }
   } catch (error: any) {
-    console.error('[Detection State] Error:', error);
+    console.error("[Detection State] Error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -1493,38 +1571,39 @@ app.get("/analytics/state", async (req, res) => {
   try {
     // Check if file exists
     if (!fs.existsSync(stateFilePath)) {
-      console.log('[Analytics State] State file not found, returning default state');
+      console.log(
+        "[Analytics State] State file not found, returning default state",
+      );
       return res.json({
         success: true,
         state: {
           cam1: {
             tracking: "stopped",
             follow: "stopped",
-            focus: "stopped"
+            focus: "stopped",
           },
           cam2: {
             tracking: "stopped",
             follow: "stopped",
-            focus: "stopped"
-          }
+            focus: "stopped",
+          },
         },
-        message: 'State file not found, using defaults'
+        message: "State file not found, using defaults",
       });
     }
 
     // Read and parse the state file
-    const fileContent = fs.readFileSync(stateFilePath, 'utf-8');
+    const fileContent = fs.readFileSync(stateFilePath, "utf-8");
     const state = JSON.parse(fileContent);
 
-    console.log('[Analytics State] Loaded state from file:', state);
+    console.log("[Analytics State] Loaded state from file:", state);
 
     res.json({
       success: true,
-      state
+      state,
     });
-
   } catch (error: any) {
-    console.error('[Analytics State] Error reading state file:', error);
+    console.error("[Analytics State] Error reading state file:", error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -1532,14 +1611,14 @@ app.get("/analytics/state", async (req, res) => {
         cam1: {
           tracking: "stopped",
           follow: "stopped",
-          focus: "stopped"
+          focus: "stopped",
         },
         cam2: {
           tracking: "stopped",
           follow: "stopped",
-          focus: "stopped"
-        }
-      }
+          focus: "stopped",
+        },
+      },
     });
   }
 });
@@ -1553,43 +1632,57 @@ app.post("/recording/start", async (req, res) => {
     const { cameraId, fileName } = req.body;
 
     if (!cameraId || !fileName) {
-      return res.status(400).json({ success: false, error: 'cameraId and fileName are required' });
+      return res
+        .status(400)
+        .json({ success: false, error: "cameraId and fileName are required" });
     }
 
     const cam = cameras[cameraId];
     if (!cam) {
-      return res.status(404).json({ success: false, error: `Camera ${cameraId} not found` });
+      return res
+        .status(404)
+        .json({ success: false, error: `Camera ${cameraId} not found` });
     }
 
     // Check if already recording for this camera
     if (activeRecordings.has(cameraId)) {
-      return res.status(400).json({ success: false, error: `Recording already in progress for ${cameraId}` });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: `Recording already in progress for ${cameraId}`,
+        });
     }
 
     // URL encode username and password for RTSP
     const encodedUsername = encodeURIComponent(cam.username);
     const encodedPassword = encodeURIComponent(cam.password);
     const rtspUrl = `rtsp://${encodedUsername}:${encodedPassword}@${cam.ip}:554/cam/realmonitor?channel=1&subtype=0`;
-    const outputPath = path.join(__dirname, '../../recordings', fileName);
+    const outputPath = path.join(__dirname, "../../recordings", fileName);
 
     // Use ffmpeg to record RTSP stream
-    const ffmpeg = spawn('ffmpeg', [
-      '-rtsp_transport', 'tcp',
-      '-i', rtspUrl,
-      '-c', 'copy',
-      '-f', 'mp4',
-      '-movflags', 'frag_keyframe+empty_moov',
-      outputPath
+    const ffmpeg = spawn("ffmpeg", [
+      "-rtsp_transport",
+      "tcp",
+      "-i",
+      rtspUrl,
+      "-c",
+      "copy",
+      "-f",
+      "mp4",
+      "-movflags",
+      "frag_keyframe+empty_moov",
+      outputPath,
     ]);
 
     activeRecordings.set(cameraId, ffmpeg);
 
-    ffmpeg.on('close', (code) => {
+    ffmpeg.on("close", (code) => {
       console.log(`Recording stopped for ${cameraId} with code ${code}`);
       activeRecordings.delete(cameraId);
     });
 
-    ffmpeg.stderr.on('data', (data) => {
+    ffmpeg.stderr.on("data", (data) => {
       console.log(`FFmpeg ${cameraId}: ${data}`);
     });
 
@@ -1597,11 +1690,10 @@ app.post("/recording/start", async (req, res) => {
       success: true,
       message: `Recording started for ${cameraId}`,
       fileName,
-      outputPath
+      outputPath,
     });
-
   } catch (error: any) {
-    console.error('[Recording] Start error:', error);
+    console.error("[Recording] Start error:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1612,25 +1704,28 @@ app.post("/recording/stop", async (req, res) => {
     const { cameraId } = req.body;
 
     if (!cameraId) {
-      return res.status(400).json({ success: false, error: 'cameraId is required' });
+      return res
+        .status(400)
+        .json({ success: false, error: "cameraId is required" });
     }
 
     const ffmpeg = activeRecordings.get(cameraId);
     if (!ffmpeg) {
-      return res.status(404).json({ success: false, error: `No active recording for ${cameraId}` });
+      return res
+        .status(404)
+        .json({ success: false, error: `No active recording for ${cameraId}` });
     }
 
     // Send SIGTERM to gracefully stop ffmpeg
-    ffmpeg.kill('SIGTERM');
+    ffmpeg.kill("SIGTERM");
     activeRecordings.delete(cameraId);
 
     res.json({
       success: true,
-      message: `Recording stopped for ${cameraId}`
+      message: `Recording stopped for ${cameraId}`,
     });
-
   } catch (error: any) {
-    console.error('[Recording] Stop error:', error);
+    console.error("[Recording] Stop error:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1639,23 +1734,25 @@ app.post("/recording/stop", async (req, res) => {
 app.get("/recording/download/:fileName", async (req, res) => {
   try {
     const { fileName } = req.params;
-    const filePath = path.join(__dirname, '../../recordings', fileName);
+    const filePath = path.join(__dirname, "../../recordings", fileName);
 
     // Check if file exists
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ success: false, error: 'Recording not found' });
+      return res
+        .status(404)
+        .json({ success: false, error: "Recording not found" });
     }
 
     // Set headers for download
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+    res.setHeader("Content-Type", "video/mp4");
 
     // Stream the file
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
 
     // Delete file after streaming completes
-    fileStream.on('end', () => {
+    fileStream.on("end", () => {
       fs.unlink(filePath, (err) => {
         if (err) {
           console.error(`Error deleting recording ${fileName}:`, err);
@@ -1665,13 +1762,14 @@ app.get("/recording/download/:fileName", async (req, res) => {
       });
     });
 
-    fileStream.on('error', (error) => {
+    fileStream.on("error", (error) => {
       console.error(`Error streaming recording ${fileName}:`, error);
-      res.status(500).json({ success: false, error: 'Error downloading recording' });
+      res
+        .status(500)
+        .json({ success: false, error: "Error downloading recording" });
     });
-
   } catch (error: any) {
-    console.error('[Recording] Download error:', error);
+    console.error("[Recording] Download error:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1679,29 +1777,41 @@ app.get("/recording/download/:fileName", async (req, res) => {
 // Object Detection Photos API
 app.get("/detection/photos", async (req, res) => {
   try {
-    const { classification, startDate, endDate, minScore, maxScore, limit = 100 } = req.query;
+    const {
+      classification,
+      startDate,
+      endDate,
+      minScore,
+      maxScore,
+      limit = 100,
+    } = req.query;
 
     // Default photos directory (can be configured via environment variable)
-    const photosDir = "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
+    const photosDir =
+      "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
 
     // Check if directory exists
     if (!fs.existsSync(photosDir)) {
       return res.json({
         success: true,
         photos: [],
-        message: 'Detection photos directory not found',
-        directory: photosDir
+        message: "Detection photos directory not found",
+        directory: photosDir,
       });
     }
 
     // Read all date folders (format: YYYY-MM-DD)
-    const dateFolders = fs.readdirSync(photosDir)
-      .filter(item => {
-        const fullPath = path.join(photosDir, item);
-        return fs.statSync(fullPath).isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(item);
-      });
+    const dateFolders = fs.readdirSync(photosDir).filter((item) => {
+      const fullPath = path.join(photosDir, item);
+      return (
+        fs.statSync(fullPath).isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(item)
+      );
+    });
 
-    console.log(`[Detection Photos] Found ${dateFolders.length} date folders:`, dateFolders);
+    console.log(
+      `[Detection Photos] Found ${dateFolders.length} date folders:`,
+      dateFolders,
+    );
 
     // Collect all photos from all date folders
     const photos: any[] = [];
@@ -1712,15 +1822,17 @@ app.get("/detection/photos", async (req, res) => {
 
       // Process image files in this date folder
       files
-        .filter(file => /\.(jpg|jpeg|png|bmp)$/i.test(file))
-        .forEach(filename => {
+        .filter((file) => /\.(jpg|jpeg|png|bmp)$/i.test(file))
+        .forEach((filename) => {
           try {
             // Parse filename pattern: classification-YYYYMMDD_HHmmss-score-crop_type.ext
             // Example: vehicle-20000106_174946-0.78-crop_ther.jpg or vehicle-20000106_174946-0.78-crop_full.jpg
-            const parts = filename.split('-');
+            const parts = filename.split("-");
 
             if (parts.length < 3) {
-              console.warn(`[Detection Photos] Skipping invalid filename: ${filename}`);
+              console.warn(
+                `[Detection Photos] Skipping invalid filename: ${filename}`,
+              );
               return;
             }
 
@@ -1731,12 +1843,14 @@ app.get("/detection/photos", async (req, res) => {
 
             // Parse date string (YYYYMMDD_HHmmss)
             if (!dateStr || dateStr.length < 15) {
-              console.warn(`[Detection Photos] Invalid date in filename: ${filename}`);
+              console.warn(
+                `[Detection Photos] Invalid date in filename: ${filename}`,
+              );
               return;
             }
 
             // Split by underscore to separate date and time
-            const [datePart, timePart] = dateStr.split('_');
+            const [datePart, timePart] = dateStr.split("_");
 
             const year = parseInt(datePart.substring(0, 4));
             const month = parseInt(datePart.substring(4, 6));
@@ -1745,7 +1859,14 @@ app.get("/detection/photos", async (req, res) => {
             const minute = parseInt(timePart.substring(2, 4));
             const second = parseInt(timePart.substring(4, 6));
 
-            const timestamp = new Date(year, month - 1, day, hour, minute, second);
+            const timestamp = new Date(
+              year,
+              month - 1,
+              day,
+              hour,
+              minute,
+              second,
+            );
 
             photos.push({
               filename,
@@ -1754,10 +1875,13 @@ app.get("/detection/photos", async (req, res) => {
               timestamp: timestamp.toISOString(),
               score,
               path: `/detection/photos/${dateFolder}/${filename}`,
-              size: fs.statSync(path.join(folderPath, filename)).size
+              size: fs.statSync(path.join(folderPath, filename)).size,
             });
           } catch (err) {
-            console.error(`[Detection Photos] Error processing file ${filename}:`, err);
+            console.error(
+              `[Detection Photos] Error processing file ${filename}:`,
+              err,
+            );
           }
         });
     }
@@ -1768,32 +1892,43 @@ app.get("/detection/photos", async (req, res) => {
     let filteredPhotos = photos;
 
     if (classification) {
-      filteredPhotos = filteredPhotos.filter(p =>
-        p.classification.toLowerCase() === (classification as string).toLowerCase()
+      filteredPhotos = filteredPhotos.filter(
+        (p) =>
+          p.classification.toLowerCase() ===
+          (classification as string).toLowerCase(),
       );
     }
 
     if (startDate) {
       const start = new Date(startDate as string);
-      filteredPhotos = filteredPhotos.filter(p => new Date(p.timestamp) >= start);
+      filteredPhotos = filteredPhotos.filter(
+        (p) => new Date(p.timestamp) >= start,
+      );
     }
 
     if (endDate) {
       const end = new Date(endDate as string);
-      filteredPhotos = filteredPhotos.filter(p => new Date(p.timestamp) <= end);
+      filteredPhotos = filteredPhotos.filter(
+        (p) => new Date(p.timestamp) <= end,
+      );
     }
 
     if (minScore) {
-      filteredPhotos = filteredPhotos.filter(p => p.score >= parseFloat(minScore as string));
+      filteredPhotos = filteredPhotos.filter(
+        (p) => p.score >= parseFloat(minScore as string),
+      );
     }
 
     if (maxScore) {
-      filteredPhotos = filteredPhotos.filter(p => p.score <= parseFloat(maxScore as string));
+      filteredPhotos = filteredPhotos.filter(
+        (p) => p.score <= parseFloat(maxScore as string),
+      );
     }
 
     // Sort by timestamp (newest first)
-    filteredPhotos.sort((a, b) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    filteredPhotos.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
 
     // Apply limit
@@ -1807,14 +1942,20 @@ app.get("/detection/photos", async (req, res) => {
       count: filteredPhotos.length,
       total: photos.length,
       photos: filteredPhotos,
-      filters: { classification, startDate, endDate, minScore, maxScore, limit }
+      filters: {
+        classification,
+        startDate,
+        endDate,
+        minScore,
+        maxScore,
+        limit,
+      },
     });
-
   } catch (error: any) {
-    console.error('[Detection Photos] Error:', error);
+    console.error("[Detection Photos] Error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -1823,7 +1964,8 @@ app.get("/detection/photos", async (req, res) => {
 app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
   try {
     const { dateFolder, filename } = req.params;
-    const photosDir = "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
+    const photosDir =
+      "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
     const filePath = path.join(photosDir, dateFolder, filename);
 
     // Security check: prevent directory traversal
@@ -1833,7 +1975,7 @@ app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
     if (!resolvedPath.startsWith(resolvedDir)) {
       return res.status(403).json({
         success: false,
-        error: 'Access denied'
+        error: "Access denied",
       });
     }
 
@@ -1841,7 +1983,7 @@ app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFolder)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid date folder format'
+        error: "Invalid date folder format",
       });
     }
 
@@ -1849,18 +1991,17 @@ app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
-        error: 'Photo not found'
+        error: "Photo not found",
       });
     }
 
     // Send file
     res.sendFile(resolvedPath);
-
   } catch (error: any) {
-    console.error('[Detection Photo] Error:', error);
+    console.error("[Detection Photo] Error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -1868,23 +2009,25 @@ app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
 // Delete all detection photos
 app.delete("/detection/photos", async (req, res) => {
   try {
-    const photosDir = "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
+    const photosDir =
+      "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
 
     // Check if directory exists
     if (!fs.existsSync(photosDir)) {
       return res.json({
         success: true,
-        message: 'Detection photos directory not found',
-        deleted: 0
+        message: "Detection photos directory not found",
+        deleted: 0,
       });
     }
 
     // Read all date folders (format: YYYY-MM-DD)
-    const dateFolders = fs.readdirSync(photosDir)
-      .filter(item => {
-        const fullPath = path.join(photosDir, item);
-        return fs.statSync(fullPath).isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(item);
-      });
+    const dateFolders = fs.readdirSync(photosDir).filter((item) => {
+      const fullPath = path.join(photosDir, item);
+      return (
+        fs.statSync(fullPath).isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(item)
+      );
+    });
 
     let deletedCount = 0;
     let errorCount = 0;
@@ -1892,8 +2035,9 @@ app.delete("/detection/photos", async (req, res) => {
     // Delete all photos from each date folder
     for (const dateFolder of dateFolders) {
       const folderPath = path.join(photosDir, dateFolder);
-      const files = fs.readdirSync(folderPath)
-        .filter(file => /\.(jpg|jpeg|png|bmp)$/i.test(file));
+      const files = fs
+        .readdirSync(folderPath)
+        .filter((file) => /\.(jpg|jpeg|png|bmp)$/i.test(file));
 
       for (const filename of files) {
         try {
@@ -1907,28 +2051,32 @@ app.delete("/detection/photos", async (req, res) => {
       }
     }
 
-    console.log(`[Detection Photos] Deleted ${deletedCount} photos from ${dateFolders.length} folders`);
+    console.log(
+      `[Detection Photos] Deleted ${deletedCount} photos from ${dateFolders.length} folders`,
+    );
 
     res.json({
       success: true,
       message: `Successfully deleted ${deletedCount} detection photos`,
       deleted: deletedCount,
       errors: errorCount,
-      folders: dateFolders.length
+      folders: dateFolders.length,
     });
-
   } catch (error: any) {
-    console.error('[Detection Photos] Clear all error:', error);
+    console.error("[Detection Photos] Clear all error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // ============ RECORDINGS ENDPOINT ============
 // Serve recorded video files
-app.use('/recordings', express.static(path.join(__dirname, '../../recordings')));
+app.use(
+  "/recordings",
+  express.static(path.join(__dirname, "../../recordings")),
+);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
