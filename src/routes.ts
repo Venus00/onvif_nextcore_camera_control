@@ -404,8 +404,8 @@ app.get(
 app.post(
   "/camera/:camId/video/stabilizer",
   route(async ({ setup }, body) => {
-    const { channel = 0, config = 0, stable } = body;
-    const response = await setup.setVideoStabilizer(stable, channel, config);
+    const { channel = 0, config = 0, stablizer } = body;
+    const response = await setup.setVideoStabilizer(stablizer, channel, config);
     return { response, ok: setup.isSuccess(response) };
   }),
 );
@@ -1646,12 +1646,10 @@ app.post("/recording/start", async (req, res) => {
 
     // Check if already recording for this camera
     if (activeRecordings.has(cameraId)) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: `Recording already in progress for ${cameraId}`,
-        });
+      return res.status(400).json({
+        success: false,
+        error: `Recording already in progress for ${cameraId}`,
+      });
     }
 
     // URL encode username and password for RTSP
