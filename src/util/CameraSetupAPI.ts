@@ -405,15 +405,16 @@ export class CameraSetupAPI {
 
   // 3.1.5 VideoStabilizer
   async getVideoStabilizer(): Promise<ParsedConfig> {
-    return this.getConfig("VideoInStabilizer");
+    return this.getConfig("VideoImageControl");
   }
 
   async setVideoStabilizer(
-    enable: boolean,
-    channel: Channel = 0
+    stable: number,
+    channel: Channel = 0,
+    config: ConfigProfile = 0
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInStabilizer", { Enable: enable }, channel)
+      this.formatParams("VideoImageControl", { Stable: stable }, channel, config)
     );
   }
 
@@ -779,7 +780,7 @@ export class CameraSetupAPI {
       "VideoInSharpness",
       "VideoInDenoise",
       "VideoInFlip",
-      "VideoInStabilizer",
+      "VideoImageControl",
       "VideoInExposure",
       "VideoInBacklight",
       "VideoInWhiteBalance",

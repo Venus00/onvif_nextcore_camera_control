@@ -404,8 +404,8 @@ app.get(
 app.post(
   "/camera/:camId/video/stabilizer",
   route(async ({ setup }, body) => {
-    const { channel = 0, enable } = body;
-    const response = await setup.setVideoStabilizer(enable, channel);
+    const { channel = 0, config = 0, stable } = body;
+    const response = await setup.setVideoStabilizer(stable, channel, config);
     return { response, ok: setup.isSuccess(response) };
   }),
 );
