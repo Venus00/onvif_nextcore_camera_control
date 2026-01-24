@@ -235,7 +235,7 @@ export class CameraSetupAPI {
     prefix: string,
     params: Record<string, any>,
     channel?: number,
-    config?: number
+    config?: number,
   ): string {
     const bracket =
       config !== undefined
@@ -250,7 +250,7 @@ export class CameraSetupAPI {
       if (Array.isArray(value)) {
         value.forEach((v, i) => {
           parts.push(
-            `${prefix}${bracket}.${key}[${i}]=${encodeURIComponent(v)}`
+            `${prefix}${bracket}.${key}[${i}]=${encodeURIComponent(v)}`,
           );
         });
       } else {
@@ -265,7 +265,7 @@ export class CameraSetupAPI {
 
   async getConfig(configName: string): Promise<ParsedConfig> {
     const url = this.buildUrl(
-      `/cgi-bin/configManager.cgi?action=getConfig&name=${configName}`
+      `/cgi-bin/configManager.cgi?action=getConfig&name=${configName}`,
     );
     const text = await this.request(url);
     return this.parseResponse(text);
@@ -273,7 +273,7 @@ export class CameraSetupAPI {
 
   async setConfig(paramString: string): Promise<string> {
     const url = this.buildUrl(
-      `/cgi-bin/configManager.cgi?action=setConfig&${paramString}`
+      `/cgi-bin/configManager.cgi?action=setConfig&${paramString}`,
     );
     console.log(paramString);
     const text = await this.request(url);
@@ -290,7 +290,7 @@ export class CameraSetupAPI {
   // helper map: frontendKey -> camera param name
   async setVideoColor(
     params: Record<string, any>,
-    channel: number = 0
+    channel: number = 0,
   ): Promise<string> {
     const PROFILE_TO_INDEX: Record<string, number> = {
       daytime: 0,
@@ -320,7 +320,7 @@ export class CameraSetupAPI {
     const config = PROFILE_TO_INDEX[profileName];
     console.log("Mapped VideoColor params:", config, profileName);
     return this.setConfig(
-      this.formatParams("VideoColor", mapped, channel, config)
+      this.formatParams("VideoColor", mapped, channel, config),
     );
   }
 
@@ -332,7 +332,7 @@ export class CameraSetupAPI {
   // Add to your backend client class (next to setVideoColor)
   async setVideoSharpness(
     params: Record<string, any>,
-    channel: number = 0
+    channel: number = 0,
   ): Promise<string> {
     const PROFILE_TO_INDEX: Record<string, number> = {
       daytime: 0,
@@ -369,7 +369,7 @@ export class CameraSetupAPI {
     const config = PROFILE_TO_INDEX[profileName];
     // formatParams will construct: table.VideoInSharpness[0][<config>].<Param>=<value>
     return this.setConfig(
-      this.formatParams("VideoInSharpness", mapped, channel, config)
+      this.formatParams("VideoInSharpness", mapped, channel, config),
     );
   }
 
@@ -381,10 +381,10 @@ export class CameraSetupAPI {
   async setVideoDenoise(
     params: DenoiseParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInDenoise", params, channel, config)
+      this.formatParams("VideoInDenoise", params, channel, config),
     );
   }
 
@@ -396,10 +396,10 @@ export class CameraSetupAPI {
   async setVideoFlip(
     params: FlipParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoImageControl", params, channel, config)
+      this.formatParams("VideoImageControl", params, channel, config),
     );
   }
 
@@ -411,10 +411,15 @@ export class CameraSetupAPI {
   async setVideoStabilizer(
     stable: number,
     channel: Channel = 0,
-    config: ConfigProfile = 0
+    config: ConfigProfile = 0,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoImageControl", { Stable: stable }, channel, config)
+      this.formatParams(
+        "VideoImageControl",
+        { Stable: stable },
+        channel,
+        config,
+      ),
     );
   }
 
@@ -426,10 +431,10 @@ export class CameraSetupAPI {
   async setVideoExposure(
     params: ExposureParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInExposure", params, channel, config)
+      this.formatParams("VideoInExposure", params, channel, config),
     );
   }
 
@@ -441,10 +446,10 @@ export class CameraSetupAPI {
   async setVideoBacklight(
     params: BacklightParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInBacklight", params, channel, config)
+      this.formatParams("VideoInBacklight", params, channel, config),
     );
   }
 
@@ -456,10 +461,10 @@ export class CameraSetupAPI {
   async setVideoWhiteBalance(
     params: WhiteBalanceParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInWhiteBalance", params, channel, config)
+      this.formatParams("VideoInWhiteBalance", params, channel, config),
     );
   }
 
@@ -471,10 +476,10 @@ export class CameraSetupAPI {
   async setVideoDayNight(
     params: DayNightParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInDayNight", params, channel, config)
+      this.formatParams("VideoInDayNight", params, channel, config),
     );
   }
 
@@ -486,10 +491,10 @@ export class CameraSetupAPI {
   async setVideoZoom(
     params: ZoomParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInZoom", params, channel, config)
+      this.formatParams("VideoInZoom", params, channel, config),
     );
   }
 
@@ -501,10 +506,10 @@ export class CameraSetupAPI {
   async setVideoFocus(
     params: FocusParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInFocus", params, channel, config)
+      this.formatParams("VideoInFocus", params, channel, config),
     );
   }
 
@@ -516,10 +521,10 @@ export class CameraSetupAPI {
   async setVideoLighting(
     params: LightingParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInLighting", params, channel, config)
+      this.formatParams("VideoInLighting", params, channel, config),
     );
   }
 
@@ -531,10 +536,10 @@ export class CameraSetupAPI {
   async setVideoDefog(
     params: DefogParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInDefog", params, channel, config)
+      this.formatParams("VideoInDefog", params, channel, config),
     );
   }
 
@@ -545,7 +550,7 @@ export class CameraSetupAPI {
 
   async setVideoFFC(
     params: { Mode?: "Auto" | "Manual"; Period?: number },
-    channel: Channel = 1
+    channel: Channel = 1,
   ): Promise<string> {
     return this.setConfig(this.formatParams("VideoInFFC", params, channel));
   }
@@ -558,7 +563,7 @@ export class CameraSetupAPI {
   async setVideoFusion(
     params: FusionParams,
     channel: Channel = 1,
-    config: ConfigProfile = 0
+    config: ConfigProfile = 0,
   ): Promise<string> {
     const parts: string[] = [];
     const bracket = `[${channel}][${config}]`;
@@ -569,7 +574,7 @@ export class CameraSetupAPI {
         parts.push(`VideoInFusion${bracket}.PlaneOffset[1]=${value[1]}`);
       } else {
         parts.push(
-          `VideoInFusion${bracket}.${key}=${encodeURIComponent(String(value))}`
+          `VideoInFusion${bracket}.${key}=${encodeURIComponent(String(value))}`,
         );
       }
     }
@@ -585,10 +590,10 @@ export class CameraSetupAPI {
   async setVideoDewave(
     params: DewaveParams,
     channel: Channel = 0,
-    config: ConfigProfile = 2
+    config: ConfigProfile = 2,
   ): Promise<string> {
     return this.setConfig(
-      this.formatParams("VideoInDewave", params, channel, config)
+      this.formatParams("VideoInDewave", params, channel, config),
     );
   }
 
@@ -604,7 +609,7 @@ export class CameraSetupAPI {
 
   async setVideoMode(
     params: VideoModeParams,
-    channel: Channel = 0
+    channel: Channel = 0,
   ): Promise<string> {
     const parts: string[] = [];
 
@@ -616,7 +621,7 @@ export class CameraSetupAPI {
       // Expect params.timeSection like: string[7][N]
       // e.g. "0 06:30:59-18:30:00" for each period
       parts.push(
-        `VideoInMode[${channel}].TimeSection[0][0]=${params.timeSection?.[0]?.[0]}`
+        `VideoInMode[${channel}].TimeSection[0][0]=${params.timeSection?.[0]?.[0]}`,
       );
 
       return this.setConfig(parts.join("&"));
@@ -631,7 +636,7 @@ export class CameraSetupAPI {
       params.timeSection.forEach((day, dayIndex) => {
         day.forEach((period, periodIndex) => {
           parts.push(
-            `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${period}`
+            `VideoInMode[${channel}].TimeSection[${dayIndex}][${periodIndex}]=${period}`,
           );
         });
       });
@@ -648,7 +653,7 @@ export class CameraSetupAPI {
 
   async setEncode(
     params: EncodeVideoParams,
-    channel: Channel = 0
+    channel: Channel = 0,
   ): Promise<string> {
     // console.log("setEncode params:", params);
     const mainStreamResult = await this.setMainStreamEncode(params, channel);
@@ -659,7 +664,7 @@ export class CameraSetupAPI {
   async setMainStreamEncode(
     params: EncodeVideoParams,
     channel: Channel = 0,
-    extraStream: number = 0
+    extraStream: number = 0,
   ): Promise<string> {
     const parts: string[] = [];
     for (const [key, value] of Object.entries(params)) {
@@ -677,7 +682,7 @@ export class CameraSetupAPI {
 
   async setChannelTitle(name: string, channel: Channel = 0): Promise<string> {
     return this.setConfig(
-      `ChannelTitle[${channel}].Name=${encodeURIComponent(name)}`
+      `ChannelTitle[${channel}].Name=${encodeURIComponent(name)}`,
     );
   }
 
@@ -688,7 +693,7 @@ export class CameraSetupAPI {
 
   async setVideoWidget(
     params: VideoWidgetParams,
-    channel: Channel = 0
+    channel: Channel = 0,
   ): Promise<string> {
     return this.setConfig(this.formatParams("VideoWidget", params, channel));
   }
@@ -698,7 +703,7 @@ export class CameraSetupAPI {
     text: string,
     enable: boolean = true,
     channel: Channel = 0,
-    index: number = 0
+    index: number = 0,
   ): Promise<string> {
     const parts = [
       `VideoWidget[${channel}].TextOverlay[${index}].Enable=${enable}`,
@@ -721,7 +726,7 @@ export class CameraSetupAPI {
     params: ROIParams,
     channel: Channel = 0,
     stream: number = 0,
-    roiIndex: number = 0
+    roiIndex: number = 0,
   ): Promise<string> {
     const parts: string[] = [];
     const prefix = `VideoEncodeROI[${channel}]`;
@@ -753,18 +758,18 @@ export class CameraSetupAPI {
     params: AudioEncodeParams,
     channel: Channel = 0,
     streamType: "MainFormat" | "ExtraFormat" = "MainFormat",
-    index: number = 0
+    index: number = 0,
   ): Promise<string> {
     const parts: string[] = [];
 
     for (const [key, value] of Object.entries(params)) {
       if (key === "AudioEnable") {
         parts.push(
-          `Encode[${channel}].${streamType}[${index}].AudioEnable=${value}`
+          `Encode[${channel}].${streamType}[${index}].AudioEnable=${value}`,
         );
       } else {
         parts.push(
-          `Encode[${channel}].${streamType}[${index}].Audio.${key}=${encodeURIComponent(String(value))}`
+          `Encode[${channel}].${streamType}[${index}].Audio.${key}=${encodeURIComponent(String(value))}`,
         );
       }
     }
@@ -818,7 +823,7 @@ export class CameraSetupAPI {
   extractValues(
     config: ParsedConfig,
     channel: number = 0,
-    configProfile?: number
+    configProfile?: number,
   ): Record<string, string> {
     const pattern =
       configProfile !== undefined
