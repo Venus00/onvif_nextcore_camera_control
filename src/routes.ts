@@ -1825,8 +1825,8 @@ app.get("/detection/photos", async (req, res) => {
         .filter((file) => /\.(jpg|jpeg|png|bmp)$/i.test(file))
         .forEach((filename) => {
           try {
-            // Parse filename pattern: classification-YYYYMMDD_HHmmss-score-crop_type.ext
-            // Example: vehicle-20000106_174946-0.78-crop_ther.jpg or vehicle-20000106_174946-0.78-crop_full.jpg
+            // Parse filename pattern: classification-YYYYMMDD_HHmmss-score-crop_type-objectId.ext
+            // Example: vehicle-20000106_174946-0.78-crop_ther-123.jpg
             const parts = filename.split("-");
 
             if (parts.length < 3) {
@@ -1840,6 +1840,12 @@ app.get("/detection/photos", async (req, res) => {
             const dateStr = parts[1]; // Format: YYYYMMDD_HHmmss
             const scoreStr = parts[2]; // Format: 0.78
             const score = parseFloat(scoreStr) * 100 || 0; // Convert to percentage (0.78 -> 78)
+
+            // Extract objectId from the last part (before file extension)
+            // Last part could be like "crop_ther-123.jpg" or just "123.jpg"
+            const lastPart = parts[parts.length - 1];
+            const objectIdMatch = lastPart.match(/(\d+)\.(jpg|jpeg|png|bmp)$/i);
+            const objectId = objectIdMatch ? parseInt(objectIdMatch[1]) : null;
 
             // Parse date string (YYYYMMDD_HHmmss)
             if (!dateStr || dateStr.length < 15) {
@@ -1874,6 +1880,7 @@ app.get("/detection/photos", async (req, res) => {
               classification: classificationName,
               timestamp: timestamp.toISOString(),
               score,
+              objectId,
               path: `/detection/photos/${dateFolder}/${filename}`,
               size: fs.statSync(path.join(folderPath, filename)).size,
             });
@@ -1953,6 +1960,108 @@ app.get("/detection/photos", async (req, res) => {
     });
   } catch (error: any) {
     console.error("[Detection Photos] Error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Get latest crop image for a specific object ID
+app.get("/detection/object/:objectId/crop", async (req, res) => {
+  try {
+    const { objectId } = req.params;
+    const photosDir =
+      "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
+
+    // Check if directory exists
+    if (!fs.existsSync(photosDir)) {
+      return res.status(404).json({
+        success: false,
+        error: "Detection photos directory not found",
+      });
+    }
+
+    // Read all date folders (format: YYYY-MM-DD)
+    const dateFolders = fs.readdirSync(photosDir).filter((item) => {
+      const fullPath = path.join(photosDir, item);
+      return (
+        fs.statSync(fullPath).isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(item)
+      );
+    });
+
+    // Sort date folders descending (newest first)
+    dateFolders.sort((a, b) => b.localeCompare(a));
+
+    let latestImage: { path: string; timestamp: Date } | null = null;
+
+    // Search for the latest image with matching objectId
+    for (const dateFolder of dateFolders) {
+      const folderPath = path.join(photosDir, dateFolder);
+      const files = fs
+        .readdirSync(folderPath)
+        .filter((file) => /\.(jpg|jpeg|png|bmp)$/i.test(file));
+
+      for (const filename of files) {
+        try {
+          // Parse filename pattern: classification-YYYYMMDD_HHmmss-score-crop_type-objectId.ext
+          const parts = filename.split("-");
+          if (parts.length < 3) continue;
+
+          // Extract objectId from the last part (before file extension)
+          const lastPart = parts[parts.length - 1];
+          const objectIdMatch = lastPart.match(/(\d+)\.(jpg|jpeg|png|bmp)$/i);
+
+          if (objectIdMatch && objectIdMatch[1] === objectId) {
+            // Parse timestamp from filename
+            const dateStr = parts[1]; // Format: YYYYMMDD_HHmmss
+            if (!dateStr || dateStr.length < 15) continue;
+
+            const [datePart, timePart] = dateStr.split("_");
+            const year = parseInt(datePart.substring(0, 4));
+            const month = parseInt(datePart.substring(4, 6));
+            const day = parseInt(datePart.substring(6, 8));
+            const hour = parseInt(timePart.substring(0, 2));
+            const minute = parseInt(timePart.substring(2, 4));
+            const second = parseInt(timePart.substring(4, 6));
+
+            const timestamp = new Date(
+              year,
+              month - 1,
+              day,
+              hour,
+              minute,
+              second,
+            );
+
+            // Check if this is the latest image so far
+            if (!latestImage || timestamp > latestImage.timestamp) {
+              latestImage = {
+                path: path.join(folderPath, filename),
+                timestamp,
+              };
+            }
+          }
+        } catch (err) {
+          console.error(
+            `[Object Crop] Error processing file ${filename}:`,
+            err,
+          );
+        }
+      }
+    }
+
+    if (!latestImage) {
+      return res.status(404).json({
+        success: false,
+        error: `No crop image found for object ID ${objectId}`,
+      });
+    }
+
+    // Send the latest image file
+    res.sendFile(latestImage.path);
+  } catch (error: any) {
+    console.error("[Object Crop] Error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
