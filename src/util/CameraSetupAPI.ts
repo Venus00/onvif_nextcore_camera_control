@@ -493,9 +493,10 @@ export class CameraSetupAPI {
     channel: Channel = 0,
     config: ConfigProfile = 2,
   ): Promise<string> {
-    return this.setConfig(
+    const digitalZommConf = this.setConfig(
       this.formatParams("VideoInZoom", params, channel, config),
     );
+    return digitalZommConf;
   }
 
   // 3.1.11 VideoFocus
