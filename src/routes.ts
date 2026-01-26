@@ -298,19 +298,7 @@ app.post(
   }),
 );
 
-// stablizer
-app.get(
-  "/camera/:camId/video/exposure",
-  route(async ({ setup }) => ({ config: await setup.getVideoExposure() })),
-);
-app.post(
-  "/camera/:camId/video/exposure",
-  route(async ({ setup }, body) => {
-    const { channel = 0, config = 0, ...params } = body;
-    const response = await setup.setVideoExposure(params, channel, config);
-    return { response, ok: setup.isSuccess(response) };
-  }),
-);
+
 // White Balance
 app.get(
   "/camera/:camId/video/whitebalance",
@@ -404,7 +392,7 @@ app.get(
 app.post(
   "/camera/:camId/video/stabilizer",
   route(async ({ setup }, body) => {
-    const { channel = 0, config = 0, stablizer } = body;
+    const { channel = 0, config = 0, stabilizer: stablizer } = body;
     const response = await setup.setVideoStabilizer(stablizer, channel, config);
     return { response, ok: setup.isSuccess(response) };
   }),
