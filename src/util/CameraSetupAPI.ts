@@ -404,7 +404,7 @@ export class CameraSetupAPI {
   }
 
   // 3.1.5 VideoStabilizer
-  async getVideoStabilizer(): Promise<ParsedConfig> {
+  async(): Promise<ParsedConfig> {
     return this.getConfig("VideoImageControl");
   }
 

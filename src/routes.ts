@@ -298,7 +298,6 @@ app.post(
   }),
 );
 
-
 // White Balance
 app.get(
   "/camera/:camId/video/whitebalance",
@@ -394,7 +393,13 @@ app.post(
   route(async ({ setup }, body) => {
     const { channel = 0, config = 0, stabilizer: stablizer } = body;
     const response = await setup.setVideoStabilizer(stablizer, channel, config);
-    return { response, ok: setup.isSuccess(response) };
+    // Activate digital zoom when setting stabilizer
+    const zoomResponse = await setup.setVideoZoom(
+      { DigitalZoom: true },
+      channel,
+      config,
+    );
+    return { response, zoomResponse, ok: setup.isSuccess(response) };
   }),
 );
 
