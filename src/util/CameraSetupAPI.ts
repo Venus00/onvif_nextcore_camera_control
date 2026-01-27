@@ -49,28 +49,28 @@ export interface VideoColorParams {
   Gamma?: number;
   ChromaSuppress?: number;
   Style?:
-    | "Gentle"
-    | "Standard"
-    | "Flamboyant"
-    | "WhiteHot"
-    | "Lava"
-    | "IronRed"
-    | "HotIron"
-    | "Medical"
-    | "Arctic"
-    | "Rainbow1"
-    | "Rainbow2"
-    | "Tint"
-    | "BlackHot";
+  | "Gentle"
+  | "Standard"
+  | "Flamboyant"
+  | "WhiteHot"
+  | "Lava"
+  | "IronRed"
+  | "HotIron"
+  | "Medical"
+  | "Arctic"
+  | "Rainbow1"
+  | "Rainbow2"
+  | "Tint"
+  | "BlackHot";
 }
 
 export interface DayNightParams {
   Mode?:
-    | "Brightness"
-    | "Color"
-    | "BlackWhite"
-    | "AlarmInput"
-    | "PhotoresistorExt";
+  | "Brightness"
+  | "Color"
+  | "BlackWhite"
+  | "AlarmInput"
+  | "PhotoresistorExt";
   Delay?: number;
   Sensitivity?: 1 | 2 | 3;
   Type?: "Electron" | "ICR" | "Mechanism";
@@ -93,14 +93,14 @@ export interface ExposureParams {
 
 export interface WhiteBalanceParams {
   Mode?:
-    | "Auto"
-    | "Indoor"
-    | "Outdoor"
-    | "ATW"
-    | "Manual"
-    | "Sodium"
-    | "Natural"
-    | "Street";
+  | "Auto"
+  | "Indoor"
+  | "Outdoor"
+  | "ATW"
+  | "Manual"
+  | "Sodium"
+  | "Natural"
+  | "Street";
   RedGain?: number;
   BlueGain?: number;
 }
@@ -496,6 +496,7 @@ export class CameraSetupAPI {
     const digitalZommConf = this.setConfig(
       this.formatParams("VideoInZoom", params, channel, config),
     );
+    console.log("digital zomm ", digitalZommConf)
     return digitalZommConf;
   }
 

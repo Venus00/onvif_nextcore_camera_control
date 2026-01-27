@@ -1,13 +1,12 @@
 import express from "express";
-import cors from "cors"; // <-- add this
-// import DigestFetch from "digest-fetch";
-// const DigestFetch = require("digest-fetch");
+import cors from "cors";
 import DigestFetch from "digest-fetch";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { exec } from "child_process";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
+import { setupReactStatic } from "./util/serveReactStatic";
 import CameraSetupAPI, {
   NetworkAPI,
   PTZAPI,
@@ -122,6 +121,7 @@ async function monitorPTZFocusHD(camId: string) {
 // }, 1000);
 
 const app = express();
+setupReactStatic(app);
 app.use(express.json());
 app.use(cors());
 // ============ CAMERA CONFIGURATION ============
