@@ -121,9 +121,11 @@ async function monitorPTZFocusHD(camId: string) {
 // }, 1000);
 
 const app = express();
-setupReactStatic(app);
+const apiRouter = express.Router();
 app.use(express.json());
 app.use(cors());
+app.use('/api', apiRouter);
+setupReactStatic(app);
 // ============ CAMERA CONFIGURATION ============
 
 interface CameraInfo {
@@ -137,7 +139,6 @@ function getCameraClient(camId: string) {
   if (!cfg) throw new Error(`Unknown camera id: ${camId}`);
   return { client: new DigestFetch(cfg.username, cfg.password), ip: cfg.ip };
 }
-app.use(express.json());
 
 // ============ CAMERA CONFIGURATION ============
 
@@ -220,18 +221,18 @@ function route(
 // SECTION 3 - CAMERA SETUP
 // ================================================================
 
-app.get(
+apiRouter.get(
   "/camera/:camId/setup",
   route(async ({ setup }) => ({ configs: await setup.getAllConfigs() })),
 );
 
 // Video Color
-app.get(
+apiRouter.get(
   "/camera/:camId/video/color",
   route(async ({ setup }) => ({ config: await setup.getVideoColor() })),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/video/color",
   route(async ({ setup }, body) => {
     const { channel = 0, ...params } = body;
@@ -240,11 +241,11 @@ app.post(
   }),
 );
 // video Sharpness
-app.get(
+apiRouter.get(
   "/camera/:camId/video/sharpness",
   route(async ({ setup }) => ({ config: await setup.getVideoSharpness() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/sharpness",
   route(async ({ setup }, body) => {
     const { channel = 0, ...params } = body;
@@ -253,13 +254,13 @@ app.post(
   }),
 );
 //vide mode
-app.get(
+apiRouter.get(
   "/camera/:camId/video/mode", // Changed from /video/inMode
   route(async ({ setup }) => ({ config: await setup.getVideoMode() })),
 );
 
 // Add POST route
-app.post(
+apiRouter.post(
   "/camera/:camId/video/mode",
   route(async ({ setup }, body) => {
     const { channel = 0, mode, config0, config1, timeSection } = body;
@@ -271,11 +272,11 @@ app.post(
   }),
 );
 // Day/Night
-app.get(
+apiRouter.get(
   "/camera/:camId/video/daynight",
   route(async ({ setup }) => ({ config: await setup.getVideoDayNight() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/daynight",
   route(async ({ setup }, body) => {
     const { channel = 0, config = 0, ...params } = body;
@@ -285,11 +286,11 @@ app.post(
 );
 
 // Exposure
-app.get(
+apiRouter.get(
   "/camera/:camId/video/exposure",
   route(async ({ setup }) => ({ config: await setup.getVideoExposure() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/exposure",
   route(async ({ setup }, body) => {
     const { channel = 0, config = 0, ...params } = body;
@@ -299,11 +300,11 @@ app.post(
 );
 
 // White Balance
-app.get(
+apiRouter.get(
   "/camera/:camId/video/whitebalance",
   route(async ({ setup }) => ({ config: await setup.getVideoWhiteBalance() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/whitebalance",
   route(async ({ setup }, body) => {
     const { channel = 0, config = 0, ...params } = body;
@@ -312,11 +313,11 @@ app.post(
   }),
 );
 // Zoom
-app.get(
+apiRouter.get(
   "/camera/:camId/video/zoom",
   route(async ({ setup }) => ({ config: await setup.getVideoZoom() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/zoom",
   route(async ({ setup }, body) => {
     const { channel = 0, config = 0, ...params } = body;
@@ -326,11 +327,11 @@ app.post(
 );
 
 // Focus
-app.get(
+apiRouter.get(
   "/camera/:camId/video/focus",
   route(async ({ setup }) => ({ config: await setup.getVideoFocus() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/focus",
 
   route(async ({ setup }, body) => {
@@ -341,11 +342,11 @@ app.post(
 );
 
 // Defog
-app.get(
+apiRouter.get(
   "/camera/:camId/video/defog",
   route(async ({ setup }) => ({ config: await setup.getVideoDefog() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/defog",
   route(async ({ setup }, body) => {
     const { channel = 0, config = 0, ...params } = body;
@@ -355,11 +356,11 @@ app.post(
 );
 
 // Flip
-app.get(
+apiRouter.get(
   "/camera/:camId/video/flip",
   route(async ({ setup }) => ({ config: await setup.getVideoFlip() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/flip",
 
   route(async ({ setup }, body) => {
@@ -370,11 +371,11 @@ app.post(
 );
 
 // denoise
-app.get(
+apiRouter.get(
   "/camera/:camId/video/denoise",
   route(async ({ setup }) => ({ config: await setup.getVideoDenoise() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/denoise",
   route(async ({ setup }, body) => {
     const { channel = 0, config = 0, ...params } = body;
@@ -384,11 +385,11 @@ app.post(
 );
 
 // Video Stabilizer
-app.get(
+apiRouter.get(
   "/camera/:camId/video/stabilizer",
   route(async ({ setup }) => ({ config: await setup.getVideoStabilizer() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/stabilizer",
   route(async ({ setup }, body) => {
     const { channel = 0, config = 0, stabilizer: stablizer } = body;
@@ -404,17 +405,17 @@ app.post(
 );
 
 // Backlight
-app.get(
+apiRouter.get(
   "/camera/:camId/video/backlight",
   route(async ({ setup }) => ({ config: await setup.getVideoBacklight() })),
 );
 
 // Encode
-app.get(
+apiRouter.get(
   "/camera/:camId/encode",
   route(async ({ setup }) => ({ config: await setup.getEncode() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/encode",
   route(async ({ setup }, body) => {
     const { channel = 0, config = 0, ...params } = body;
@@ -423,11 +424,11 @@ app.post(
   }),
 );
 
-app.get(
+apiRouter.get(
   "/camera/:camId/video/videoROI",
   route(async ({ setup }) => ({ config: await setup.getVideoROI() })),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/video/videoROI",
   route(async ({ setup }, body) => {
     const { channel = 0, config = 0, ...params } = body;
@@ -437,18 +438,18 @@ app.post(
 );
 
 // Title
-app.get(
+apiRouter.get(
   "/camera/:camId/title",
   route(async ({ setup }) => ({ config: await setup.getChannelTitle() })),
 );
 
 // OSD
-app.get(
+apiRouter.get(
   "/camera/:camId/osd",
   route(async ({ setup }) => ({ config: await setup.getVideoWidget() })),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/osd",
   route(async ({ setup }, body) => {
     const { channel = 0, ...params } = body;
@@ -457,7 +458,7 @@ app.post(
   }),
 );
 
-app.post("/focus/:camId/move", async (req, res) => {
+apiRouter.post("/focus/:camId/move", async (req, res) => {
   try {
     console.log("focus move", req.body);
     const camId = "cam2";
@@ -479,7 +480,7 @@ app.post("/focus/:camId/move", async (req, res) => {
   }
 });
 
-app.post("/focus/:camId/stop", async (req, res) => {
+apiRouter.post("/focus/:camId/stop", async (req, res) => {
   try {
     console.log("focus stop", req.body);
     const camId = "cam2";
@@ -510,48 +511,48 @@ app.post("/focus/:camId/stop", async (req, res) => {
 // SECTION 4 - NETWORK
 // ================================================================
 
-app.get(
+apiRouter.get(
   "/camera/:camId/network",
   route(async ({ network }) => ({ configs: await network.getAllConfigs() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/network/tcpip",
   route(async ({ network }) => ({ config: await network.getNetwork() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/network/dvrip",
   route(async ({ network }) => ({ config: await network.getDVRIP() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/network/web",
   route(async ({ network }) => ({ config: await network.getWeb() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/network/rtsp",
   route(async ({ network }) => ({ config: await network.getRTSP() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/network/https",
   route(async ({ network }) => ({ config: await network.getHttps() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/network/upnp",
   route(async ({ network }) => ({ config: await network.getUPnP() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/network/multicast",
   route(async ({ network }) => ({ config: await network.getMulticast() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/network/qos",
   route(async ({ network }) => ({ config: await network.getQoS() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/network/onvif",
   route(async ({ network }) => ({ config: await network.getONVIF() })),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/network/rtsp",
   route(async ({ network }, body) => {
     const response = await network.setRTSP(body);
@@ -559,7 +560,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/network/onvif",
   route(async ({ network }, body) => {
     const response = await network.setONVIF(body.enable);
@@ -571,41 +572,41 @@ app.post(
 // SECTION 5 - PTZ
 // ================================================================
 
-app.get(
+apiRouter.get(
   "/camera/:camId/ptz",
   route(async ({ ptz }) => ({ configs: await ptz.getAllConfigs() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/ptz/status",
   route(async ({ ptz }) => ({ status: await ptz.getPTZStatus() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/ptz/presets",
   route(async ({ ptz }) => ({ presets: await ptz.getPresets() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/ptz/tours",
   route(async ({ ptz }) => ({ tours: await ptz.getTours() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/ptz/scantours",
   route(async ({ ptz }) => ({ scanTours: await ptz.getScanTours() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/ptz/autoscan",
   route(async ({ ptz }) => ({ autoScan: await ptz.getAutoScan() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/ptz/idlemotion",
   route(async ({ ptz }) => ({ idleMotion: await ptz.getIdleMotion() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/ptz/powerup",
   route(async ({ ptz }) => ({ powerUp: await ptz.getPowerUp() })),
 );
 
 // PTZ Control
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/move/up",
   route(async ({ ptz }, body) => {
     const { channel = 1, speed = 4 } = body;
@@ -614,7 +615,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/move/down",
   route(async ({ ptz }, body) => {
     const { channel = 1, speed = 4 } = body;
@@ -623,7 +624,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/move/left",
   route(async ({ ptz }, body) => {
     const { channel = 1, speed = 4 } = body;
@@ -632,7 +633,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/move/right",
   route(async ({ ptz }, body) => {
     const { channel = 1, speed = 4 } = body;
@@ -641,7 +642,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/wiper/on",
   route(async ({ ptz }, body) => {
     const { channel = 0 } = body;
@@ -650,7 +651,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/move/stop",
   route(async ({ ptz }, body) => {
     const { channel = 1 } = body;
@@ -659,7 +660,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/zoom/in",
   route(async ({ ptz }, body) => {
     const { channel = 1 } = body;
@@ -668,7 +669,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/zoom/out",
   route(async ({ ptz }, body) => {
     const { channel = 1 } = body;
@@ -677,7 +678,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/zoom/stop",
   route(async ({ ptz }, body) => {
     const { channel = 1 } = body;
@@ -686,7 +687,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/focus/stop",
   route(async ({ ptz }, body) => {
     const { channel = 1 } = body;
@@ -695,7 +696,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/focus/near",
   route(async ({ ptz }, body) => {
     const { channel = 1 } = body;
@@ -704,7 +705,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/focus/far",
   route(async ({ ptz }, body) => {
     const { channel = 1 } = body;
@@ -714,7 +715,7 @@ app.post(
 );
 
 // Enable autofocus
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/focus/auto/enable",
   route(async ({ ptz }, body, params) => {
     const { channel = 1 } = body;
@@ -778,7 +779,7 @@ app.post(
 );
 
 // Disable autofocus
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/focus/auto/disable",
   route(async ({ ptz }, body, params) => {
     const { channel = 1 } = body;
@@ -841,7 +842,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/preset/goto",
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
@@ -851,7 +852,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/preset/set",
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
@@ -870,7 +871,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/preset/clear",
   route(async ({ ptz }, body) => {
     const { presetId, channel = 0 } = body;
@@ -880,7 +881,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/tour/start",
   route(async ({ ptz }, body) => {
     const { tourId, channel = 0 } = body;
@@ -889,7 +890,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/tour/stop",
   route(async ({ ptz }, body) => {
     const { tourId, channel = 0 } = body;
@@ -897,7 +898,7 @@ app.post(
     return { response, ok: ptz.isSuccess(response) };
   }),
 );
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/tour/update",
   route(async ({ ptz }, body) => {
     const { tourId, channel = 0 } = body;
@@ -907,7 +908,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/position",
   route(async ({ ptz }, body) => {
     const { pan, tilt, zoom, channel = 0 } = body;
@@ -916,7 +917,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/light/on",
   route(async ({ ptz }, body) => {
     const { channel = 0 } = body;
@@ -925,7 +926,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/light/off",
   route(async ({ ptz }, body) => {
     const { channel = 0 } = body;
@@ -934,7 +935,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/ptz/wiper",
   route(async ({ ptz }, body) => {
     const { channel = 0 } = body;
@@ -947,54 +948,54 @@ app.post(
 // SECTION 6 - EVENTS
 // ================================================================
 
-app.get(
+apiRouter.get(
   "/camera/:camId/events",
   route(async ({ events }) => ({ configs: await events.getAllConfigs() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/events/motion",
   route(async ({ events }) => ({ config: await events.getMotionDetect() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/events/tamper",
   route(async ({ events }) => ({ config: await events.getTamperDetect() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/events/scenechange",
   route(async ({ events }) => ({ config: await events.getSceneChange() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/events/audio",
   route(async ({ events }) => ({ config: await events.getAudioDetect() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/events/network/disconnect",
   route(async ({ events }) => ({
     config: await events.getNetworkDisconnect(),
   })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/events/network/ipconflict",
   route(async ({ events }) => ({ config: await events.getIPConflict() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/events/storage/nosd",
   route(async ({ events }) => ({ config: await events.getNoSDCardAlarm() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/events/storage/error",
   route(async ({ events }) => ({ config: await events.getSDCardError() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/events/storage/lowspace",
   route(async ({ events }) => ({ config: await events.getSDCardLowSpace() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/events/fire",
   route(async ({ events }) => ({ config: await events.getFireWarning() })),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/events/motion",
   route(async ({ events }, body) => {
     const { channel = 0, windowIndex = 0, ...params } = body;
@@ -1003,7 +1004,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/events/tamper",
   route(async ({ events }, body) => {
     const { channel = 0, ...params } = body;
@@ -1012,7 +1013,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/events/audio",
   route(async ({ events }, body) => {
     const { channel = 0, ...params } = body;
@@ -1022,7 +1023,7 @@ app.post(
 );
 
 // Alarm event stream URL
-app.get(
+apiRouter.get(
   "/camera/:camId/events/stream",
   route(async ({ events }, _, params) => {
     const url = events.getAlarmEventUrl(["All"], 20, true);
@@ -1034,16 +1035,16 @@ app.get(
 // SECTION 8 - STORAGE
 // ================================================================
 
-app.get(
+apiRouter.get(
   "/camera/:camId/storage",
   route(async ({ storage }) => ({ configs: await storage.getAllConfigs() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/storage/record",
   route(async ({ storage }) => ({ config: await storage.getRecordSchedule() })),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/storage/record",
   route(async ({ storage }, body) => {
     // console.log("Setting record schedule:", body);
@@ -1051,34 +1052,34 @@ app.post(
     return { response, ok: storage.isSuccess(response) };
   }),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/storage/snap",
   route(async ({ storage }) => ({ config: await storage.getSnapSchedule() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/storage/point",
   route(async ({ storage }) => ({ config: await storage.getStoragePoint() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/storage/ftp",
   route(async ({ storage }) => ({ config: await storage.getFTP() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/storage/nas",
   route(async ({ storage }) => ({ config: await storage.getNAS() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/storage/media",
   route(async ({ storage }) => ({ config: await storage.getMediaGlobal() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/storage/device",
   route(async ({ storage }) => ({
     info: await storage.getStorageDeviceInfo(),
   })),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/storage/ftp",
   route(async ({ storage }, body) => {
     const response = await storage.setFTP(body);
@@ -1086,7 +1087,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/storage/nas",
   route(async ({ storage }, body) => {
     const response = await storage.setNAS(body);
@@ -1094,7 +1095,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/storage/format",
   route(async ({ storage }, body) => {
     const { device = "/dev/mmcblk0p1" } = body;
@@ -1107,28 +1108,28 @@ app.post(
 // SECTION 9 - SYSTEM
 // ================================================================
 
-app.get(
+apiRouter.get(
   "/camera/:camId/system",
   route(async ({ system }) => ({ configs: await system.getAllConfigs() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/system/info",
   route(async ({ system }) => ({ info: await system.getDeviceInfo() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/system/time",
   route(async ({ system }) => ({ time: await system.getCurrentTime() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/system/ntp",
   route(async ({ system }) => ({ config: await system.getNTP() })),
 );
-app.get(
+apiRouter.get(
   "/camera/:camId/system/channels",
   route(async ({ system }) => ({ count: await system.getChannelCount() })),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/system/time",
   route(async ({ system }, body) => {
     const { time } = body; // Format: yyyy-MM-dd HH:mm:ss
@@ -1137,7 +1138,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/system/ntp",
   route(async ({ system }, body) => {
     const response = await system.setNTP(body);
@@ -1145,7 +1146,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/system/reboot",
   route(async ({ system }) => {
     const response = await system.reboot();
@@ -1153,7 +1154,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/system/reset",
   route(async ({ system }) => {
     const response = await system.factoryReset();
@@ -1162,7 +1163,7 @@ app.post(
 );
 
 // System reboot endpoint (reboots the entire server/system)
-app.post("/system/reboot", async (req, res) => {
+apiRouter.post("/system/reboot", async (req, res) => {
   try {
     console.log("[System] Reboot request received");
 
@@ -1207,7 +1208,7 @@ app.post("/system/reboot", async (req, res) => {
 // SECTION 2 - LIVE
 // ================================================================
 
-app.get(
+apiRouter.get(
   "/camera/:camId/live/rtsp",
   route(async ({ live }, _, params) => {
     const cam = cameras[params.camId];
@@ -1220,7 +1221,7 @@ app.get(
   }),
 );
 
-app.get(
+apiRouter.get(
   "/camera/:camId/live/snapshot",
   route(async ({ live }) => {
     return {
@@ -1230,14 +1231,14 @@ app.get(
   }),
 );
 
-app.get(
+apiRouter.get(
   "/camera/:camId/live/thermal",
   route(async ({ live }) => {
     return { config: await live.getThermalConfig() };
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/live/temperature",
   route(async ({ live }, body) => {
     const { x, y, channel = 2 } = body;
@@ -1246,7 +1247,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/live/thermal/enable",
   route(async ({ live }, body) => {
     const { enable } = body;
@@ -1255,7 +1256,7 @@ app.post(
   }),
 );
 
-app.post(
+apiRouter.post(
   "/camera/:camId/live/thermal/unit",
   route(async ({ live }, body) => {
     const { unit } = body; // 'Centigrade' | 'Fahrenheit'
@@ -1265,7 +1266,7 @@ app.post(
 );
 
 // Object Detection
-app.post("/detection/start", async (req, res) => {
+apiRouter.post("/detection/start", async (req, res) => {
   try {
     const { cameraId = "cam1" } = req.body; // cam1 = optique, cam2 = thermique
     console.log(`[Detection] Request to start detection on ${cameraId}`);
@@ -1323,7 +1324,7 @@ app.post("/detection/start", async (req, res) => {
   }
 });
 
-app.post("/detection/stop", async (req, res) => {
+apiRouter.post("/detection/stop", async (req, res) => {
   try {
     const { cameraId = "cam1" } = req.body; // cam1 = optique, cam2 = thermique
     console.log(`[Detection] Request to stop detection on ${cameraId}`);
@@ -1384,7 +1385,7 @@ app.post("/detection/stop", async (req, res) => {
 });
 
 // Object Tracking
-app.post("/track/object/:id", async (req, res) => {
+apiRouter.post("/track/object/:id", async (req, res) => {
   try {
     const objectId = parseInt(req.params.id);
     const { cameraId = "cam1" } = req.body; // cam1 = optique, cam2 = thermique
@@ -1449,7 +1450,7 @@ app.post("/track/object/:id", async (req, res) => {
   }
 });
 
-app.post("/track/stop", async (req, res) => {
+apiRouter.post("/track/stop", async (req, res) => {
   try {
     const { cameraId = "cam1" } = req.body; // cam1 = optique, cam2 = thermique
     console.log(`[Tracking] Request to stop tracking on ${cameraId}`);
@@ -1510,7 +1511,7 @@ app.post("/track/stop", async (req, res) => {
 });
 
 // Get detection/tracking state
-app.get("/detection/state", async (req, res) => {
+apiRouter.get("/detection/state", async (req, res) => {
   try {
     const { cameraId } = req.query;
 
@@ -1560,7 +1561,7 @@ app.get("/detection/state", async (req, res) => {
 });
 
 // Get analytics state from file
-app.get("/analytics/state", async (req, res) => {
+apiRouter.get("/analytics/state", async (req, res) => {
   try {
     // Check if file exists
     if (!fs.existsSync(stateFilePath)) {
@@ -1620,7 +1621,7 @@ app.get("/analytics/state", async (req, res) => {
 const activeRecordings = new Map<string, ChildProcessWithoutNullStreams>();
 
 // Start recording from RTSP stream
-app.post("/recording/start", async (req, res) => {
+apiRouter.post("/recording/start", async (req, res) => {
   try {
     const { cameraId, fileName } = req.body;
 
@@ -1690,7 +1691,7 @@ app.post("/recording/start", async (req, res) => {
 });
 
 // Stop recording
-app.post("/recording/stop", async (req, res) => {
+apiRouter.post("/recording/stop", async (req, res) => {
   try {
     const { cameraId } = req.body;
 
@@ -1722,7 +1723,7 @@ app.post("/recording/stop", async (req, res) => {
 });
 
 // Download and delete recording
-app.get("/recording/download/:fileName", async (req, res) => {
+apiRouter.get("/recording/download/:fileName", async (req, res) => {
   try {
     const { fileName } = req.params;
     const filePath = path.join(__dirname, "../../recordings", fileName);
@@ -1766,7 +1767,7 @@ app.get("/recording/download/:fileName", async (req, res) => {
 });
 
 // Object Detection Photos API
-app.get("/detection/photos", async (req, res) => {
+apiRouter.get("/detection/photos", async (req, res) => {
   try {
     const {
       classification,
@@ -1959,7 +1960,7 @@ app.get("/detection/photos", async (req, res) => {
 });
 
 // Get latest crop image for a specific object ID
-app.get("/detection/object/:objectId/crop", async (req, res) => {
+apiRouter.get("/detection/object/:objectId/crop", async (req, res) => {
   try {
     const { objectId } = req.params;
     const photosDir =
@@ -2061,7 +2062,7 @@ app.get("/detection/object/:objectId/crop", async (req, res) => {
 });
 
 // Serve individual detection photo (with date folder)
-app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
+apiRouter.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
   try {
     const { dateFolder, filename } = req.params;
     const photosDir =
@@ -2107,7 +2108,7 @@ app.get("/detection/photos/:dateFolder/:filename", async (req, res) => {
 });
 
 // Delete all detection photos
-app.delete("/detection/photos", async (req, res) => {
+apiRouter.delete("/detection/photos", async (req, res) => {
   try {
     const photosDir =
       "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/IA";
@@ -2173,7 +2174,7 @@ app.delete("/detection/photos", async (req, res) => {
 
 // ============ RECORDINGS ENDPOINT ============
 // Serve recorded video files
-app.use(
+apiRouter.use(
   "/recordings",
   express.static(path.join(__dirname, "../../recordings")),
 );
@@ -2193,3 +2194,4 @@ app.listen(PORT, () => {
 });
 
 export default app;
+
