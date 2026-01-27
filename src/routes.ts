@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { exec } from "child_process";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
-import { setupReactStatic } from "./util/serveReactStatic";
+import { setupReactStatic } from "./util/serveReactStatic.js";
 import CameraSetupAPI, {
   NetworkAPI,
   PTZAPI,
@@ -125,7 +125,6 @@ const apiRouter = express.Router();
 app.use(express.json());
 app.use(cors());
 app.use('/api', apiRouter);
-setupReactStatic(app);
 // ============ CAMERA CONFIGURATION ============
 
 interface CameraInfo {
@@ -2178,6 +2177,9 @@ apiRouter.use(
   "/recordings",
   express.static(path.join(__dirname, "../../recordings")),
 );
+
+// Serve React static files (must be after all API routes)
+setupReactStatic(app);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
