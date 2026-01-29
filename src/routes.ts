@@ -2199,6 +2199,7 @@ interface IntrusionPreset {
   timestamp: number;
   rectangles: IntrusionRectangle[];
   imageData: string;
+  presetNumber?: number; // Camera PTZ preset number (30-128)
 }
 
 // Get all intrusion presets
@@ -2243,7 +2244,44 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
     const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
     const presets: IntrusionPreset[] = JSON.parse(data);
 
-    // Create new preset
+    // Find next available preset number (30-128)
+    const usedPresetNumbers = presets
+      .filter(p => p.cameraId === cameraId && typeof p.presetNumber === 'number')
+      .map(p => p.presetNumber as number);
+
+    let presetNumber = 30;
+    while (usedPresetNumbers.includes(presetNumber) && presetNumber <= 128) {
+      presetNumber++;
+    }
+
+    if (presetNumber > 128) {
+      return res.status(400).json({
+        success: false,
+        error: "Maximum number of presets reached (30-128). Please delete an existing preset.",
+      });
+    }
+
+    // Create PTZ preset on camera
+    try {
+      const cam = cameras[cameraId];
+      if (!cam) {
+        throw new Error(`Camera ${cameraId} not found`);
+      }
+
+      // Get camera API
+      const api = await getAPIs(cameraId);
+      // Set the preset at current position
+      await api.ptz.setPreset(presetNumber);
+      console.log(`[Intrusion] PTZ preset ${presetNumber} "${name}" created on camera ${cameraId}`);
+    } catch (ptzError: any) {
+      console.error(`[Intrusion] Error setting PTZ preset on camera:`, ptzError);
+      return res.status(500).json({
+        success: false,
+        error: `Failed to create PTZ preset on camera: ${ptzError.message}`,
+      });
+    }
+
+    // Create new preset with PTZ preset number
     const newPreset: IntrusionPreset = {
       id: `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name,
@@ -2251,6 +2289,7 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
       timestamp: Date.now(),
       rectangles,
       imageData,
+      presetNumber,
     };
 
     // Add to presets array
@@ -2259,7 +2298,7 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
     // Save to file
     fs.writeFileSync(intrusionPresetsPath, JSON.stringify(presets, null, 2), "utf-8");
 
-    console.log(`[Intrusion] Created preset "${name}" for ${cameraId} with ${rectangles.length} zones`);
+    console.log(`[Intrusion] Created preset "${name}" for ${cameraId} with ${rectangles.length} zones and PTZ preset #${presetNumber}`);
 
     res.json({
       success: true,
@@ -2292,8 +2331,21 @@ apiRouter.delete("/intrusion/presets/:id", async (req, res) => {
       });
     }
 
-    // Remove preset
     const deletedPreset = presets[presetIndex];
+
+    // Delete PTZ preset from camera if it has a preset number
+    if (deletedPreset.presetNumber) {
+      try {
+        const api = await getAPIs(deletedPreset.cameraId);
+        await api.ptz.clearPreset(deletedPreset.presetNumber);
+        console.log(`[Intrusion] Deleted PTZ preset #${deletedPreset.presetNumber} from camera ${deletedPreset.cameraId}`);
+      } catch (ptzError: any) {
+        console.error(`[Intrusion] Error deleting PTZ preset from camera:`, ptzError);
+        // Continue with deletion even if camera preset deletion fails
+      }
+    }
+
+    // Remove preset from array
     presets = presets.filter((p) => p.id !== id);
 
     // Save to file
