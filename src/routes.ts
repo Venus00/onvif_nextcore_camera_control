@@ -2418,6 +2418,258 @@ apiRouter.post("/intrusion/start", async (req, res) => {
   }
 });
 
+// ============ INTRUSION EVENTS API ============
+// Get intrusion events (photos from intrusion detection)
+apiRouter.get("/intrusion/events", async (req, res) => {
+  try {
+    const {
+      zone,
+      cameraId,
+      startDate,
+      endDate,
+      limit = 100,
+    } = req.query;
+
+    // Intrusion photos directory
+    const intrusionDir =
+      "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/intrusion";
+
+    // Check if directory exists
+    if (!fs.existsSync(intrusionDir)) {
+      return res.json({
+        success: true,
+        events: [],
+        message: "Intrusion events directory not found",
+        directory: intrusionDir,
+      });
+    }
+
+    // Read all files in the intrusion directory
+    const files = fs.readdirSync(intrusionDir).filter((file) =>
+      /\.(jpg|jpeg|png|bmp)$/i.test(file)
+    );
+
+    console.log(
+      `[Intrusion Events] Found ${files.length} files in intrusion directory`,
+    );
+
+    // Collect all intrusion events
+    const events: any[] = [];
+
+    for (const filename of files) {
+      try {
+        // Parse filename pattern: zone-YYYYMMDD_HHmmss-camid.ext
+        // Example: zone1-20260129_143045-cam1.jpg
+        const parts = filename.split("-");
+
+        if (parts.length < 3) {
+          console.warn(
+            `[Intrusion Events] Skipping invalid filename: ${filename}`,
+          );
+          continue;
+        }
+
+        const zoneName = parts[0];
+        const dateStr = parts[1]; // Format: YYYYMMDD_HHmmss
+        const camIdPart = parts[2].split(".")[0]; // Extract cam1/cam2 before extension
+
+        // Parse date string (YYYYMMDD_HHmmss)
+        if (!dateStr || dateStr.length < 15) {
+          console.warn(
+            `[Intrusion Events] Invalid date in filename: ${filename}`,
+          );
+          continue;
+        }
+
+        // Split by underscore to separate date and time
+        const [datePart, timePart] = dateStr.split("_");
+
+        const year = parseInt(datePart.substring(0, 4));
+        const month = parseInt(datePart.substring(4, 6));
+        const day = parseInt(datePart.substring(6, 8));
+        const hour = parseInt(timePart.substring(0, 2));
+        const minute = parseInt(timePart.substring(2, 4));
+        const second = parseInt(timePart.substring(4, 6));
+
+        const timestamp = new Date(
+          year,
+          month - 1,
+          day,
+          hour,
+          minute,
+          second,
+        );
+
+        events.push({
+          id: `${zoneName}-${dateStr}-${camIdPart}`,
+          filename,
+          zone: zoneName,
+          cameraId: camIdPart,
+          timestamp: timestamp.toISOString(),
+          path: `/intrusion/events/photo/${filename}`,
+          size: fs.statSync(path.join(intrusionDir, filename)).size,
+        });
+      } catch (err) {
+        console.error(
+          `[Intrusion Events] Error processing file ${filename}:`,
+          err,
+        );
+      }
+    }
+
+    console.log(`[Intrusion Events] Total events found: ${events.length}`);
+
+    // Apply filters
+    let filteredEvents = events;
+
+    if (zone) {
+      filteredEvents = filteredEvents.filter(
+        (e) => e.zone.toLowerCase() === (zone as string).toLowerCase(),
+      );
+    }
+
+    if (cameraId) {
+      filteredEvents = filteredEvents.filter(
+        (e) => e.cameraId === cameraId,
+      );
+    }
+
+    if (startDate) {
+      const start = new Date(startDate as string);
+      filteredEvents = filteredEvents.filter(
+        (e) => new Date(e.timestamp) >= start,
+      );
+    }
+
+    if (endDate) {
+      const end = new Date(endDate as string);
+      filteredEvents = filteredEvents.filter(
+        (e) => new Date(e.timestamp) <= end,
+      );
+    }
+
+    // Sort by timestamp (newest first)
+    filteredEvents.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
+
+    // Apply limit
+    const limitNum = parseInt(limit as string);
+    if (limitNum > 0) {
+      filteredEvents = filteredEvents.slice(0, limitNum);
+    }
+
+    res.json({
+      success: true,
+      count: filteredEvents.length,
+      total: events.length,
+      events: filteredEvents,
+      filters: {
+        zone,
+        cameraId,
+        startDate,
+        endDate,
+        limit,
+      },
+    });
+  } catch (error: any) {
+    console.error("[Intrusion Events] Error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Serve individual intrusion event photo
+apiRouter.get("/intrusion/events/photo/:filename", async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const intrusionDir =
+      "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/intrusion";
+    const filePath = path.join(intrusionDir, filename);
+
+    // Security check: prevent directory traversal
+    const resolvedPath = path.resolve(filePath);
+    const resolvedDir = path.resolve(intrusionDir);
+
+    if (!resolvedPath.startsWith(resolvedDir)) {
+      return res.status(403).json({
+        success: false,
+        error: "Access denied",
+      });
+    }
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: "Intrusion event photo not found",
+      });
+    }
+
+    // Send file
+    res.sendFile(resolvedPath);
+  } catch (error: any) {
+    console.error("[Intrusion Event Photo] Error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Delete all intrusion events
+apiRouter.delete("/intrusion/events", async (req, res) => {
+  try {
+    const intrusionDir =
+      "/home/ubuntu/falcon_camera_udp_workers/stockage/ftp_storage/intrusion";
+
+    // Check if directory exists
+    if (!fs.existsSync(intrusionDir)) {
+      return res.json({
+        success: true,
+        message: "Intrusion events directory not found",
+        deleted: 0,
+      });
+    }
+
+    const files = fs.readdirSync(intrusionDir).filter((file) =>
+      /\.(jpg|jpeg|png|bmp)$/i.test(file),
+    );
+
+    let deletedCount = 0;
+    let errorCount = 0;
+
+    for (const filename of files) {
+      try {
+        const filePath = path.join(intrusionDir, filename);
+        fs.unlinkSync(filePath);
+        deletedCount++;
+      } catch (err) {
+        console.error(`[Intrusion Events] Error deleting ${filename}:`, err);
+        errorCount++;
+      }
+    }
+
+    console.log(`[Intrusion Events] Deleted ${deletedCount} event photos`);
+
+    res.json({
+      success: true,
+      message: `Successfully deleted ${deletedCount} intrusion event photos`,
+      deleted: deletedCount,
+      errors: errorCount,
+    });
+  } catch (error: any) {
+    console.error("[Intrusion Events] Clear all error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 // ============ RECORDINGS ENDPOINT ============
 // Serve recorded video files
 apiRouter.use(
