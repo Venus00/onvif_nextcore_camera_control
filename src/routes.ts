@@ -2223,12 +2223,12 @@ apiRouter.get("/intrusion/presets", async (req, res) => {
 // Create new intrusion preset
 apiRouter.post("/intrusion/presets", async (req, res) => {
   try {
-    const { name, cameraId, rectangles, imageData } = req.body;
+    const { name, cameraId, rectangles } = req.body;
 
-    if (!name || !cameraId || !rectangles || !imageData) {
+    if (!name || !cameraId || !rectangles) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: name, cameraId, rectangles, imageData",
+        error: "Missing required fields: name, cameraId, rectangles",
       });
     }
 
@@ -2287,7 +2287,6 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
       cameraId,
       timestamp: Date.now(),
       rectangles,
-      imageData,
       presetNumber,
     };
 
