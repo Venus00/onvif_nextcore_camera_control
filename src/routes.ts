@@ -2171,6 +2171,201 @@ apiRouter.delete("/detection/photos", async (req, res) => {
   }
 });
 
+// ============ INTRUSION DETECTION API ============
+const intrusionPresetsPath = path.join(__dirname, "../../data/intrusion-presets.json");
+
+// Ensure data directory exists
+const dataDir = path.join(__dirname, "../../data");
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// Initialize presets file if it doesn't exist
+if (!fs.existsSync(intrusionPresetsPath)) {
+  fs.writeFileSync(intrusionPresetsPath, JSON.stringify([]), "utf-8");
+}
+
+interface IntrusionRectangle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface IntrusionPreset {
+  id: string;
+  name: string;
+  cameraId: "cam1" | "cam2";
+  timestamp: number;
+  rectangles: IntrusionRectangle[];
+  imageData: string;
+}
+
+// Get all intrusion presets
+apiRouter.get("/intrusion/presets", async (req, res) => {
+  try {
+    const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
+    const presets: IntrusionPreset[] = JSON.parse(data);
+
+    res.json({
+      success: true,
+      presets,
+    });
+  } catch (error: any) {
+    console.error("[Intrusion] Error reading presets:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Create new intrusion preset
+apiRouter.post("/intrusion/presets", async (req, res) => {
+  try {
+    const { name, cameraId, rectangles, imageData } = req.body;
+
+    if (!name || !cameraId || !rectangles || !imageData) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: name, cameraId, rectangles, imageData",
+      });
+    }
+
+    if (rectangles.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "At least one detection zone is required",
+      });
+    }
+
+    // Read existing presets
+    const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
+    const presets: IntrusionPreset[] = JSON.parse(data);
+
+    // Create new preset
+    const newPreset: IntrusionPreset = {
+      id: `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      cameraId,
+      timestamp: Date.now(),
+      rectangles,
+      imageData,
+    };
+
+    // Add to presets array
+    presets.push(newPreset);
+
+    // Save to file
+    fs.writeFileSync(intrusionPresetsPath, JSON.stringify(presets, null, 2), "utf-8");
+
+    console.log(`[Intrusion] Created preset "${name}" for ${cameraId} with ${rectangles.length} zones`);
+
+    res.json({
+      success: true,
+      preset: newPreset,
+    });
+  } catch (error: any) {
+    console.error("[Intrusion] Error creating preset:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Delete intrusion preset
+apiRouter.delete("/intrusion/presets/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Read existing presets
+    const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
+    let presets: IntrusionPreset[] = JSON.parse(data);
+
+    // Find preset
+    const presetIndex = presets.findIndex((p) => p.id === id);
+    if (presetIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: "Preset not found",
+      });
+    }
+
+    // Remove preset
+    const deletedPreset = presets[presetIndex];
+    presets = presets.filter((p) => p.id !== id);
+
+    // Save to file
+    fs.writeFileSync(intrusionPresetsPath, JSON.stringify(presets, null, 2), "utf-8");
+
+    console.log(`[Intrusion] Deleted preset "${deletedPreset.name}" (${id})`);
+
+    res.json({
+      success: true,
+      message: "Preset deleted successfully",
+      deletedPreset,
+    });
+  } catch (error: any) {
+    console.error("[Intrusion] Error deleting preset:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Start intrusion detection with preset
+apiRouter.post("/intrusion/start", async (req, res) => {
+  try {
+    const { presetId } = req.body;
+
+    if (!presetId) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing presetId",
+      });
+    }
+
+    // Read presets
+    const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
+    const presets: IntrusionPreset[] = JSON.parse(data);
+
+    // Find preset
+    const preset = presets.find((p) => p.id === presetId);
+    if (!preset) {
+      return res.status(404).json({
+        success: false,
+        error: "Preset not found",
+      });
+    }
+
+    // TODO: Send command to backend to start intrusion detection with zones
+    // For now, just log and return success
+    console.log(`[Intrusion] Starting intrusion detection with preset "${preset.name}" on ${preset.cameraId}`);
+    console.log(`[Intrusion] Detection zones:`, preset.rectangles);
+
+    // You can integrate with your backend here:
+    await fetch(`http://localhost:9898/ia_process/intrusion/${preset.cameraId}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ zones: preset.rectangles })
+    });
+
+    res.json({
+      success: true,
+      message: `Intrusion detection started with preset "${preset.name}"`,
+      preset,
+    });
+  } catch (error: any) {
+    console.error("[Intrusion] Error starting intrusion detection:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 // ============ RECORDINGS ENDPOINT ============
 // Serve recorded video files
 apiRouter.use(
