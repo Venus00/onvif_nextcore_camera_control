@@ -2198,7 +2198,6 @@ interface IntrusionPreset {
   cameraId: "cam1" | "cam2";
   timestamp: number;
   rectangles: IntrusionRectangle[];
-  imageData: string;
   presetNumber?: number; // Camera PTZ preset number (30-128)
 }
 
@@ -2403,7 +2402,6 @@ apiRouter.post("/intrusion/start", async (req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ zones: preset.rectangles })
     });
-
     res.json({
       success: true,
       message: `Intrusion detection started with preset "${preset.name}"`,
