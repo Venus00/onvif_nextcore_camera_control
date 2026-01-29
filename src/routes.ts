@@ -2390,17 +2390,33 @@ apiRouter.post("/intrusion/start", async (req, res) => {
       });
     }
 
-    // TODO: Send command to backend to start intrusion detection with zones
-    // For now, just log and return success
     console.log(`[Intrusion] Starting intrusion detection with preset "${preset.name}" on ${preset.cameraId}`);
     console.log(`[Intrusion] Detection zones:`, preset.rectangles);
 
-    // You can integrate with your backend here:
-    await fetch(`http://localhost:9898/ia_process/intrusion/${preset.cameraId}/start`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ zones: preset.rectangles })
-    });
+    // Go to PTZ preset position if available
+    if (preset.presetNumber) {
+      try {
+        const api = await getAPIs(preset.cameraId);
+        await api.ptz.gotoPreset(preset.presetNumber, 0);
+        console.log(`[Intrusion] Camera ${preset.cameraId} moved to PTZ preset #${preset.presetNumber}`);
+      } catch (ptzError: any) {
+        console.error(`[Intrusion] Error moving to PTZ preset:`, ptzError);
+        // Continue with intrusion detection even if PTZ movement fails
+      }
+    }
+
+    // Send command to backend to start intrusion detection with zones
+    try {
+      await fetch(`http://localhost:9898/ia_process/intrusion/${preset.cameraId}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zones: preset.rectangles })
+      });
+    } catch (backendError: any) {
+      console.error("[Intrusion] Backend connection error:", backendError);
+      // Continue even if backend fails
+    }
+
     res.json({
       success: true,
       message: `Intrusion detection started with preset "${preset.name}"`,
