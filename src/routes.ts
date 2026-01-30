@@ -124,7 +124,7 @@ const app = express();
 const apiRouter = express.Router();
 app.use(express.json());
 app.use(cors());
-app.use('/api', apiRouter);
+app.use("/api", apiRouter);
 // ============ CAMERA CONFIGURATION ============
 
 interface CameraInfo {
@@ -442,11 +442,11 @@ apiRouter.get(
   route(async ({ setup }) => ({ config: await setup.getChannelTitle() })),
 );
 
-
-apiRouter.post(  "/camera/:camId/title",
+apiRouter.post(
+  "/camera/:camId/title",
   route(async ({ setup }, body) => {
-    const { channel = 0, ...params } = body;
-    const response = await setup.setChannelTitle(params, channel);
+    const { channel = 0, name } = body;
+    const response = await setup.setChannelTitle(name, channel);
     return { response, ok: setup.isSuccess(response) };
   }),
 );
@@ -2181,7 +2181,10 @@ apiRouter.delete("/detection/photos", async (req, res) => {
 });
 
 // ============ INTRUSION DETECTION API ============
-const intrusionPresetsPath = path.join(__dirname, "../../data/intrusion-presets.json");
+const intrusionPresetsPath = path.join(
+  __dirname,
+  "../../data/intrusion-presets.json",
+);
 
 // Ensure data directory exists
 const dataDir = path.join(__dirname, "../../data");
@@ -2254,8 +2257,10 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
 
     // Find next available preset number (30-128)
     const usedPresetNumbers = presets
-      .filter(p => p.cameraId === cameraId && typeof p.presetNumber === 'number')
-      .map(p => p.presetNumber as number);
+      .filter(
+        (p) => p.cameraId === cameraId && typeof p.presetNumber === "number",
+      )
+      .map((p) => p.presetNumber as number);
 
     let presetNumber = 30;
     while (usedPresetNumbers.includes(presetNumber) && presetNumber <= 128) {
@@ -2265,7 +2270,8 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
     if (presetNumber > 128) {
       return res.status(400).json({
         success: false,
-        error: "Maximum number of presets reached (30-128). Please delete an existing preset.",
+        error:
+          "Maximum number of presets reached (30-128). Please delete an existing preset.",
       });
     }
 
@@ -2280,9 +2286,14 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
       const api = await getAPIs(cameraId);
       // Set the preset at current position
       await api.ptz.setPreset(presetNumber);
-      console.log(`[Intrusion] PTZ preset ${presetNumber} "${name}" created on camera ${cameraId}`);
+      console.log(
+        `[Intrusion] PTZ preset ${presetNumber} "${name}" created on camera ${cameraId}`,
+      );
     } catch (ptzError: any) {
-      console.error(`[Intrusion] Error setting PTZ preset on camera:`, ptzError);
+      console.error(
+        `[Intrusion] Error setting PTZ preset on camera:`,
+        ptzError,
+      );
       return res.status(500).json({
         success: false,
         error: `Failed to create PTZ preset on camera: ${ptzError.message}`,
@@ -2303,9 +2314,15 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
     presets.push(newPreset);
 
     // Save to file
-    fs.writeFileSync(intrusionPresetsPath, JSON.stringify(presets, null, 2), "utf-8");
+    fs.writeFileSync(
+      intrusionPresetsPath,
+      JSON.stringify(presets, null, 2),
+      "utf-8",
+    );
 
-    console.log(`[Intrusion] Created preset "${name}" for ${cameraId} with ${rectangles.length} zones and PTZ preset #${presetNumber}`);
+    console.log(
+      `[Intrusion] Created preset "${name}" for ${cameraId} with ${rectangles.length} zones and PTZ preset #${presetNumber}`,
+    );
 
     res.json({
       success: true,
@@ -2345,9 +2362,14 @@ apiRouter.delete("/intrusion/presets/:id", async (req, res) => {
       try {
         const api = await getAPIs(deletedPreset.cameraId);
         await api.ptz.clearPreset(deletedPreset.presetNumber);
-        console.log(`[Intrusion] Deleted PTZ preset #${deletedPreset.presetNumber} from camera ${deletedPreset.cameraId}`);
+        console.log(
+          `[Intrusion] Deleted PTZ preset #${deletedPreset.presetNumber} from camera ${deletedPreset.cameraId}`,
+        );
       } catch (ptzError: any) {
-        console.error(`[Intrusion] Error deleting PTZ preset from camera:`, ptzError);
+        console.error(
+          `[Intrusion] Error deleting PTZ preset from camera:`,
+          ptzError,
+        );
         // Continue with deletion even if camera preset deletion fails
       }
     }
@@ -2356,7 +2378,11 @@ apiRouter.delete("/intrusion/presets/:id", async (req, res) => {
     presets = presets.filter((p) => p.id !== id);
 
     // Save to file
-    fs.writeFileSync(intrusionPresetsPath, JSON.stringify(presets, null, 2), "utf-8");
+    fs.writeFileSync(
+      intrusionPresetsPath,
+      JSON.stringify(presets, null, 2),
+      "utf-8",
+    );
 
     console.log(`[Intrusion] Deleted preset "${deletedPreset.name}" (${id})`);
 
@@ -2399,7 +2425,9 @@ apiRouter.post("/intrusion/start", async (req, res) => {
       });
     }
 
-    console.log(`[Intrusion] Starting intrusion detection with preset "${preset.name}" on ${preset.cameraId}`);
+    console.log(
+      `[Intrusion] Starting intrusion detection with preset "${preset.name}" on ${preset.cameraId}`,
+    );
     console.log(`[Intrusion] Detection zones:`, preset.rectangles);
 
     // Go to PTZ preset position if available
@@ -2407,7 +2435,9 @@ apiRouter.post("/intrusion/start", async (req, res) => {
       try {
         const api = await getAPIs(preset.cameraId);
         await api.ptz.gotoPreset(preset.presetNumber, 0);
-        console.log(`[Intrusion] Camera ${preset.cameraId} moved to PTZ preset #${preset.presetNumber}`);
+        console.log(
+          `[Intrusion] Camera ${preset.cameraId} moved to PTZ preset #${preset.presetNumber}`,
+        );
       } catch (ptzError: any) {
         console.error(`[Intrusion] Error moving to PTZ preset:`, ptzError);
         // Continue with intrusion detection even if PTZ movement fails
@@ -2416,11 +2446,14 @@ apiRouter.post("/intrusion/start", async (req, res) => {
 
     // Send command to backend to start intrusion detection with zones
     try {
-      await fetch(`http://localhost:9898/ia_process/intrusion/${preset.cameraId}/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ zones: preset.rectangles })
-      });
+      await fetch(
+        `http://localhost:9898/ia_process/intrusion/${preset.cameraId}/start`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ zones: preset.rectangles }),
+        },
+      );
     } catch (backendError: any) {
       console.error("[Intrusion] Backend connection error:", backendError);
       // Continue even if backend fails
@@ -2444,13 +2477,7 @@ apiRouter.post("/intrusion/start", async (req, res) => {
 // Get intrusion events (photos from intrusion detection)
 apiRouter.get("/intrusion/events", async (req, res) => {
   try {
-    const {
-      zone,
-      cameraId,
-      startDate,
-      endDate,
-      limit = 100,
-    } = req.query;
+    const { zone, cameraId, startDate, endDate, limit = 100 } = req.query;
 
     // Intrusion photos directory
     const intrusionDir =
@@ -2467,9 +2494,9 @@ apiRouter.get("/intrusion/events", async (req, res) => {
     }
 
     // Read all files in the intrusion directory
-    const files = fs.readdirSync(intrusionDir).filter((file) =>
-      /\.(jpg|jpeg|png|bmp)$/i.test(file)
-    );
+    const files = fs
+      .readdirSync(intrusionDir)
+      .filter((file) => /\.(jpg|jpeg|png|bmp)$/i.test(file));
 
     console.log(
       `[Intrusion Events] Found ${files.length} files in intrusion directory`,
@@ -2520,14 +2547,7 @@ apiRouter.get("/intrusion/events", async (req, res) => {
         const minute = parseInt(timePart.substring(2, 4));
         const second = parseInt(timePart.substring(4, 6));
 
-        const timestamp = new Date(
-          year,
-          month - 1,
-          day,
-          hour,
-          minute,
-          second,
-        );
+        const timestamp = new Date(year, month - 1, day, hour, minute, second);
 
         events.push({
           id: `${zoneName}_${datePart}_${timePart}_${camIdPart}`,
@@ -2558,9 +2578,7 @@ apiRouter.get("/intrusion/events", async (req, res) => {
     }
 
     if (cameraId) {
-      filteredEvents = filteredEvents.filter(
-        (e) => e.cameraId === cameraId,
-      );
+      filteredEvents = filteredEvents.filter((e) => e.cameraId === cameraId);
     }
 
     if (startDate) {
@@ -2664,9 +2682,9 @@ apiRouter.delete("/intrusion/events", async (req, res) => {
       });
     }
 
-    const files = fs.readdirSync(intrusionDir).filter((file) =>
-      /\.(jpg|jpeg|png|bmp)$/i.test(file),
-    );
+    const files = fs
+      .readdirSync(intrusionDir)
+      .filter((file) => /\.(jpg|jpeg|png|bmp)$/i.test(file));
 
     let deletedCount = 0;
     let errorCount = 0;
@@ -2724,4 +2742,3 @@ app.listen(PORT, () => {
 });
 
 export default app;
-
