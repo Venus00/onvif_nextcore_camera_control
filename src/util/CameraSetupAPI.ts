@@ -679,9 +679,11 @@ export class CameraSetupAPI {
   }
 
   // 3.2.2 ChannelTitle
-  async getChannelTitle(): Promise<string> {
+  async getChannelTitle(): Promise<{ name: string }> {
     const config = await this.getConfig("ChannelTitle");
-    return config["table.ChannelTitle[0].Name"] || "";
+    return {
+      name: config["table.ChannelTitle[0].Name"] || "",
+    };
   }
 
   async setChannelTitle(name: string, channel: Channel = 0): Promise<string> {
