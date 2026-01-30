@@ -277,6 +277,7 @@ export class CameraSetupAPI {
     );
     console.log(paramString);
     const text = await this.request(url);
+    console.log("setConfig response:", url, text);
     return text.trim();
   }
 
