@@ -2473,7 +2473,7 @@ apiRouter.get("/intrusion/events", async (req, res) => {
       try {
         // Parse filename pattern: zone-YYYYMMDD_HHmmss-camid.ext
         // Example: zone1-20260129_143045-cam1.jpg
-        const parts = filename.split("-");
+        const parts = filename.split("_");
 
         if (parts.length < 3) {
           console.warn(
