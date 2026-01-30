@@ -2471,32 +2471,38 @@ apiRouter.get("/intrusion/events", async (req, res) => {
 
     for (const filename of files) {
       try {
-        // Parse filename pattern: zone-YYYYMMDD_HHmmss-camid.ext
-        // Example: zone1-20260129_143045-cam1.jpg
+        // Parse filename pattern: zone1_YYYYMMDD_HHmmss_camid.ext
+        // Example: zone1_20260129_143045_cam1.jpg
 
         const parts = filename.split("_");
 
-        if (parts.length < 3) {
+        if (parts.length < 4) {
           console.warn(
             `[Intrusion Events] Skipping invalid filename: ${filename}`,
           );
           continue;
         }
 
-        const zoneName = parts[0];
-        const dateStr = parts[1]; // Format: YYYYMMDD_HHmmss
-        const camIdPart = parts[2].split(".")[0]; // Extract cam1/cam2 before extension
+        const zoneName = parts[0]; // zone1
+        const datePart = parts[1]; // YYYYMMDD (20260129)
+        const timePart = parts[2]; // HHmmss (143045)
+        const camIdPart = parts[3].split(".")[0]; // Extract cam1/cam2 before extension
 
-        // Parse date string (YYYYMMDD_HHmmss)
-        if (!dateStr || dateStr.length < 15) {
+        // Parse date string YYYYMMDD
+        if (!datePart || datePart.length !== 8) {
           console.warn(
             `[Intrusion Events] Invalid date in filename: ${filename}`,
           );
           continue;
         }
 
-        // Split by underscore to separate date and time
-        const [datePart, timePart] = dateStr.split("_");
+        // Parse time string HHmmss
+        if (!timePart || timePart.length !== 6) {
+          console.warn(
+            `[Intrusion Events] Invalid time in filename: ${filename}`,
+          );
+          continue;
+        }
 
         const year = parseInt(datePart.substring(0, 4));
         const month = parseInt(datePart.substring(4, 6));
@@ -2515,7 +2521,7 @@ apiRouter.get("/intrusion/events", async (req, res) => {
         );
 
         events.push({
-          id: `${zoneName}-${dateStr}-${camIdPart}`,
+          id: `${zoneName}_${datePart}_${timePart}_${camIdPart}`,
           filename,
           zone: zoneName,
           cameraId: camIdPart,
