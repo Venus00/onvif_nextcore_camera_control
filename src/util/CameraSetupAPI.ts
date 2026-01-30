@@ -49,28 +49,28 @@ export interface VideoColorParams {
   Gamma?: number;
   ChromaSuppress?: number;
   Style?:
-  | "Gentle"
-  | "Standard"
-  | "Flamboyant"
-  | "WhiteHot"
-  | "Lava"
-  | "IronRed"
-  | "HotIron"
-  | "Medical"
-  | "Arctic"
-  | "Rainbow1"
-  | "Rainbow2"
-  | "Tint"
-  | "BlackHot";
+    | "Gentle"
+    | "Standard"
+    | "Flamboyant"
+    | "WhiteHot"
+    | "Lava"
+    | "IronRed"
+    | "HotIron"
+    | "Medical"
+    | "Arctic"
+    | "Rainbow1"
+    | "Rainbow2"
+    | "Tint"
+    | "BlackHot";
 }
 
 export interface DayNightParams {
   Mode?:
-  | "Brightness"
-  | "Color"
-  | "BlackWhite"
-  | "AlarmInput"
-  | "PhotoresistorExt";
+    | "Brightness"
+    | "Color"
+    | "BlackWhite"
+    | "AlarmInput"
+    | "PhotoresistorExt";
   Delay?: number;
   Sensitivity?: 1 | 2 | 3;
   Type?: "Electron" | "ICR" | "Mechanism";
@@ -93,14 +93,14 @@ export interface ExposureParams {
 
 export interface WhiteBalanceParams {
   Mode?:
-  | "Auto"
-  | "Indoor"
-  | "Outdoor"
-  | "ATW"
-  | "Manual"
-  | "Sodium"
-  | "Natural"
-  | "Street";
+    | "Auto"
+    | "Indoor"
+    | "Outdoor"
+    | "ATW"
+    | "Manual"
+    | "Sodium"
+    | "Natural"
+    | "Street";
   RedGain?: number;
   BlueGain?: number;
 }
@@ -497,7 +497,7 @@ export class CameraSetupAPI {
     const digitalZommConf = this.setConfig(
       this.formatParams("VideoInZoom", params, channel, config),
     );
-    console.log("digital zomm ", digitalZommConf)
+    console.log("digital zomm ", digitalZommConf);
     return digitalZommConf;
   }
 
@@ -690,8 +690,39 @@ export class CameraSetupAPI {
   }
 
   // 3.2.3 & 3.2.4 VideoWidget (OSD)
+  // 3.2.3 & 3.2.4 VideoWidget (OSD)
   async getVideoWidget(): Promise<ParsedConfig> {
     return this.getConfig("VideoWidget");
+  }
+
+  async getVideoWidgetOSDStatus(): Promise<{
+    "ChannelTitle.EncodeBlend": string;
+    "TimeTitle.EncodeBlend": string;
+    "PTZCoordinates.EncodeBlend": string;
+    "PTZZoom.EncodeBlend": string;
+    "PTZPreset.EncodeBlend": string;
+    "Temperature.EncodeBlend": string;
+    "TimeTitle.ShowWeek": string;
+  }> {
+    const fullConfig = await this.getConfig("VideoWidget");
+
+    return {
+      "ChannelTitle.EncodeBlend":
+        fullConfig["table.VideoWidget[0].ChannelTitle.EncodeBlend"] || "false",
+      "TimeTitle.EncodeBlend":
+        fullConfig["table.VideoWidget[0].TimeTitle.EncodeBlend"] || "false",
+      "PTZCoordinates.EncodeBlend":
+        fullConfig["table.VideoWidget[0].PTZCoordinates.EncodeBlend"] ||
+        "false",
+      "PTZZoom.EncodeBlend":
+        fullConfig["table.VideoWidget[0].PTZZoom.EncodeBlend"] || "false",
+      "PTZPreset.EncodeBlend":
+        fullConfig["table.VideoWidget[0].PTZPreset.EncodeBlend"] || "false",
+      "Temperature.EncodeBlend":
+        fullConfig["table.VideoWidget[0].Temperature.EncodeBlend"] || "false",
+      "TimeTitle.ShowWeek":
+        fullConfig["table.VideoWidget[0].TimeTitle.ShowWeek"] || "false",
+    };
   }
 
   async setVideoWidget(

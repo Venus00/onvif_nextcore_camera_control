@@ -454,7 +454,9 @@ apiRouter.post(
 // OSD
 apiRouter.get(
   "/camera/:camId/osd",
-  route(async ({ setup }) => ({ config: await setup.getVideoWidget() })),
+  route(async ({ setup }) => ({
+    config: await setup.getVideoWidgetOSDStatus(),
+  })),
 );
 
 apiRouter.post(
