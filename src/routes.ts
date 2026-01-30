@@ -442,6 +442,15 @@ apiRouter.get(
   route(async ({ setup }) => ({ config: await setup.getChannelTitle() })),
 );
 
+
+apiRouter.post(  "/camera/:camId/title",
+  route(async ({ setup }, body) => {
+    const { channel = 0, ...params } = body;
+    const response = await setup.setChannelTitle(params, channel);
+    return { response, ok: setup.isSuccess(response) };
+  }),
+);
+
 // OSD
 apiRouter.get(
   "/camera/:camId/osd",
