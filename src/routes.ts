@@ -2846,15 +2846,13 @@ apiRouter.get("/network/ntp", async (req, res) => {
     }
 
     res.json({
-      success: true,
       ntpServers: ntpServers.length > 0 ? ntpServers : ['Not configured'],
       primaryServer: ntpServers[0] || null,
     });
   } catch (error: any) {
     console.error("[NTP] Error getting NTP config:", error);
     res.status(500).json({
-      success: false,
-      error: "Failed to retrieve NTP configuration",
+      error: "Échec de la récupération de la configuration NTP",
       details: error.message,
     });
   }
@@ -2866,8 +2864,7 @@ apiRouter.post("/network/ntp", async (req, res) => {
 
   if (!ntpServer) {
     return res.status(400).json({
-      success: false,
-      error: "Please provide 'ntpServer' address",
+      error: "Veuillez fournir l'adresse 'ntpServer'",
     });
   }
 
@@ -2935,15 +2932,13 @@ apiRouter.post("/network/ntp", async (req, res) => {
     console.log(`[NTP] Set NTP server to: ${ntpServer}`);
 
     res.json({
-      success: true,
-      message: "NTP server configured successfully",
+      message: "Serveur NTP configuré avec succès",
       ntpServer,
     });
   } catch (error: any) {
     console.error("[NTP] Error setting NTP config:", error);
     res.status(500).json({
-      success: false,
-      error: "Failed to set NTP configuration",
+      error: "Échec de la configuration NTP",
       details: error.message,
     });
   }
