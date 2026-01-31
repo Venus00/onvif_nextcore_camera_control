@@ -4,7 +4,7 @@ import DigestFetch from "digest-fetch";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { exec } from "child_process";
+import { exec, execSync } from "child_process";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import { setupReactStatic } from "./util/serveReactStatic.js";
 import CameraSetupAPI, {
@@ -2692,6 +2692,7 @@ apiRouter.delete("/intrusion/events", async (req, res) => {
 
 // ============ NETWORK IP CONFIGURATION ============
 const INTERFACE = 'eth0';
+const CONNECTION_NAME = 'falcon-static';
 
 // GET: Retrieve current IP address configuration
 apiRouter.get("/network/ip", async (req, res) => {
@@ -2710,7 +2711,6 @@ apiRouter.get("/network/ip", async (req, res) => {
 
     if (ipMatch) {
       res.json({
-        success: true,
         interface: INTERFACE,
         ip: ipMatch[1],
         netmask: netmaskMatch ? netmaskMatch[1] : null,
@@ -2718,17 +2718,15 @@ apiRouter.get("/network/ip", async (req, res) => {
       });
     } else {
       res.json({
-        success: true,
         interface: INTERFACE,
         ip: null,
-        message: "No IP configured",
+        message: "Aucune IP configurée",
       });
     }
   } catch (error: any) {
     console.error("[Network] Error getting IP:", error);
     res.status(404).json({
-      success: false,
-      error: `Interface ${INTERFACE} not found.`,
+      error: `L'interface ${INTERFACE} est introuvable.`,
       details: error.message,
     });
   }
@@ -2738,47 +2736,56 @@ apiRouter.get("/network/ip", async (req, res) => {
 apiRouter.post("/network/ip", (req, res) => {
   const { ip, mask, gateway } = req.body;
 
+  // Validation des paramètres
   if (!ip || !mask || !gateway) {
     return res.status(400).json({
-      success: false,
-      error: "Please provide 'ip', 'mask' and 'gateway'.",
+      error: "Veuillez fournir 'ip', 'mask' et 'gateway'.",
     });
   }
 
-  const cmdIp = `ifconfig ${INTERFACE} ${ip} netmask ${mask} up`;
-  const cmdGw = `route del default 2>/dev/null || true; route add default gw ${gateway}`;
+  console.log(`[Network] Configuration - IP: ${ip}, Mask: ${mask}, Gateway: ${gateway}`);
 
-  console.log(`[Network] Executing: ${cmdIp}`);
+  try {
+    // Convertir le masque en CIDR
+    const cidrMask = netmaskToCIDR(mask);
+    console.log(`[Network] Masque CIDR: ${cidrMask}`);
 
-  exec(cmdIp, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`[Network] IP Error: ${stderr}`);
-      return res.status(500).json({
-        success: false,
-        error: "Failed to change IP",
-        details: stderr,
-      });
+    // Vérifier et supprimer la connexion existante si elle existe
+    const existingConnections = execSync('nmcli -t -f NAME con show').toString().split('\n');
+
+    if (existingConnections.includes(CONNECTION_NAME)) {
+      console.log(`[Network] Suppression de la connexion existante "${CONNECTION_NAME}"`);
+      execSync(`sudo nmcli con delete "${CONNECTION_NAME}"`);
     }
 
-    console.log(`[Network] Executing: ${cmdGw}`);
+    // Créer la nouvelle connexion
+    console.log('[Network] Création de la nouvelle connexion...');
+    execSync(`sudo nmcli con add con-name "${CONNECTION_NAME}" ifname "${INTERFACE}" type ethernet ip4 ${ip}/${cidrMask} gw4 ${gateway}`);
 
-    exec(cmdGw, (errGw, outGw, stdGw) => {
-      if (errGw) {
-        console.error(`[Network] Gateway Error: ${stdGw}`);
-        return res.status(500).json({
-          success: false,
-          message: "IP changed, but failed to configure Gateway",
-          details: stdGw,
-        });
-      }
+    // Activer la connexion
+    console.log('[Network] Activation de la connexion...');
+    execSync(`sudo nmcli con up "${CONNECTION_NAME}"`);
 
-      res.json({
-        success: true,
-        message: "Network configuration applied successfully.",
-        config: { ip, mask, gateway },
-      });
+    console.log('[Network] Configuration réseau appliquée avec succès.');
+
+    res.json({
+      message: "Configuration réseau persistante appliquée avec succès.",
+      config: {
+        ip,
+        mask: `${ip}/${cidrMask}`,
+        gateway,
+        interface: INTERFACE,
+        connection: CONNECTION_NAME
+      },
     });
-  });
+
+  } catch (error: any) {
+    console.error('[Network] Échec de la configuration:', error.message);
+    res.status(500).json({
+      error: "Échec de la configuration réseau",
+      details: error.message
+    });
+  }
 });
 
 // DELETE: Remove IP configuration only
@@ -2948,6 +2955,28 @@ apiRouter.use(
   "/recordings",
   express.static(path.join(__dirname, "../../recordings")),
 );
+
+// Utility function to convert netmask to CIDR
+function netmaskToCIDR(netmask: string | number): number {
+  // Si c'est déjà un nombre CIDR, le retourner
+  if (!isNaN(Number(netmask)) && Number(netmask) >= 0 && Number(netmask) <= 32) {
+    return parseInt(netmask.toString());
+  }
+
+  // Convertir depuis le format décimal (255.255.255.0)
+  const parts = netmask.toString().split('.').map(Number);
+
+  if (parts.length !== 4) {
+    throw new Error('Format de masque invalide');
+  }
+
+  // Convertir en binaire et compter les bits à 1
+  const binary = parts.map(part => {
+    return part.toString(2).padStart(8, '0');
+  }).join('');
+
+  return binary.split('1').length - 1;
+}
 
 // Serve React static files (must be after all API routes)
 setupReactStatic(app);
