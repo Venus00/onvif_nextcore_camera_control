@@ -4,7 +4,7 @@ import DigestFetch from "digest-fetch";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { exec } from "child_process";
+import { exec, execSync } from "child_process";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import { setupReactStatic } from "./util/serveReactStatic.js";
 import CameraSetupAPI, {
@@ -2719,12 +2719,293 @@ apiRouter.delete("/intrusion/events", async (req, res) => {
   }
 });
 
+// ============ NETWORK IP CONFIGURATION ============
+const INTERFACE = 'eth0';
+const CONNECTION_NAME = 'falcon-static';
+
+// GET: Retrieve current IP address configuration
+apiRouter.get("/network/ip", async (req, res) => {
+  try {
+    const { stdout } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+      exec(`ifconfig ${INTERFACE}`, (error, stdout, stderr) => {
+        if (error) reject(error);
+        else resolve({ stdout, stderr });
+      });
+    });
+
+    // Extract IP with regex
+    const ipMatch = stdout.match(/inet\s+(\d+\.\d+\.\d+\.\d+)/);
+    const netmaskMatch = stdout.match(/netmask\s+(\d+\.\d+\.\d+\.\d+)/);
+    const macMatch = stdout.match(/ether\s+([0-9a-f:]+)/);
+
+    if (ipMatch) {
+      res.json({
+        interface: INTERFACE,
+        ip: ipMatch[1],
+        netmask: netmaskMatch ? netmaskMatch[1] : null,
+        mac: macMatch ? macMatch[1] : null,
+      });
+    } else {
+      res.json({
+        interface: INTERFACE,
+        ip: null,
+        message: "Aucune IP configurée",
+      });
+    }
+  } catch (error: any) {
+    console.error("[Network] Error getting IP:", error);
+    res.status(404).json({
+      error: `L'interface ${INTERFACE} est introuvable.`,
+      details: error.message,
+    });
+  }
+});
+
+// POST: Set new IP, Mask and Gateway
+apiRouter.post("/network/ip", (req, res) => {
+  const { ip, mask, gateway } = req.body;
+
+  // Validation des paramètres
+  if (!ip || !mask || !gateway) {
+    return res.status(400).json({
+      error: "Veuillez fournir 'ip', 'mask' et 'gateway'.",
+    });
+  }
+
+  console.log(`[Network] Configuration - IP: ${ip}, Mask: ${mask}, Gateway: ${gateway}`);
+
+  try {
+    // Convertir le masque en CIDR
+    const cidrMask = netmaskToCIDR(mask);
+    console.log(`[Network] Masque CIDR: ${cidrMask}`);
+
+    // Vérifier et supprimer la connexion existante si elle existe
+    const existingConnections = execSync('nmcli -t -f NAME con show').toString().split('\n');
+
+    if (existingConnections.includes(CONNECTION_NAME)) {
+      console.log(`[Network] Suppression de la connexion existante "${CONNECTION_NAME}"`);
+      execSync(`sudo nmcli con delete "${CONNECTION_NAME}"`);
+    }
+
+    // Créer la nouvelle connexion
+    console.log('[Network] Création de la nouvelle connexion...');
+    execSync(`sudo nmcli con add con-name "${CONNECTION_NAME}" ifname "${INTERFACE}" type ethernet ip4 ${ip}/${cidrMask} gw4 ${gateway}`);
+
+    // Activer la connexion
+    console.log('[Network] Activation de la connexion...');
+    execSync(`sudo nmcli con up "${CONNECTION_NAME}"`);
+
+    console.log('[Network] Configuration réseau appliquée avec succès.');
+
+    res.json({
+      message: "Configuration réseau persistante appliquée avec succès.",
+      config: {
+        ip,
+        mask: `${ip}/${cidrMask}`,
+        gateway,
+        interface: INTERFACE,
+        connection: CONNECTION_NAME
+      },
+    });
+
+  } catch (error: any) {
+    console.error('[Network] Échec de la configuration:', error.message);
+    res.status(500).json({
+      error: "Échec de la configuration réseau",
+      details: error.message
+    });
+  }
+});
+
+// DELETE: Remove IP configuration only
+apiRouter.delete("/network/ip", (req, res) => {
+  const cmdFlushIp = `ip addr flush dev ${INTERFACE}`;
+  const cmdUp = `ip link set ${INTERFACE} up`;
+
+  const fullCmd = `${cmdFlushIp}; ${cmdUp}`;
+
+  console.log(`[Network] Executing: ${fullCmd}`);
+
+  exec(fullCmd, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`[Network] Error deleting IP: ${stderr}`);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to delete IP",
+        details: stderr,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `IP address of ${INTERFACE} deleted successfully.`,
+      interface: INTERFACE,
+      status: "up (without IP)",
+    });
+  });
+});
+
+// ============ NTP CONFIGURATION ============
+
+// GET: Retrieve current NTP server configuration
+apiRouter.get("/network/ntp", async (req, res) => {
+  try {
+    // Read NTP configuration from /etc/ntp.conf or /etc/systemd/timesyncd.conf
+    const { stdout } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+      exec("cat /etc/ntp.conf 2>/dev/null || cat /etc/systemd/timesyncd.conf 2>/dev/null", (error, stdout, stderr) => {
+        if (error) reject(error);
+        else resolve({ stdout, stderr });
+      });
+    });
+
+    // Extract NTP server addresses
+    const ntpServers: string[] = [];
+    const lines = stdout.split('\n');
+
+    for (const line of lines) {
+      // Match "server" or "NTP=" lines
+      const serverMatch = line.match(/^\s*server\s+(\S+)/);
+      const ntpMatch = line.match(/^\s*NTP=(\S+)/);
+
+      if (serverMatch) {
+        ntpServers.push(serverMatch[1]);
+      } else if (ntpMatch) {
+        ntpServers.push(ntpMatch[1]);
+      }
+    }
+
+    res.json({
+      success: true,
+      ntpServers: ntpServers.length > 0 ? ntpServers : ['Not configured'],
+      primaryServer: ntpServers[0] || null,
+    });
+  } catch (error: any) {
+    console.error("[NTP] Error getting NTP config:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to retrieve NTP configuration",
+      details: error.message,
+    });
+  }
+});
+
+// POST: Set NTP server configuration
+apiRouter.post("/network/ntp", async (req, res) => {
+  const { ntpServer } = req.body;
+
+  if (!ntpServer) {
+    return res.status(400).json({
+      success: false,
+      error: "Please provide 'ntpServer' address",
+    });
+  }
+
+  try {
+    // Check if using systemd-timesyncd or ntp
+    const { stdout: checkService } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+      exec("systemctl is-active systemd-timesyncd 2>/dev/null || echo 'inactive'", (error, stdout, stderr) => {
+        resolve({ stdout: stdout.trim(), stderr });
+      });
+    });
+
+    if (checkService === 'active') {
+      // Using systemd-timesyncd
+      const configContent = `[Time]\nNTP=${ntpServer}\n`;
+      const tempFile = '/tmp/timesyncd.conf';
+
+      fs.writeFileSync(tempFile, configContent);
+
+      await new Promise<void>((resolve, reject) => {
+        exec(`sudo cp ${tempFile} /etc/systemd/timesyncd.conf && sudo systemctl restart systemd-timesyncd`, (error, stdout, stderr) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+    } else {
+      // Using ntp service
+      const { stdout: ntpConf } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+        exec("cat /etc/ntp.conf 2>/dev/null || echo ''", (error, stdout, stderr) => {
+          resolve({ stdout, stderr });
+        });
+      });
+
+      // Replace or add NTP server
+      let lines = ntpConf.split('\n');
+      let serverFound = false;
+
+      lines = lines.map(line => {
+        if (line.match(/^\s*server\s+/)) {
+          if (!serverFound) {
+            serverFound = true;
+            return `server ${ntpServer}`;
+          }
+          return `# ${line}`;
+        }
+        return line;
+      });
+
+      if (!serverFound) {
+        lines.push(`server ${ntpServer}`);
+      }
+
+      const newConfig = lines.join('\n');
+      const tempFile = '/tmp/ntp.conf';
+
+      fs.writeFileSync(tempFile, newConfig);
+
+      await new Promise<void>((resolve, reject) => {
+        exec(`sudo cp ${tempFile} /etc/ntp.conf && sudo systemctl restart ntp`, (error, stdout, stderr) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+    }
+
+    console.log(`[NTP] Set NTP server to: ${ntpServer}`);
+
+    res.json({
+      success: true,
+      message: "NTP server configured successfully",
+      ntpServer,
+    });
+  } catch (error: any) {
+    console.error("[NTP] Error setting NTP config:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to set NTP configuration",
+      details: error.message,
+    });
+  }
+});
+
 // ============ RECORDINGS ENDPOINT ============
 // Serve recorded video files
 apiRouter.use(
   "/recordings",
   express.static(path.join(__dirname, "../../recordings")),
 );
+
+// Utility function to convert netmask to CIDR
+function netmaskToCIDR(netmask: string | number): number {
+  // Si c'est déjà un nombre CIDR, le retourner
+  if (!isNaN(Number(netmask)) && Number(netmask) >= 0 && Number(netmask) <= 32) {
+    return parseInt(netmask.toString());
+  }
+
+  // Convertir depuis le format décimal (255.255.255.0)
+  const parts = netmask.toString().split('.').map(Number);
+
+  if (parts.length !== 4) {
+    throw new Error('Format de masque invalide');
+  }
+
+  // Convertir en binaire et compter les bits à 1
+  const binary = parts.map(part => {
+    return part.toString(2).padStart(8, '0');
+  }).join('');
+
+  return binary.split('1').length - 1;
+}
 
 // Serve React static files (must be after all API routes)
 setupReactStatic(app);
