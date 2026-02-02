@@ -309,13 +309,10 @@ export class ScanTourManager extends EventEmitter {
     async startTour(config: ScanTourConfig, ptzAPI: any): Promise<ScanTour> {
         const { preset } = config;
 
-        // Check if tour already exists for this camera
-        const existingTour = Array.from(this.tours.values()).find(
-            (tour) => tour.getCameraId() === preset.cameraId && tour.isRunning()
-        );
-
-        if (existingTour) {
-            throw new Error(`Scan tour already active for ${preset.cameraId}`);
+        // Check if any tour is already running (only one tour at a time)
+        if (this.tours.size > 0) {
+            const runningTour = Array.from(this.tours.values())[0];
+            throw new Error(`Only one scan tour can run at a time. Tour already active for ${runningTour.getCameraId()}`);
         }
 
         // Create new tour

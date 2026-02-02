@@ -609,8 +609,18 @@ apiRouter.get(
 // PTZ Control
 apiRouter.post(
   "/camera/:camId/ptz/move/up",
-  route(async ({ ptz }, body) => {
+  route(async ({ ptz }, body, params) => {
     const { channel = 1, speed = 4 } = body;
+    const { camId } = params;
+
+    // Pause any active scan tour for this camera
+    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
+    const tour = scanTourManager.getTourByCamera(cameraId);
+    if (tour && tour.isRunning()) {
+      scanTourManager.pauseTour(cameraId);
+      console.log(`[PTZ] Paused scan tour for ${cameraId} due to manual movement`);
+    }
+
     const response = await ptz.moveUp(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
   }),
@@ -618,8 +628,18 @@ apiRouter.post(
 
 apiRouter.post(
   "/camera/:camId/ptz/move/down",
-  route(async ({ ptz }, body) => {
+  route(async ({ ptz }, body, params) => {
     const { channel = 1, speed = 4 } = body;
+    const { camId } = params;
+
+    // Pause any active scan tour for this camera
+    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
+    const tour = scanTourManager.getTourByCamera(cameraId);
+    if (tour && tour.isRunning()) {
+      scanTourManager.pauseTour(cameraId);
+      console.log(`[PTZ] Paused scan tour for ${cameraId} due to manual movement`);
+    }
+
     const response = await ptz.moveDown(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
   }),
@@ -627,8 +647,18 @@ apiRouter.post(
 
 apiRouter.post(
   "/camera/:camId/ptz/move/left",
-  route(async ({ ptz }, body) => {
+  route(async ({ ptz }, body, params) => {
     const { channel = 1, speed = 4 } = body;
+    const { camId } = params;
+
+    // Pause any active scan tour for this camera
+    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
+    const tour = scanTourManager.getTourByCamera(cameraId);
+    if (tour && tour.isRunning()) {
+      scanTourManager.pauseTour(cameraId);
+      console.log(`[PTZ] Paused scan tour for ${cameraId} due to manual movement`);
+    }
+
     const response = await ptz.moveLeft(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
   }),
@@ -636,8 +666,18 @@ apiRouter.post(
 
 apiRouter.post(
   "/camera/:camId/ptz/move/right",
-  route(async ({ ptz }, body) => {
+  route(async ({ ptz }, body, params) => {
     const { channel = 1, speed = 4 } = body;
+    const { camId } = params;
+
+    // Pause any active scan tour for this camera
+    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
+    const tour = scanTourManager.getTourByCamera(cameraId);
+    if (tour && tour.isRunning()) {
+      scanTourManager.pauseTour(cameraId);
+      console.log(`[PTZ] Paused scan tour for ${cameraId} due to manual movement`);
+    }
+
     const response = await ptz.moveRight(channel, speed);
     return { response, ok: ptz.isSuccess(response) };
   }),
@@ -845,8 +885,18 @@ apiRouter.post(
 
 apiRouter.post(
   "/camera/:camId/ptz/preset/goto",
-  route(async ({ ptz }, body) => {
+  route(async ({ ptz }, body, params) => {
     const { presetId, channel = 0 } = body;
+    const { camId } = params;
+
+    // Pause any active scan tour for this camera
+    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
+    const tour = scanTourManager.getTourByCamera(cameraId);
+    if (tour && tour.isRunning()) {
+      scanTourManager.pauseTour(cameraId);
+      console.log(`[PTZ] Paused scan tour for ${cameraId} due to goto preset`);
+    }
+
     console.log("Going to preset", presetId, "on channel", channel);
     const response = await ptz.gotoPreset(presetId.id, channel);
     return { response, ok: ptz.isSuccess(response) };
@@ -911,8 +961,18 @@ apiRouter.post(
 
 apiRouter.post(
   "/camera/:camId/ptz/position",
-  route(async ({ ptz }, body) => {
+  route(async ({ ptz }, body, params) => {
     const { pan, tilt, zoom, channel = 0 } = body;
+    const { camId } = params;
+
+    // Pause any active scan tour for this camera
+    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
+    const tour = scanTourManager.getTourByCamera(cameraId);
+    if (tour && tour.isRunning()) {
+      scanTourManager.pauseTour(cameraId);
+      console.log(`[PTZ] Paused scan tour for ${cameraId} due to position absolute`);
+    }
+
     const response = await ptz.positionAbsolute(pan, tilt, zoom, channel);
     return { response, ok: ptz.isSuccess(response) };
   }),
@@ -2256,8 +2316,23 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
     // Validate PTZ angles
     const validPanAngle = typeof panAngle === 'number' && panAngle >= 0 && panAngle <= 360 ? panAngle : 0;
     const validTiltAngle = typeof tiltAngle === 'number' && tiltAngle >= -90 && tiltAngle <= 90 ? tiltAngle : 0;
-    const maxZoom = cameraId === 'cam1' ? 10 : 52;
-    const validZoomLevel = typeof zoomLevel === 'number' && zoomLevel >= 1 && zoomLevel <= maxZoom ? zoomLevel : 1;
+
+    // Validate and map zoom based on camera type (matching Video.tsx goto function)
+    const minUserZoom = cameraId === 'cam1' ? 1 : 1;
+    const maxUserZoom = cameraId === 'cam1' ? 10 : 52;
+    let validZoomLevel = typeof zoomLevel === 'number' && zoomLevel >= minUserZoom && zoomLevel <= maxUserZoom ? zoomLevel : 1;
+
+    // Map user zoom to camera zoom (for positionAbsolute API)
+    let mappedZoom: number;
+    if (cameraId === 'cam1') {
+      // Thermal camera: map 1-10 to 2.8-27
+      mappedZoom = 2.8 + ((validZoomLevel - 1) / 9) * (27 - 2.8);
+    } else {
+      // Optical camera: map 1-52 to 0-128
+      mappedZoom = ((validZoomLevel - 1) / 51) * 128;
+    }
+    mappedZoom = Math.round(mappedZoom * 100) / 100; // Round to 2 decimals
+
     const validTimeInterval = typeof timeInterval === 'number' && timeInterval >= 1 && timeInterval <= 3600 ? timeInterval : 5;
 
     // Read existing presets
@@ -2273,7 +2348,7 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
       rectangles,
       panAngle: validPanAngle,
       tiltAngle: validTiltAngle,
-      zoomLevel: validZoomLevel,
+      zoomLevel: mappedZoom, // Store mapped zoom value for camera API
       timeInterval: validTimeInterval,
     };
 
@@ -2283,7 +2358,7 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
     // Save to file
     fs.writeFileSync(intrusionPresetsPath, JSON.stringify(presets, null, 2), "utf-8");
 
-    console.log(`[Intrusion] Created preset "${name}" for ${cameraId} with ${rectangles.length} zones (Pan: ${validPanAngle}°, Tilt: ${validTiltAngle}°, Zoom: ${validZoomLevel}, Interval: ${validTimeInterval}s)`);
+    console.log(`[Intrusion] Created preset "${name}" for ${cameraId} with ${rectangles.length} zones (Pan: ${validPanAngle}°, Tilt: ${validTiltAngle}°, User Zoom: ${validZoomLevel}× → Camera Zoom: ${mappedZoom}, Interval: ${validTimeInterval}s)`);
 
     res.json({
       success: true,
