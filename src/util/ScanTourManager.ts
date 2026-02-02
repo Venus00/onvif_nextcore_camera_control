@@ -220,7 +220,6 @@ export class ScanTour extends EventEmitter {
             }
         }, this.preset.timeInterval * 1000);
     }
-
     /**
      * Private: Perform one movement step
      */
