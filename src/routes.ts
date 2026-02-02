@@ -2490,6 +2490,7 @@ apiRouter.post("/intrusion/stop", async (req, res) => {
 
     scanTourManager.pauseTour(identifier);
 
+
     const tour = scanTourManager.getTour(presetId) || scanTourManager.getTourByCamera(cameraId);
     const state = tour?.getState();
 
