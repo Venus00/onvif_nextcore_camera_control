@@ -66,10 +66,10 @@ export class ScanTour extends EventEmitter {
         this.ptzAPI = ptzAPI;
         this.backendUrl = backendUrl;
 
-        // Set pan range (default ±180° from initial position)
+        // Set pan range (always 0 to 360°)
         this.panRange = config.panRange || {
-            min: Math.max(config.preset.panAngle - 180, 0),
-            max: Math.min(config.preset.panAngle + 180, 360),
+            min: 0,
+            max: 360,
         };
 
         this.status = ScanTourStatus.STOPPED;
@@ -147,7 +147,7 @@ export class ScanTour extends EventEmitter {
 
         // Send stop command to backend
         try {
-            await fetch(`${this.backendUrl}/ia_process/intrusion/${this.preset.cameraId}/stop`, {
+            await fetch(`${this.backendUrl}/ia_process/intrusion/stop`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
             });
