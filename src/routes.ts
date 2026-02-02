@@ -617,12 +617,13 @@ apiRouter.post(
     const { channel = 1, speed = 4 } = body;
     const { camId } = params;
 
-    // Pause any active scan tour for this camera
-    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
-    const tour = scanTourManager.getTourByCamera(cameraId);
-    if (tour && tour.isRunning()) {
-      scanTourManager.pauseTour(cameraId);
-      console.log(`[PTZ] Paused scan tour for ${cameraId} due to manual movement`);
+    // Pause ALL active scan tours since both cameras share the same motors
+    const allTours = scanTourManager.getAllTours();
+    for (const tourState of allTours) {
+      if (tourState.status === 'running') {
+        scanTourManager.pauseTour(tourState.cameraId);
+        console.log(`[PTZ] Paused scan tour for ${tourState.cameraId} due to manual movement on ${camId}`);
+      }
     }
 
     const response = await ptz.moveUp(channel, speed);
@@ -636,12 +637,13 @@ apiRouter.post(
     const { channel = 1, speed = 4 } = body;
     const { camId } = params;
 
-    // Pause any active scan tour for this camera
-    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
-    const tour = scanTourManager.getTourByCamera(cameraId);
-    if (tour && tour.isRunning()) {
-      scanTourManager.pauseTour(cameraId);
-      console.log(`[PTZ] Paused scan tour for ${cameraId} due to manual movement`);
+    // Pause ALL active scan tours since both cameras share the same motors
+    const allTours = scanTourManager.getAllTours();
+    for (const tourState of allTours) {
+      if (tourState.status === 'running') {
+        scanTourManager.pauseTour(tourState.cameraId);
+        console.log(`[PTZ] Paused scan tour for ${tourState.cameraId} due to manual movement on ${camId}`);
+      }
     }
 
     const response = await ptz.moveDown(channel, speed);
@@ -655,12 +657,13 @@ apiRouter.post(
     const { channel = 1, speed = 4 } = body;
     const { camId } = params;
 
-    // Pause any active scan tour for this camera
-    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
-    const tour = scanTourManager.getTourByCamera(cameraId);
-    if (tour && tour.isRunning()) {
-      scanTourManager.pauseTour(cameraId);
-      console.log(`[PTZ] Paused scan tour for ${cameraId} due to manual movement`);
+    // Pause ALL active scan tours since both cameras share the same motors
+    const allTours = scanTourManager.getAllTours();
+    for (const tourState of allTours) {
+      if (tourState.status === 'running') {
+        scanTourManager.pauseTour(tourState.cameraId);
+        console.log(`[PTZ] Paused scan tour for ${tourState.cameraId} due to manual movement on ${camId}`);
+      }
     }
 
     const response = await ptz.moveLeft(channel, speed);
@@ -674,12 +677,13 @@ apiRouter.post(
     const { channel = 1, speed = 4 } = body;
     const { camId } = params;
 
-    // Pause any active scan tour for this camera
-    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
-    const tour = scanTourManager.getTourByCamera(cameraId);
-    if (tour && tour.isRunning()) {
-      scanTourManager.pauseTour(cameraId);
-      console.log(`[PTZ] Paused scan tour for ${cameraId} due to manual movement`);
+    // Pause ALL active scan tours since both cameras share the same motors
+    const allTours = scanTourManager.getAllTours();
+    for (const tourState of allTours) {
+      if (tourState.status === 'running') {
+        scanTourManager.pauseTour(tourState.cameraId);
+        console.log(`[PTZ] Paused scan tour for ${tourState.cameraId} due to manual movement on ${camId}`);
+      }
     }
 
     const response = await ptz.moveRight(channel, speed);
@@ -893,12 +897,13 @@ apiRouter.post(
     const { presetId, channel = 0 } = body;
     const { camId } = params;
 
-    // Pause any active scan tour for this camera
-    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
-    const tour = scanTourManager.getTourByCamera(cameraId);
-    if (tour && tour.isRunning()) {
-      scanTourManager.pauseTour(cameraId);
-      console.log(`[PTZ] Paused scan tour for ${cameraId} due to goto preset`);
+    // Pause ALL active scan tours since both cameras share the same motors
+    const allTours = scanTourManager.getAllTours();
+    for (const tourState of allTours) {
+      if (tourState.status === 'running') {
+        scanTourManager.pauseTour(tourState.cameraId);
+        console.log(`[PTZ] Paused scan tour for ${tourState.cameraId} due to goto preset on ${camId}`);
+      }
     }
 
     console.log("Going to preset", presetId, "on channel", channel);
@@ -969,12 +974,13 @@ apiRouter.post(
     const { pan, tilt, zoom, channel = 0 } = body;
     const { camId } = params;
 
-    // Pause any active scan tour for this camera
-    const cameraId = camId === 'cam1' ? 'cam2' : 'cam1';
-    const tour = scanTourManager.getTourByCamera(cameraId);
-    if (tour && tour.isRunning()) {
-      scanTourManager.pauseTour(cameraId);
-      console.log(`[PTZ] Paused scan tour for ${cameraId} due to position absolute`);
+    // Pause ALL active scan tours since both cameras share the same motors
+    const allTours = scanTourManager.getAllTours();
+    for (const tourState of allTours) {
+      if (tourState.status === 'running') {
+        scanTourManager.pauseTour(tourState.cameraId);
+        console.log(`[PTZ] Paused scan tour for ${tourState.cameraId} due to position absolute on ${camId}`);
+      }
     }
 
     const response = await ptz.positionAbsolute(pan, tilt, zoom, channel);
@@ -2284,7 +2290,7 @@ apiRouter.get("/intrusion/presets", async (req, res) => {
   try {
     const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
     const parsedData = JSON.parse(data);
-    
+
     // Handle both old format (array) and new format (object with presets)
     const presets = Array.isArray(parsedData) ? parsedData : parsedData.presets || [];
     const scanTourState = parsedData.scanTourState || { status: 'stopped', activePresetId: null, cameraId: null, currentPanAngle: null, lastUpdated: null };
