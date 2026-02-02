@@ -2313,6 +2313,7 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
       });
     }
 
+
     // Validate PTZ angles
     const validPanAngle = typeof panAngle === 'number' && panAngle >= 0 && panAngle <= 360 ? panAngle : 0;
     const validTiltAngle = typeof tiltAngle === 'number' && tiltAngle >= -90 && tiltAngle <= 90 ? tiltAngle : 0;
