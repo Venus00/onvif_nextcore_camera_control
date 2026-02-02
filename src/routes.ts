@@ -2285,6 +2285,7 @@ apiRouter.get("/intrusion/presets", async (req, res) => {
       success: true,
       presets,
     });
+
   } catch (error: any) {
     console.error("[Intrusion] Error reading presets:", error);
     res.status(500).json({
