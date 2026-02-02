@@ -2449,7 +2449,7 @@ apiRouter.delete("/intrusion/presets/:id", async (req, res) => {
 // Start intrusion detection with scan tour
 apiRouter.post("/intrusion/start", async (req, res) => {
   try {
-    const { presetId, panStep = 10 } = req.body;
+    const { presetId } = req.body;
 
     if (!presetId) {
       return res.status(400).json({
@@ -2472,16 +2472,16 @@ apiRouter.post("/intrusion/start", async (req, res) => {
       });
     }
 
-    console.log(`[Intrusion] Starting scan tour with preset "${preset.name}" on ${preset.cameraId}`);
+    console.log(`[Intrusion] Starting scan tour with preset "${preset.name}" on ${preset.cameraId}, panStep: ${preset.panAngle}°`);
 
     // Get PTZ API
     const api = await getAPIs(preset.cameraId);
 
-    // Start tour using ScanTourManager
+    // Start tour using ScanTourManager (use preset.panAngle as panStep)
     const tour = await scanTourManager.startTour(
       {
         preset,
-        panStep: Math.abs(panStep),
+        panStep: Math.abs(preset.panAngle),
       },
       api.ptz
     );

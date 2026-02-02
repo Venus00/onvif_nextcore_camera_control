@@ -70,7 +70,7 @@ export class ScanTour extends EventEmitter {
 
         this.preset = config.preset;
         this.panStep = Math.abs(config.panStep);
-        this.currentPanAngle = config.preset.panAngle;
+        this.currentPanAngle = 0; // Always start from 0°
         this.ptzAPI = ptzAPI;
         this.backendUrl = backendUrl;
 
@@ -92,15 +92,15 @@ export class ScanTour extends EventEmitter {
         }
 
         try {
-            // Move to initial position
+            // Move to initial position (always start at 0°)
             await this.ptzAPI.positionAbsolute(
-                this.preset.panAngle,
+                0,
                 this.preset.tiltAngle,
                 this.preset.zoomLevel,
                 0
             );
 
-            console.log(`[ScanTour] Camera ${this.preset.cameraId} moved to initial position: Pan ${this.preset.panAngle}°, Tilt ${this.preset.tiltAngle}°, Zoom ${this.preset.zoomLevel}×`);
+            console.log(`[ScanTour] Camera ${this.preset.cameraId} moved to initial position: Pan 0°, Tilt ${this.preset.tiltAngle}°, Zoom ${this.preset.zoomLevel}× (Step: ${this.panStep}°)`);
 
             // Send initial detection command to backend
             //await this.sendBackendUpdate();
