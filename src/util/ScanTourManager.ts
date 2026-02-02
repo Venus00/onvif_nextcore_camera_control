@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const PRESETS_FILE_PATH = path.join(__dirname, '../../../data/intrusion-presets.json');
+const PRESETS_FILE_PATH = path.join(__dirname, '../../data/intrusion-presets.json');
 
 export interface IntrusionRectangle {
     x: number;
