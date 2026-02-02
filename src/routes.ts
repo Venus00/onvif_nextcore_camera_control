@@ -16,6 +16,10 @@ import CameraSetupAPI, {
   LiveAPI,
   CameraClient,
 } from "./util";
+
+const { promisify } = require('util');
+const execPromise = promisify(exec);
+
 import { createUDPClient } from "./util/udpclient.js";
 import { ScanTourManager } from "./util/ScanTourManager.js";
 import type { IntrusionPreset, IntrusionRectangle } from "./util/ScanTourManager.js";
@@ -2943,11 +2947,22 @@ apiRouter.get("/network/ip", async (req, res) => {
     const ipMatch = stdout.match(/inet\s+(\d+\.\d+\.\d+\.\d+)/);
     const netmaskMatch = stdout.match(/netmask\s+(\d+\.\d+\.\d+\.\d+)/);
     const macMatch = stdout.match(/ether\s+([0-9a-f:]+)/);
+    let gateway = null;
+    try {
+      const { stdout: routeOutput } = await execPromise(`ip route | grep default | grep ${INTERFACE}`);
+      const gatewayMatch = routeOutput.match(/default via (\d+\.\d+\.\d+\.\d+)/);
+      if (gatewayMatch) {
+        gateway = gatewayMatch[1];
+      }
+    } catch (err) {
+      console.log('Aucune gateway trouvée pour cette interface');
+    }
 
     if (ipMatch) {
       res.json({
         interface: INTERFACE,
         ip: ipMatch[1],
+        gateway: gateway,
         netmask: netmaskMatch ? netmaskMatch[1] : null,
         mac: macMatch ? macMatch[1] : null,
       });
@@ -2955,6 +2970,7 @@ apiRouter.get("/network/ip", async (req, res) => {
       res.json({
         interface: INTERFACE,
         ip: null,
+        gateway: null,
         message: "Aucune IP configurée",
       });
     }
@@ -3175,6 +3191,83 @@ apiRouter.post("/network/ntp", async (req, res) => {
     res.status(500).json({
       error: "Échec de la configuration NTP",
       details: error.message,
+    });
+  }
+});
+
+// ============ USER CREDENTIALS MANAGEMENT ============
+const userCredentialsPath = path.join(__dirname, "../../saveapi/user-credentials.json");
+
+// Initialize user credentials file if it doesn't exist
+if (!fs.existsSync(userCredentialsPath)) {
+  const defaultCredentials = {
+    username: "admin@gmail.com",
+    password: "admin"
+  };
+  fs.writeFileSync(userCredentialsPath, JSON.stringify(defaultCredentials, null, 2), "utf-8");
+  console.log("[User] Initialized default user credentials");
+}
+
+// POST: Update user credentials (username and/or password)
+apiRouter.post("/user/credentials", async (req, res) => {
+  const { currentPassword, newUsername, newPassword } = req.body;
+
+  try {
+    // Read current credentials
+    const data = fs.readFileSync(userCredentialsPath, "utf-8");
+    const credentials = JSON.parse(data);
+
+    // Verify current password
+    if (credentials.password !== currentPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Mot de passe actuel incorrect"
+      });
+    }
+
+    // Update credentials
+    if (newUsername) {
+      credentials.username = newUsername;
+      console.log(`[User] Username updated to: ${newUsername}`);
+    }
+
+    if (newPassword) {
+      credentials.password = newPassword;
+      console.log(`[User] Password updated`);
+    }
+
+    // Save updated credentials
+    fs.writeFileSync(userCredentialsPath, JSON.stringify(credentials, null, 2), "utf-8");
+
+    res.json({
+      success: true,
+      message: "Identifiants mis à jour avec succès"
+    });
+  } catch (error: any) {
+    console.error("[User] Error updating credentials:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la mise à jour des identifiants",
+      error: error.message
+    });
+  }
+});
+
+// GET: Get current username (for display purposes, without password)
+apiRouter.get("/user/info", async (req, res) => {
+  try {
+    const data = fs.readFileSync(userCredentialsPath, "utf-8");
+    const credentials = JSON.parse(data);
+
+    res.json({
+      success: true,
+      username: credentials.username
+    });
+  } catch (error: any) {
+    console.error("[User] Error reading user info:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des informations utilisateur"
     });
   }
 });

@@ -95,7 +95,7 @@ export class ScanTour extends EventEmitter {
             console.log(`[ScanTour] Camera ${this.preset.cameraId} moved to initial position: Pan ${this.preset.panAngle}°, Tilt ${this.preset.tiltAngle}°, Zoom ${this.preset.zoomLevel}×`);
 
             // Send initial detection command to backend
-            await this.sendBackendUpdate();
+            //await this.sendBackendUpdate();
 
             // Start the scan interval
             this.status = ScanTourStatus.RUNNING;
@@ -245,7 +245,7 @@ export class ScanTour extends EventEmitter {
         console.log(`[ScanTour] ${this.preset.cameraId} moved to Pan ${this.currentPanAngle}°`);
 
         // Update backend
-        await this.sendBackendUpdate();
+        //await this.sendBackendUpdate();
 
         // Emit movement event
         this.emit('movement', {
