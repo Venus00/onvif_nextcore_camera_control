@@ -1,4 +1,8 @@
 import { EventEmitter } from 'events';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const PRESETS_FILE_PATH = path.join(__dirname, '../../../data/intrusion-presets.json');
 
 export interface IntrusionRectangle {
     x: number;
@@ -107,6 +111,7 @@ export class ScanTour extends EventEmitter {
                 await fetch(`${this.backendUrl}/ia_process/intrusion/${this.preset.cameraId}/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ zones: this.preset.rectangles })
                 });
             } catch (error: any) {
                 console.error('[ScanTour] Backend stop error:', error);
@@ -312,6 +317,46 @@ export class ScanTourManager extends EventEmitter {
     }
 
     /**
+     * Load presets file
+     */
+    private loadPresetsFile(): any {
+        try {
+            if (fs.existsSync(PRESETS_FILE_PATH)) {
+                const data = fs.readFileSync(PRESETS_FILE_PATH, 'utf-8');
+                return JSON.parse(data);
+            }
+        } catch (error) {
+            console.error('[ScanTourManager] Error loading presets file:', error);
+        }
+        return { scanTourState: { status: 'stopped', activePresetId: null, cameraId: null, currentPanAngle: null, lastUpdated: null }, presets: [] };
+    }
+
+    /**
+     * Save scan tour state to presets file
+     */
+    private saveScanTourState(state: { status: string; activePresetId: string | null; cameraId: string | null; currentPanAngle: number | null }): void {
+        try {
+            const data = this.loadPresetsFile();
+            data.scanTourState = {
+                ...state,
+                lastUpdated: new Date().toISOString(),
+            };
+            fs.writeFileSync(PRESETS_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+            console.log('[ScanTourManager] Scan tour state saved:', data.scanTourState);
+        } catch (error) {
+            console.error('[ScanTourManager] Error saving scan tour state:', error);
+        }
+    }
+
+    /**
+     * Get current scan tour state from file
+     */
+    getScanTourState(): any {
+        const data = this.loadPresetsFile();
+        return data.scanTourState || { status: 'stopped', activePresetId: null, cameraId: null, currentPanAngle: null, lastUpdated: null };
+    }
+
+    /**
      * Create and start a new scan tour
      */
     async startTour(config: ScanTourConfig, ptzAPI: any): Promise<ScanTour> {
@@ -331,26 +376,56 @@ export class ScanTourManager extends EventEmitter {
         // Set up event listeners
         tour.on('started', (state) => {
             console.log(`[ScanTourManager] Tour started:`, state);
+            this.saveScanTourState({
+                status: 'running',
+                activePresetId: preset.id,
+                cameraId: preset.cameraId,
+                currentPanAngle: state.currentPanAngle,
+            });
             this.emit('tour-started', state);
         });
 
         tour.on('movement', (data) => {
+            this.saveScanTourState({
+                status: 'running',
+                activePresetId: preset.id,
+                cameraId: preset.cameraId,
+                currentPanAngle: data.panAngle,
+            });
             this.emit('tour-movement', data);
         });
 
         tour.on('paused', (state) => {
             console.log(`[ScanTourManager] Tour paused:`, state);
+            this.saveScanTourState({
+                status: 'paused',
+                activePresetId: preset.id,
+                cameraId: preset.cameraId,
+                currentPanAngle: state.currentPanAngle,
+            });
             this.emit('tour-paused', state);
         });
 
         tour.on('resumed', (state) => {
             console.log(`[ScanTourManager] Tour resumed:`, state);
+            this.saveScanTourState({
+                status: 'running',
+                activePresetId: preset.id,
+                cameraId: preset.cameraId,
+                currentPanAngle: state.currentPanAngle,
+            });
             this.emit('tour-resumed', state);
         });
 
         tour.on('stopped', (state) => {
             console.log(`[ScanTourManager] Tour stopped:`, state);
             this.tours.delete(preset.id);
+            this.saveScanTourState({
+                status: 'stopped',
+                activePresetId: null,
+                cameraId: null,
+                currentPanAngle: null,
+            });
             this.emit('tour-stopped', state);
         });
 

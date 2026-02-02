@@ -2283,11 +2283,16 @@ scanTourManager.on('tour-error', ({ presetId, error }) => {
 apiRouter.get("/intrusion/presets", async (req, res) => {
   try {
     const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
-    const presets: IntrusionPreset[] = JSON.parse(data);
+    const parsedData = JSON.parse(data);
+    
+    // Handle both old format (array) and new format (object with presets)
+    const presets = Array.isArray(parsedData) ? parsedData : parsedData.presets || [];
+    const scanTourState = parsedData.scanTourState || { status: 'stopped', activePresetId: null, cameraId: null, currentPanAngle: null, lastUpdated: null };
 
     res.json({
       success: true,
       presets,
+      scanTourState,
     });
 
 
@@ -2344,7 +2349,9 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
 
     // Read existing presets
     const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
-    const presets: IntrusionPreset[] = JSON.parse(data);
+    const parsedData = JSON.parse(data);
+    const presets: IntrusionPreset[] = Array.isArray(parsedData) ? parsedData : parsedData.presets || [];
+    const scanTourState = parsedData.scanTourState || { status: 'stopped', activePresetId: null, cameraId: null, currentPanAngle: null, lastUpdated: null };
 
 
     // Create new preset (no camera preset needed for scan tours)
@@ -2363,8 +2370,12 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
     // Add to presets array
     presets.push(newPreset);
 
-    // Save to file
-    fs.writeFileSync(intrusionPresetsPath, JSON.stringify(presets, null, 2), "utf-8");
+    // Save to file with new structure
+    const outputData = {
+      scanTourState,
+      presets,
+    };
+    fs.writeFileSync(intrusionPresetsPath, JSON.stringify(outputData, null, 2), "utf-8");
 
     console.log(`[Intrusion] Created preset "${name}" for ${cameraId} with ${rectangles.length} zones (Pan: ${validPanAngle}°, Tilt: ${validTiltAngle}°, User Zoom: ${validZoomLevel}× → Camera Zoom: ${mappedZoom}, Interval: ${validTimeInterval}s)`);
 
@@ -2388,7 +2399,9 @@ apiRouter.delete("/intrusion/presets/:id", async (req, res) => {
 
     // Read existing presets
     const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
-    let presets: IntrusionPreset[] = JSON.parse(data);
+    const parsedData = JSON.parse(data);
+    let presets: IntrusionPreset[] = Array.isArray(parsedData) ? parsedData : parsedData.presets || [];
+    const scanTourState = parsedData.scanTourState || { status: 'stopped', activePresetId: null, cameraId: null, currentPanAngle: null, lastUpdated: null };
 
     // Find preset
     const presetIndex = presets.findIndex((p) => p.id === id);
@@ -2404,8 +2417,12 @@ apiRouter.delete("/intrusion/presets/:id", async (req, res) => {
     // Remove preset from array
     presets = presets.filter((p) => p.id !== id);
 
-    // Save to file
-    fs.writeFileSync(intrusionPresetsPath, JSON.stringify(presets, null, 2), "utf-8");
+    // Save to file with new structure
+    const outputData = {
+      scanTourState,
+      presets,
+    };
+    fs.writeFileSync(intrusionPresetsPath, JSON.stringify(outputData, null, 2), "utf-8");
 
     console.log(`[Intrusion] Deleted preset "${deletedPreset.name}" (${id})`);
 
@@ -2437,7 +2454,8 @@ apiRouter.post("/intrusion/start", async (req, res) => {
 
     // Read presets
     const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
-    const presets: IntrusionPreset[] = JSON.parse(data);
+    const parsedData = JSON.parse(data);
+    const presets: IntrusionPreset[] = Array.isArray(parsedData) ? parsedData : parsedData.presets || [];
 
     // Find preset
     const preset = presets.find((p) => p.id === presetId);
@@ -2578,6 +2596,9 @@ apiRouter.get("/intrusion/status", async (req, res) => {
   try {
     const { cameraId } = req.query;
 
+    // Get persistent state from file
+    const persistentState = scanTourManager.getScanTourState();
+
     if (cameraId) {
       const tour = scanTourManager.getTourByCamera(cameraId as string);
 
@@ -2586,6 +2607,7 @@ apiRouter.get("/intrusion/status", async (req, res) => {
           success: true,
           cameraId,
           active: false,
+          persistentState,
         });
       }
 
@@ -2594,6 +2616,7 @@ apiRouter.get("/intrusion/status", async (req, res) => {
         cameraId,
         active: true,
         tour: tour.getState(),
+        persistentState,
       });
     }
 
@@ -2604,6 +2627,7 @@ apiRouter.get("/intrusion/status", async (req, res) => {
       success: true,
       activeTours,
       count: activeTours.length,
+      persistentState,
     });
   } catch (error: any) {
     console.error("[Intrusion] Error getting scan tour status:", error);
