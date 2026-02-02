@@ -17,7 +17,7 @@ import CameraSetupAPI, {
   CameraClient,
 } from "./util";
 
-const { promisify } = require('util');
+import { promisify } from 'util'
 const execPromise = promisify(exec);
 
 import { createUDPClient } from "./util/udpclient.js";
