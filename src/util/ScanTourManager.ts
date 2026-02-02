@@ -90,7 +90,6 @@ export class ScanTour extends EventEmitter {
         if (this.status === ScanTourStatus.RUNNING) {
             throw new Error('Scan tour is already running');
         }
-
         try {
             // Move to initial position (always start at 0°)
             await this.ptzAPI.positionAbsolute(
