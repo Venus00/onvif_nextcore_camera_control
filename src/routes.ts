@@ -126,7 +126,7 @@ const app = express();
 const apiRouter = express.Router();
 app.use(express.json());
 app.use(cors());
-app.use('/api', apiRouter);
+app.use("/api", apiRouter);
 // ============ CAMERA CONFIGURATION ============
 
 interface CameraInfo {
@@ -444,10 +444,21 @@ apiRouter.get(
   route(async ({ setup }) => ({ config: await setup.getChannelTitle() })),
 );
 
+apiRouter.post(
+  "/camera/:camId/title",
+  route(async ({ setup }, body) => {
+    const { channel = 0, name } = body;
+    const response = await setup.setChannelTitle(name, channel);
+    return { response, ok: setup.isSuccess(response) };
+  }),
+);
+
 // OSD
 apiRouter.get(
   "/camera/:camId/osd",
-  route(async ({ setup }) => ({ config: await setup.getVideoWidget() })),
+  route(async ({ setup }) => ({
+    config: await setup.getVideoWidgetOSDStatus(),
+  })),
 );
 
 apiRouter.post(
@@ -2234,7 +2245,10 @@ apiRouter.delete("/detection/photos", async (req, res) => {
 });
 
 // ============ INTRUSION DETECTION API ============
-const intrusionPresetsPath = path.join(__dirname, "../../data/intrusion-presets.json");
+const intrusionPresetsPath = path.join(
+  __dirname,
+  "../../data/intrusion-presets.json",
+);
 
 // Ensure data directory exists
 const dataDir = path.join(__dirname, "../../data");
@@ -2313,31 +2327,50 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
       });
     }
 
-    // Validate PTZ angles
-    const validPanAngle = typeof panAngle === 'number' && panAngle >= 0 && panAngle <= 360 ? panAngle : 0;
-    const validTiltAngle = typeof tiltAngle === 'number' && tiltAngle >= -90 && tiltAngle <= 90 ? tiltAngle : 0;
+    // Read existing presets
+    const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
+    const presets: IntrusionPreset[] = JSON.parse(data);
+
+    // Find next available preset number (30-128)
+    const usedPresetNumbers = presets
+      .filter(
+        (p) => p.cameraId === cameraId && typeof p.presetNumber === "number",
+      )
+      .map((p) => p.presetNumber as number);
 
     // Validate and map zoom based on camera type (matching Video.tsx goto function)
     const minUserZoom = cameraId === 'cam1' ? 1 : 1;
     const maxUserZoom = cameraId === 'cam1' ? 10 : 52;
     let validZoomLevel = typeof zoomLevel === 'number' && zoomLevel >= minUserZoom && zoomLevel <= maxUserZoom ? zoomLevel : 1;
 
-    // Map user zoom to camera zoom (for positionAbsolute API)
-    let mappedZoom: number;
-    if (cameraId === 'cam1') {
-      // Thermal camera: map 1-10 to 2.8-27
-      mappedZoom = 2.8 + ((validZoomLevel - 1) / 9) * (27 - 2.8);
-    } else {
-      // Optical camera: map 1-52 to 0-128
-      mappedZoom = ((validZoomLevel - 1) / 51) * 128;
+    if (presetNumber > 128) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "Maximum number of presets reached (30-128). Please delete an existing preset.",
+      });
     }
     mappedZoom = Math.round(mappedZoom * 100) / 100; // Round to 2 decimals
 
     const validTimeInterval = typeof timeInterval === 'number' && timeInterval >= 1 && timeInterval <= 3600 ? timeInterval : 5;
 
-    // Read existing presets
-    const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
-    const presets: IntrusionPreset[] = JSON.parse(data);
+      // Get camera API
+      const api = await getAPIs(cameraId);
+      // Set the preset at current position
+      await api.ptz.setPreset(presetNumber);
+      console.log(
+        `[Intrusion] PTZ preset ${presetNumber} "${name}" created on camera ${cameraId}`,
+      );
+    } catch (ptzError: any) {
+      console.error(
+        `[Intrusion] Error setting PTZ preset on camera:`,
+        ptzError,
+      );
+      return res.status(500).json({
+        success: false,
+        error: `Failed to create PTZ preset on camera: ${ptzError.message}`,
+      });
+    }
 
     // Create new preset (no camera preset needed for scan tours)
     const newPreset: IntrusionPreset = {
@@ -2356,9 +2389,15 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
     presets.push(newPreset);
 
     // Save to file
-    fs.writeFileSync(intrusionPresetsPath, JSON.stringify(presets, null, 2), "utf-8");
+    fs.writeFileSync(
+      intrusionPresetsPath,
+      JSON.stringify(presets, null, 2),
+      "utf-8",
+    );
 
-    console.log(`[Intrusion] Created preset "${name}" for ${cameraId} with ${rectangles.length} zones (Pan: ${validPanAngle}°, Tilt: ${validTiltAngle}°, User Zoom: ${validZoomLevel}× → Camera Zoom: ${mappedZoom}, Interval: ${validTimeInterval}s)`);
+    console.log(
+      `[Intrusion] Created preset "${name}" for ${cameraId} with ${rectangles.length} zones and PTZ preset #${presetNumber}`,
+    );
 
     res.json({
       success: true,
@@ -2393,11 +2432,32 @@ apiRouter.delete("/intrusion/presets/:id", async (req, res) => {
 
     const deletedPreset = presets[presetIndex];
 
+    // Delete PTZ preset from camera if it has a preset number
+    if (deletedPreset.presetNumber) {
+      try {
+        const api = await getAPIs(deletedPreset.cameraId);
+        await api.ptz.clearPreset(deletedPreset.presetNumber);
+        console.log(
+          `[Intrusion] Deleted PTZ preset #${deletedPreset.presetNumber} from camera ${deletedPreset.cameraId}`,
+        );
+      } catch (ptzError: any) {
+        console.error(
+          `[Intrusion] Error deleting PTZ preset from camera:`,
+          ptzError,
+        );
+        // Continue with deletion even if camera preset deletion fails
+      }
+    }
+
     // Remove preset from array
     presets = presets.filter((p) => p.id !== id);
 
     // Save to file
-    fs.writeFileSync(intrusionPresetsPath, JSON.stringify(presets, null, 2), "utf-8");
+    fs.writeFileSync(
+      intrusionPresetsPath,
+      JSON.stringify(presets, null, 2),
+      "utf-8",
+    );
 
     console.log(`[Intrusion] Deleted preset "${deletedPreset.name}" (${id})`);
 
@@ -2440,80 +2500,38 @@ apiRouter.post("/intrusion/start", async (req, res) => {
       });
     }
 
-    console.log(`[Intrusion] Starting scan tour with preset "${preset.name}" on ${preset.cameraId}`);
-
-    // Get PTZ API
-    const api = await getAPIs(preset.cameraId);
-
-    // Start tour using ScanTourManager
-    const tour = await scanTourManager.startTour(
-      {
-        preset,
-        panStep: Math.abs(panStep),
-      },
-      api.ptz
+    console.log(
+      `[Intrusion] Starting intrusion detection with preset "${preset.name}" on ${preset.cameraId}`,
     );
+    console.log(`[Intrusion] Detection zones:`, preset.rectangles);
 
-    const state = tour.getState();
-
-    res.json({
-      success: true,
-      message: `Scan tour started with preset "${preset.name}"`,
-      preset,
-      tour: state,
-    });
-  } catch (error: any) {
-    console.error("[Intrusion] Error starting scan tour:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
-
-// Stop scan tour (pause - can be resumed)
-apiRouter.post("/intrusion/stop", async (req, res) => {
-  try {
-    const { presetId, cameraId } = req.body;
-    const identifier = presetId || cameraId;
-
-    if (!identifier) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing presetId or cameraId",
-      });
+    // Go to PTZ preset position if available
+    if (preset.presetNumber) {
+      try {
+        const api = await getAPIs(preset.cameraId);
+        await api.ptz.gotoPreset(preset.presetNumber, 0);
+        console.log(
+          `[Intrusion] Camera ${preset.cameraId} moved to PTZ preset #${preset.presetNumber}`,
+        );
+      } catch (ptzError: any) {
+        console.error(`[Intrusion] Error moving to PTZ preset:`, ptzError);
+        // Continue with intrusion detection even if PTZ movement fails
+      }
     }
 
-    scanTourManager.pauseTour(identifier);
-
-    const tour = scanTourManager.getTour(presetId) || scanTourManager.getTourByCamera(cameraId);
-    const state = tour?.getState();
-
-    res.json({
-      success: true,
-      message: `Scan tour paused`,
-      tour: state,
-    });
-  } catch (error: any) {
-    console.error("[Intrusion] Error pausing scan tour:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
-
-// Continue scan tour (resume from pause)
-apiRouter.post("/intrusion/continue", async (req, res) => {
-  try {
-    const { presetId, cameraId } = req.body;
-    const identifier = presetId || cameraId;
-
-    if (!identifier) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing presetId or cameraId",
-      });
+    // Send command to backend to start intrusion detection with zones
+    try {
+      await fetch(
+        `http://localhost:9898/ia_process/intrusion/${preset.cameraId}/start`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ zones: preset.rectangles }),
+        },
+      );
+    } catch (backendError: any) {
+      console.error("[Intrusion] Backend connection error:", backendError);
+      // Continue even if backend fails
     }
 
     scanTourManager.resumeTour(identifier);
@@ -2609,13 +2627,7 @@ apiRouter.get("/intrusion/status", async (req, res) => {
 // Get intrusion events (photos from intrusion detection)
 apiRouter.get("/intrusion/events", async (req, res) => {
   try {
-    const {
-      zone,
-      cameraId,
-      startDate,
-      endDate,
-      limit = 100,
-    } = req.query;
+    const { zone, cameraId, startDate, endDate, limit = 100 } = req.query;
 
     // Intrusion photos directory
     const intrusionDir =
@@ -2632,9 +2644,9 @@ apiRouter.get("/intrusion/events", async (req, res) => {
     }
 
     // Read all files in the intrusion directory
-    const files = fs.readdirSync(intrusionDir).filter((file) =>
-      /\.(jpg|jpeg|png|bmp)$/i.test(file)
-    );
+    const files = fs
+      .readdirSync(intrusionDir)
+      .filter((file) => /\.(jpg|jpeg|png|bmp)$/i.test(file));
 
     console.log(
       `[Intrusion Events] Found ${files.length} files in intrusion directory`,
@@ -2685,14 +2697,7 @@ apiRouter.get("/intrusion/events", async (req, res) => {
         const minute = parseInt(timePart.substring(2, 4));
         const second = parseInt(timePart.substring(4, 6));
 
-        const timestamp = new Date(
-          year,
-          month - 1,
-          day,
-          hour,
-          minute,
-          second,
-        );
+        const timestamp = new Date(year, month - 1, day, hour, minute, second);
 
         events.push({
           id: `${zoneName}_${datePart}_${timePart}_${camIdPart}`,
@@ -2723,9 +2728,7 @@ apiRouter.get("/intrusion/events", async (req, res) => {
     }
 
     if (cameraId) {
-      filteredEvents = filteredEvents.filter(
-        (e) => e.cameraId === cameraId,
-      );
+      filteredEvents = filteredEvents.filter((e) => e.cameraId === cameraId);
     }
 
     if (startDate) {
@@ -2885,9 +2888,9 @@ apiRouter.delete("/intrusion/events", async (req, res) => {
       });
     }
 
-    const files = fs.readdirSync(intrusionDir).filter((file) =>
-      /\.(jpg|jpeg|png|bmp)$/i.test(file),
-    );
+    const files = fs
+      .readdirSync(intrusionDir)
+      .filter((file) => /\.(jpg|jpeg|png|bmp)$/i.test(file));
 
     let deletedCount = 0;
     let errorCount = 0;
@@ -3221,4 +3224,3 @@ app.listen(PORT, () => {
 });
 
 export default app;
-
