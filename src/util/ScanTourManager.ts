@@ -1,9 +1,13 @@
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from "url";
 
-const PRESETS_FILE_PATH = path.join(__dirname, '../../data/intrusion-presets.json');
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const PRESETS_FILE_PATH = path.join(__dirname, '../../../data/intrusion-presets.json');
 export interface IntrusionRectangle {
     x: number;
     y: number;
@@ -108,7 +112,7 @@ export class ScanTour extends EventEmitter {
             this.emit('started', this.getState());
 
             try {
-                await fetch(`${this.backendUrl}/ia_process/intrusion/${this.preset.cameraId}/start`, {
+                await fetch(`${this.backendUrl}/ia_process/intrusion/${this.preset.cameraId === 'cam1' ? 'cam2' : 'cam1'}/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ zones: this.preset.rectangles })
