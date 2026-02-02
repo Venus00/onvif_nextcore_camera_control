@@ -2339,6 +2339,7 @@ apiRouter.post("/intrusion/presets", async (req, res) => {
     const data = fs.readFileSync(intrusionPresetsPath, "utf-8");
     const presets: IntrusionPreset[] = JSON.parse(data);
 
+
     // Create new preset (no camera preset needed for scan tours)
     const newPreset: IntrusionPreset = {
       id: `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
