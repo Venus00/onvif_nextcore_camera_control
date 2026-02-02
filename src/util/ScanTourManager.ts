@@ -102,6 +102,15 @@ export class ScanTour extends EventEmitter {
             this.startInterval();
 
             this.emit('started', this.getState());
+
+            try {
+                await fetch(`${this.backendUrl}/ia_process/intrusion/${this.preset.cameraId}/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+            } catch (error: any) {
+                console.error('[ScanTour] Backend stop error:', error);
+            }
         } catch (error: any) {
             this.emit('error', error);
             throw error;
@@ -313,6 +322,8 @@ export class ScanTourManager extends EventEmitter {
             const runningTour = Array.from(this.tours.values())[0];
             throw new Error(`Only one scan tour can run at a time. Tour already active for ${runningTour.getCameraId()}`);
         }
+
+
 
         // Create new tour
         const tour = new ScanTour(config, ptzAPI);
