@@ -346,19 +346,7 @@ apiRouter.post(
   }),
 );
 
-// Defog
-apiRouter.get(
-  "/camera/:camId/video/defog",
-  route(async ({ setup }) => ({ config: await setup.getVideoDefog() })),
-);
-apiRouter.post(
-  "/camera/:camId/video/defog",
-  route(async ({ setup }, body) => {
-    const { channel = 0, config = 0, ...params } = body;
-    const response = await setup.setVideoDefog(params, channel, config);
-    return { response, ok: setup.isSuccess(response) };
-  }),
-);
+
 
 // Flip
 apiRouter.get(
@@ -387,6 +375,26 @@ apiRouter.post(
     const response = await setup.setVideoDenoise(params, channel, config);
     return { response, ok: setup.isSuccess(response) };
   }),
+);
+
+
+// Defog
+// GET
+apiRouter.get(
+  "/camera/:camId/video/defog",
+  route(async ({ setup }) => ({
+    config: await setup.getVideoDefog()
+  }))
+);
+
+// POST
+apiRouter.post(
+  "/camera/:camId/video/defog",
+  route(async ({ setup }, body) => {
+    const { mode, intensity = 2 } = body;
+    const response = await setup.setVideoDefog(mode, intensity);
+    return { ok: setup.isSuccess(response) };
+  })
 );
 
 // Video Stabilizer

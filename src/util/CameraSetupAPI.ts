@@ -515,6 +515,36 @@ export class CameraSetupAPI {
     );
   }
 
+
+  // 3.1.13 VideoDefog
+
+  // GET - Obtenir la configuration Defog
+  async getVideoDefog(): Promise<{
+    mode: string;
+    intensity: number;
+  }> {
+    const fullConfig = await this.getConfig("VideoInDefog");
+
+    return {
+      mode: fullConfig["table.VideoInDefog[0][2].Mode"] || "Off",
+      intensity: parseInt(
+        fullConfig["table.VideoInDefog[0][2].Intensity"] || "1",
+      ),
+    };
+  }
+
+  // POST - Définir uniquement le mode Defog
+  async setVideoDefog(
+    mode: "Off" | "Auto" | "Manul",
+    intensity: 0 | 1 | 2 = 1,
+  ): Promise<string> {
+    const params = {
+      Mode: mode,
+      Intensity: intensity,
+    };
+    const paramString = this.formatParams("VideoInDefog", params, 0, 2);
+    return this.setConfig(paramString);
+  }
   // 3.1.12 VideoLighting
   async getVideoLighting(): Promise<ParsedConfig> {
     return this.getConfig("VideoInLighting");
@@ -530,20 +560,7 @@ export class CameraSetupAPI {
     );
   }
 
-  // 3.1.13 VideoDefog
-  async getVideoDefog(): Promise<ParsedConfig> {
-    return this.getConfig("VideoInDefog");
-  }
 
-  async setVideoDefog(
-    params: DefogParams,
-    channel: Channel = 0,
-    config: ConfigProfile = 2,
-  ): Promise<string> {
-    return this.setConfig(
-      this.formatParams("VideoInDefog", params, channel, config),
-    );
-  }
 
   // 3.1.14 VideoFFC (Thermal)
   async getVideoFFC(): Promise<ParsedConfig> {
